@@ -152,6 +152,9 @@ void print_error(sci_error_t *error, char *func, int exit_on_failure) {
 		case SCI_ERR_NO_SUCH_FDID:
 			fprintf(stderr, "The specified fabric device identifier is not found\n");
 			break;	
+        default:
+            fprintf(stderr, "UNDEFINED ERROR!");
+            exit(EXIT_FAILURE);
     }
 	if (exit_on_failure) exit(EXIT_FAILURE);
 }
