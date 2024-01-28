@@ -3,6 +3,6 @@
 
 #include "/opt/DIS/include/sisci_error.h"
 
-void print_error(sci_error_t *error, char *func, int exit_on_failure);
+void print_sisci_error(sci_error_t *error, char *func, int exit_on_failure);
 
 #endif

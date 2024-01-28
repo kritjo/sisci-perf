@@ -26,8 +26,12 @@ int main(void) {
     sci_error_t error;
 
     SCIInitialize(NO_FLAGS, &error);
-    print_error(&error, "SCIInitialize", true); 
-    printf("Initialization OK!\n");
+    print_sisci_error(&error, "SCIInitialize", true); 
+    printf("SCI initialization OK!\n");
 
+    // Core program here
+
+    SCITerminate();
+    printf("SCI termination OK!\n");
     return EXIT_SUCCESS;
 }
