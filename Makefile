@@ -2,24 +2,28 @@ BUILD_DIR = build
 LIB_DIR = lib
 SRC_DIR = src
 
+SENDER_SRC = $(SRC_DIR)/sender.c
+SENDER_OBJS = $(BUILD_DIR)/sender.o
+
+RECEIVER_SRC = $(SRC_DIR)/receiver.c
+RECEIVER_OBJS = $(BUILD_DIR)/receiver.o
+
 LIB_SRC = $(wildcard $(LIB_DIR)/*.c)
 LIB_OBJS = $(LIB_SRC:$(LIB_DIR)/%.c=$(BUILD_DIR)/%.o)
-
-SRC = $(wildcard $(SRC_DIR)/*.c)
-OBJS = $(SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
-
-TARGET = main
 
 CC = gcc
 CFLAGS = -Wall -Werror -I/opt/DIS/include/ -I/opt/DIS/include/dis/ -I$(LIB_DIR)/
 LDFLAGS = -L/opt/DIS/lib64/ -lsisci
 
-all: $(TARGET)
+all: sender receiver
 
-$(TARGET): $(OBJS) $(LIB_OBJS)
+sender: $(SENDER_OBJS) $(LIB_OBJS)
 	$(CC) $(CFLAGS) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS)
 
-$(OBJS): $(SRC) 
+receiver: $(RECEIVER_OBJS) $(LIB_OBJS)
+	$(CC) $(CFLAGS) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS)
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@  
   
