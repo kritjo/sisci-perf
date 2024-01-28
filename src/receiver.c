@@ -13,11 +13,13 @@
 #define NO_FLAGS 0
 #define NO_CALLBACK 0
 #define NO_ARG 0
+#define NO_OFFSET 0
+#define NO_SUG_ADDR 0
 
 #define ADAPTER_NO 0 // From /etc/dis/dishosts.conf
 
 #define RECEIVER_SEG_ID 1337
-#define RECEIVER_SEG_SIZE 4
+#define RECEIVER_SEG_SIZE 4096
 
 int main(void) {
     sci_desc_t v_dev;
@@ -25,10 +27,14 @@ int main(void) {
     sci_local_segment_t local_segment;
     sci_map_t local_map;
     rdma_buff_t *rdma_buff;
+    unsigned int local_node_id;
 
     SCIInitialize(NO_FLAGS, &error);
     print_sisci_error(&error, "SCIInitialize", true); 
     printf("SCI initialization OK!\n");
+
+    SCIGetLocalNodeId(ADAPTER_NO, &local_node_id, NO_FLAGS, &error);
+    print_sisci_error(&error, "SCIGetLocalNodeId", true);
 
     SCIOpen(&v_dev, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIOpen", true); 
@@ -51,9 +57,9 @@ int main(void) {
 
     rdma_buff = (rdma_buff_t*) SCIMapLocalSegment(local_segment,
             &local_map,
-            0,
+            NO_OFFSET,
             RECEIVER_SEG_SIZE,
-            0,
+            NO_SUG_ADDR,
             NO_FLAGS,
             &error);
     print_sisci_error(&error, "SCIMapLocalSegment", true);
@@ -66,6 +72,7 @@ int main(void) {
         &error);
     print_sisci_error(&error, "SCISetSegmentAvailable", true);     
 
+    printf("Node %u waiting for transfer\n", local_node_id);
     while (!rdma_buff->done);
     printf("RDMA Done! Word: %s\n", rdma_buff->word);
     
