@@ -23,7 +23,7 @@
 #define RECEIVER_SEG_ID 1337
 
 void print_usage(char *prog_name) {
-    printf("usage: %s (-nid <opt> | -an <opt>)\n", prog_name);
+    printf("usage: %s (-nid <opt> | -an <opt>)\n", prog_name);
     printf("    -nid <receiver node id>       : Specify the receiver using node id\n");
     printf("    -an <receiver adapter name>   : Specify the receiver using its adapter name\n");
 
