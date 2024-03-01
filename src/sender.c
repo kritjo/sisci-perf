@@ -2,11 +2,14 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <errno.h>
+#include <limits.h>
 
 #include "sisci_api.h"
 #include "sisci_error.h"
 
 #include "error_util.h"
+#include "printfo.h"
 
 #include "rdma_buff.h"
 
@@ -18,10 +21,18 @@
 #define ADAPTER_NO 0 // From /etc/dis/dishosts.conf
 
 #define RECEIVER_SEG_ID 1337
-#define RECEIVER_NODE_ID 24
 
-void send_rdma_buff(sci_dma_queue_t *dma_queue, rdma_buff_t *rdma_buff, sci_remote_segment_t *remote_segment, sci_error_t *error) {
+void print_usage(char *prog_name) {
+    printf("usage: %s (-nid <opt> | -an <opt>)\n", prog_name);
+    printf("    -nid <receiver node id>       : Specify the receiver using node id\n");
+    printf("    -an <receiver adapter name>   : Specify the receiver using its adapter name\n");
+
+    exit(EXIT_FAILURE);
+}
+
+void send_rdma_buff(sci_dma_queue_t *dma_queue, rdma_buff_t *rdma_buff, sci_remote_segment_t *remote_segment) {
     sci_dma_queue_state_t dma_queue_state;
+    sci_error_t error;
 
     SCIStartDmaTransferMem(
             *dma_queue,
@@ -32,11 +43,11 @@ void send_rdma_buff(sci_dma_queue_t *dma_queue, rdma_buff_t *rdma_buff, sci_remo
             NO_CALLBACK,
             NO_ARG,
             NO_FLAGS,
-            error);
-    print_sisci_error(error, "SCIStartDmaTransferMem", true);
+            &error);
+    print_sisci_error(&error, "SCIStartDmaTransferMem", true);
 
-    SCIWaitForDMAQueue(*dma_queue, SCI_INFINITE_TIMEOUT, NO_FLAGS, error);
-    print_sisci_error(error, "SCIWaitForDMAQueue", true);
+    SCIWaitForDMAQueue(*dma_queue, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
+    print_sisci_error(&error, "SCIWaitForDMAQueue", true);
 
     dma_queue_state = SCIDMAQueueState(*dma_queue);
     if (dma_queue_state == SCI_DMAQUEUE_DONE) 
@@ -47,13 +58,76 @@ void send_rdma_buff(sci_dma_queue_t *dma_queue, rdma_buff_t *rdma_buff, sci_remo
     }
 }
 
-int main(void) {
+bool parse_nid(char *arg, unsigned int *receiver_node_id) {
+    long strtol_tmp;
+    char *endptr;
+
+    errno = 0;
+    
+    strtol_tmp = strtol(arg, &endptr, 10);
+    if (errno != 0) {
+        perror("strtol");
+        exit(EXIT_FAILURE);
+    }
+
+    if (strtol_tmp > UINT_MAX || strtol_tmp < 0) return false;
+    if (*endptr != '\0') return false;
+    
+    *receiver_node_id = (unsigned int) strtol_tmp;
+    return true;
+}
+
+bool parse_an(char *arg, unsigned int *receiver_node_id) { 
+    dis_virt_adapter_t adapter_type;
+    sci_error_t error;
+    dis_nodeId_list_t nodelist;
+
+    SCIGetNodeIdByAdapterName(arg, &nodelist, &adapter_type, NO_FLAGS, &error);
+    print_sisci_error(&error, "SCIGetNodeIdByAdapterName", true);
+
+    if (nodelist[0] != 0) {
+        printf("Found node with id %u matching adapter name\n", nodelist[0]);
+        *receiver_node_id = nodelist[0];
+    } else {
+        printf("No matching adapters found matching %s\n", arg);
+        exit(EXIT_FAILURE);
+    }
+
+    if (nodelist[1] != 0) printf("    (multiple adapters found)\n");
+    return true;
+}
+
+void parseArgs(int argc, char *argv[], unsigned int *receiver_node_id) {
+    bool rnid_set = false;
+
+    for (int arg = 0; arg < argc; arg++) {
+        if (strcmp(argv[arg], "-nid") == 0) {
+            if (rnid_set) print_usage(argv[0]);
+            if (arg+1 == argc) print_usage(argv[0]);
+            rnid_set = parse_nid(argv[arg+1], receiver_node_id);
+            if (!rnid_set) print_usage(argv[0]);
+        }
+        else if (strcmp(argv[arg], "-an") == 0) {
+           if (rnid_set) print_usage(argv[0]);
+           if (arg+1 == argc) print_usage(argv[0]);
+           rnid_set = parse_an(argv[arg+1], receiver_node_id);
+           if (!rnid_set) print_usage(argv[0]);
+        }
+    }
+
+    if (!rnid_set) print_usage(argv[0]);
+}
+
+int main(int argc, char *argv[]) {
     sci_desc_t v_dev;
     sci_error_t error;
     sci_dma_queue_t dma_queue;
     sci_remote_segment_t remote_segment;
     size_t remote_segment_size;
     int remote_reachable;
+    unsigned int receiver_node_id;
+
+    parseArgs(argc, argv, &receiver_node_id);
 
     rdma_buff_t rdma_buff;
     rdma_buff.done = 0;
@@ -63,20 +137,19 @@ int main(void) {
     print_sisci_error(&error, "SCIInitialize", true); 
     printf("SCI initialization OK!\n");
 
+    print_all(ADAPTER_NO);
+
     SCIOpen(&v_dev, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIOpen", true); 
 
-    remote_reachable = SCIProbeNode(v_dev, ADAPTER_NO, RECEIVER_NODE_ID, NO_FLAGS, &error);
-    printf("Probe said that receiver node (%d) was", RECEIVER_NODE_ID);
+    remote_reachable = SCIProbeNode(v_dev, ADAPTER_NO, receiver_node_id, NO_FLAGS, &error);
+    printf("Probe said that receiver node (%d) was", receiver_node_id);
     if (remote_reachable) printf(" reachable!\n");
     else printf(" NOT reachable!\n");
-
-    SCICreateDMAQueue(v_dev, &dma_queue, ADAPTER_NO, 1, NO_FLAGS, &error);
-    print_sisci_error(&error, "SCICreateDMAQueue", true);    
-
+ 
     SCIConnectSegment(v_dev,
             &remote_segment, 
-            RECEIVER_NODE_ID, 
+            receiver_node_id, 
             RECEIVER_SEG_ID, 
             ADAPTER_NO,
             NO_CALLBACK,
@@ -89,10 +162,13 @@ int main(void) {
     remote_segment_size = SCIGetRemoteSegmentSize(remote_segment);
     printf("Connected to remote segment of size %ld\n", remote_segment_size);
 
-    send_rdma_buff(&dma_queue, &rdma_buff, &remote_segment, &error);
+    SCICreateDMAQueue(v_dev, &dma_queue, ADAPTER_NO, 1, NO_FLAGS, &error);
+    print_sisci_error(&error, "SCICreateDMAQueue", true);
+
+    send_rdma_buff(&dma_queue, &rdma_buff, &remote_segment);
 
     rdma_buff.done = 1;
-    send_rdma_buff(&dma_queue, &rdma_buff, &remote_segment, &error);
+    send_rdma_buff(&dma_queue, &rdma_buff, &remote_segment);
 
     SCIRemoveDMAQueue(dma_queue, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIRemoveDMAQueue", false);
