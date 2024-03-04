@@ -190,7 +190,7 @@ bool parse_an(char *arg, unsigned int *receiver_node_id) {
     return true;
 }
 
-int parseRnidArgs(int argc, char *argv[], unsigned int *receiver_node_id) {
+int parse_rnid_args(int argc, char *argv[], unsigned int *receiver_node_id) {
     bool rnid_set = false;
     int arg;
 
@@ -222,7 +222,7 @@ int main(int argc, char *argv[]) {
     unsigned int receiver_node_id;
     char *mode;
 
-    if (parseRnidArgs(argc, argv, &receiver_node_id) != argc) print_usage(argv[0]);
+    if (parse_rnid_args(argc, argv, &receiver_node_id) != argc) print_usage(argv[0]);
     mode = argv[argc-1];
     if (strcmp(mode, "dma") != 0 && strcmp(mode, "rma") != 0 && strcmp(mode, "sysdma") != 0) print_usage(argv[0]);
 
