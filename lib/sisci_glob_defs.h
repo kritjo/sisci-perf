@@ -1,0 +1,10 @@
+#ifndef KRITJOLIB_SISCI_GLOB_DEFS
+#define KRITJOLIB_SISCI_GLOB_DEFS
+
+#define NO_FLAGS 0
+#define NO_CALLBACK 0
+#define NO_ARG 0
+#define NO_OFFSET 0
+#define NO_SUG_ADDR 0
+
+#endif //KRITJOLIB_SISCI_GLOB_DEFS
