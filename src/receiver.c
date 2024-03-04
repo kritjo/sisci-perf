@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <tclDecls.h>
 
 #include "sisci_api.h"
 #include "sisci_error.h"
@@ -74,7 +73,7 @@ int main(int argc, char *argv[]) {
                           &error);
         print_sisci_error(&error, "SCIPrepareSegment", true);
     } else {
-        SCIRequestDMAChannel(v_dev, &dma_channel, ADAPTER_NO, SCI_DMA_TYPE_DONTCARE, receiver_id, NO_FLAGS, &error);
+        SCIRequestDMAChannel(v_dev, &dma_channel, ADAPTER_NO, SCI_DMA_TYPE_SYSTEM, SCI_DMA_CHANNEL_ID_DONTCARE, NO_FLAGS, &error);
         print_sisci_error(&error, "SCIRequestDMAChannel", true);
 
         SCIPrepareLocalSegmentForDMA(dma_channel, local_segment, NO_FLAGS, &error);
