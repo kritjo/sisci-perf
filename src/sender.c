@@ -26,7 +26,9 @@ void print_usage(char *prog_name) {
     printf("usage: %s (-nid <opt> | -an <opt>) <mode>\n", prog_name);
     printf("    -nid <receiver node id>       : Specify the receiver using node id\n");
     printf("    -an <receiver adapter name>   : Specify the receiver using its adapter name\n");
-    printf("    <mode>                        : Mode of operation, either 'dma' or 'ndma'\n");
+    printf("    <mode>                        : Mode of operation, either 'dma' or 'rma'\n");
+    printf("           dma                    : Use DMA from network adapter to remote segment\n");
+    printf("           rma                    : Map remote segment, and write to it directly\n");
 
     exit(EXIT_FAILURE);
 }
@@ -186,7 +188,7 @@ int main(int argc, char *argv[]) {
 
     if (parseRnidArgs(argc, argv, &receiver_node_id) != argc) print_usage(argv[0]);
     mode = argv[argc-1];
-    if (strcmp(mode, "dma") != 0 && strcmp(mode, "ndma") != 0) print_usage(argv[0]);
+    if (strcmp(mode, "dma") != 0 && strcmp(mode, "rma") != 0) print_usage(argv[0]);
 
     SCIInitialize(NO_FLAGS, &error);
     print_sisci_error(&error, "SCIInitialize", true); 
@@ -218,7 +220,7 @@ int main(int argc, char *argv[]) {
     printf("Connected to remote segment of size %ld\n", remote_segment_size);
 
     if (strcmp(mode, "dma") == 0) rdma(v_dev, remote_segment);
-    else if (strcmp(mode, "ndma") == 0) rma(remote_segment);
+    else if (strcmp(mode, "rma") == 0) rma(remote_segment);
     else {
         fprintf(stderr, "Invalid mode\n");
         exit(EXIT_FAILURE);
