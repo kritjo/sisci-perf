@@ -15,10 +15,6 @@
 #include "rma.h"
 #include "sisci_glob_defs.h"
 
-#define ADAPTER_NO 0 // From /etc/dis/dishosts.conf
-
-#define RECEIVER_SEG_ID 1337
-
 void print_usage(char *prog_name) {
     printf("usage: %s (-nid <opt> | -an <opt>) <mode>\n", prog_name);
     printf("    -nid <receiver node id>       : Specify the receiver using node id\n");

@@ -12,9 +12,6 @@
 #include "printfo.h"
 #include "sisci_glob_defs.h"
 
-#define ADAPTER_NO 0 // From /etc/dis/dishosts.conf
-
-#define RECEIVER_SEG_ID 1337
 #define RECEIVER_SEG_SIZE 4096
 
 int main(void) {
