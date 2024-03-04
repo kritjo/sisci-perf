@@ -2,8 +2,8 @@ BUILD_DIR = build
 LIB_DIR = lib
 SRC_DIR = src
 
-SENDER_SRC = $(SRC_DIR)/sender.c
-SENDER_OBJS = $(BUILD_DIR)/sender.o
+SENDER_SRC = $(SRC_DIR)/rma.c $(SRC_DIR)/sender.c
+SENDER_OBJS = $(BUILD_DIR)/rma.o $(BUILD_DIR)/sender.o
 
 RECEIVER_SRC = $(SRC_DIR)/receiver.c
 RECEIVER_OBJS = $(BUILD_DIR)/receiver.o
