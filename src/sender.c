@@ -62,6 +62,7 @@ void send_rdma_buff(sci_dma_queue_t *dma_queue, rdma_buff_t *rdma_buff, sci_remo
 void rdma(sci_desc_t v_dev, sci_remote_segment_t remote_segment) {
     sci_dma_queue_t dma_queue;
     sci_error_t error;
+    sci_dma_queue_state_t dma_q_state;
     rdma_buff_t rdma_buff;
 
     rdma_buff.done = 0;
@@ -70,6 +71,14 @@ void rdma(sci_desc_t v_dev, sci_remote_segment_t remote_segment) {
     SCICreateDMAQueue(v_dev, &dma_queue, ADAPTER_NO, 1, NO_FLAGS, &error);
     print_sisci_error(&error, "SCICreateDMAQueue", true);
 
+    dma_q_state = SCIDMAQueueState(dma_queue);
+    if (dma_q_state == SCI_DMAQUEUE_IDLE)
+        printf("DMA queue is idle\n");
+    else {
+        fprintf(stderr, "DMA queue is not idle\n");
+        exit(EXIT_FAILURE);
+    }
+
     send_rdma_buff(&dma_queue, &rdma_buff, &remote_segment);
 
     rdma_buff.done = 1;
@@ -77,6 +86,31 @@ void rdma(sci_desc_t v_dev, sci_remote_segment_t remote_segment) {
 
     SCIRemoveDMAQueue(dma_queue, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIRemoveDMAQueue", false);
+}
+
+void rma(sci_remote_segment_t remote_segment) {
+    volatile rdma_buff_t *remote_address;
+    sci_map_t remote_map;
+    sci_error_t error;
+    size_t remote_segment_size;
+    rdma_buff_t rdma_buff;
+    rdma_buff.done = 0;
+    strcpy(rdma_buff.word, "OK");
+
+    remote_segment_size = SCIGetRemoteSegmentSize(remote_segment);
+
+    remote_address = (volatile rdma_buff_t*)SCIMapRemoteSegment(
+            remote_segment, &remote_map,0 /* offset */, remote_segment_size,
+            0 /* address hint */, NO_FLAGS, &error);
+
+    print_sisci_error(&error, "SCIMapRemoteSegment", true);
+
+    *remote_address = rdma_buff;
+    remote_address->done = 1;
+    printf("Wrote to remote segment\n");
+
+    SCIUnmapSegment(remote_map, NO_FLAGS, &error);
+    print_sisci_error(&error, "SCIUnmapSegment", false);
 }
 
 bool parse_nid(char *arg, unsigned int *receiver_node_id) {
@@ -184,7 +218,11 @@ int main(int argc, char *argv[]) {
     printf("Connected to remote segment of size %ld\n", remote_segment_size);
 
     if (strcmp(mode, "dma") == 0) rdma(v_dev, remote_segment);
-    else printf("Non-DMA mode not implemented\n");
+    else if (strcmp(mode, "ndma") == 0) rma(remote_segment);
+    else {
+        fprintf(stderr, "Invalid mode\n");
+        exit(EXIT_FAILURE);
+    }
 
     SCIDisconnectSegment(remote_segment, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIDisconnectSegment", false);
