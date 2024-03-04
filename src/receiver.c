@@ -9,6 +9,7 @@
 #include "error_util.h"
 
 #include "rdma_buff.h"
+#include "printfo.h"
 
 #define NO_FLAGS 0
 #define NO_CALLBACK 0
@@ -32,6 +33,8 @@ int main(void) {
     SCIInitialize(NO_FLAGS, &error);
     print_sisci_error(&error, "SCIInitialize", true); 
     printf("SCI initialization OK!\n");
+
+    print_all(ADAPTER_NO);
 
     SCIGetLocalNodeId(ADAPTER_NO, &local_node_id, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIGetLocalNodeId", true);
