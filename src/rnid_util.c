@@ -9,8 +9,10 @@
 #include "sisci_api.h"
 #include "sisci_error.h"
 #include "error_util.h"
+#include "sisci_glob_defs.h"
 
-bool parse_nid(char *arg, unsigned int *receiver_node_id) {
+
+bool parse_uint(char *arg, unsigned int *receiver_node_id) {
     long strtol_tmp;
     char *endptr;
 
@@ -49,25 +51,30 @@ bool parse_an(char *arg, unsigned int *receiver_node_id) {
     return true;
 }
 
-int parse_rnid_args(int argc, char *argv[], unsigned int *receiver_node_id, void (*print_usage)(char *)) {
-    bool rnid_set = false;
+int parse_id_args(int argc, char *argv[], unsigned int *id, bool *is_channel, void (*print_usage)(char *)) {
+    bool opt_set = false;
     int arg;
 
     for (arg = 0; arg < argc; arg++) {
         if (strcmp(argv[arg], "-nid") == 0) {
-            if (rnid_set) print_usage(argv[0]);
+            if (opt_set) print_usage(argv[0]);
             if (arg+1 == argc) print_usage(argv[0]);
-            rnid_set = parse_nid(argv[arg+1], receiver_node_id);
-            if (!rnid_set) print_usage(argv[0]);
+            opt_set = parse_uint(argv[arg + 1], id);
+            if (!opt_set) print_usage(argv[0]);
         }
         else if (strcmp(argv[arg], "-an") == 0) {
-            if (rnid_set) print_usage(argv[0]);
+            if (opt_set) print_usage(argv[0]);
             if (arg+1 == argc) print_usage(argv[0]);
-            rnid_set = parse_an(argv[arg+1], receiver_node_id);
-            if (!rnid_set) print_usage(argv[0]);
+            opt_set = parse_an(argv[arg + 1], id);
+            if (!opt_set) print_usage(argv[0]);
+        }
+        else if (strcmp(argv[arg], "-chid") == 0) {
+            if (opt_set) print_usage(argv[0]);
+            if (arg+1 == argc) print_usage(argv[0]);
+            opt_set = parse_uint(argv[arg + 1], id);
+            if (!opt_set) print_usage(argv[0]);
+            *is_channel = true;
         }
     }
-
-    if (!rnid_set) print_usage(argv[0]);
     return arg;
 }
