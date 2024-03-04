@@ -28,14 +28,16 @@ void print_usage(char *prog_name) {
     printf("    -an <receiver adapter name>   : Specify the receiver using its adapter name\n");
     printf("    <mode>                        : Mode of operation, either 'dma' or 'rma'\n");
     printf("           dma                    : Use DMA from network adapter to remote segment\n");
+    printf("           sysdma                 : Use DMA provided by the host system\n");
     printf("           rma                    : Map remote segment, and write to it directly\n");
 
     exit(EXIT_FAILURE);
 }
 
-void send_dma_buff(sci_dma_queue_t *dma_queue, rdma_buff_t *rdma_buff, sci_remote_segment_t *remote_segment) {
+void send_dma_buff(sci_dma_queue_t *dma_queue, rdma_buff_t *rdma_buff, sci_remote_segment_t *remote_segment, bool use_sysdma) {
     sci_dma_queue_state_t dma_queue_state;
     sci_error_t error;
+    unsigned int flags = use_sysdma ? SCI_FLAG_DMA_SYSDMA : NO_FLAGS;
 
     SCIStartDmaTransferMem(
             *dma_queue,
@@ -45,7 +47,7 @@ void send_dma_buff(sci_dma_queue_t *dma_queue, rdma_buff_t *rdma_buff, sci_remot
             NO_OFFSET,
             NO_CALLBACK,
             NO_ARG,
-            NO_FLAGS,
+            flags,
             &error);
     print_sisci_error(&error, "SCIStartDmaTransferMem", true);
 
@@ -61,7 +63,7 @@ void send_dma_buff(sci_dma_queue_t *dma_queue, rdma_buff_t *rdma_buff, sci_remot
     }
 }
 
-void dma(sci_desc_t v_dev, sci_remote_segment_t remote_segment) {
+void dma(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool use_sysdma) {
     sci_dma_queue_t dma_queue;
     sci_error_t error;
     sci_dma_queue_state_t dma_q_state;
@@ -81,10 +83,10 @@ void dma(sci_desc_t v_dev, sci_remote_segment_t remote_segment) {
         exit(EXIT_FAILURE);
     }
 
-    send_dma_buff(&dma_queue, &rdma_buff, &remote_segment);
+    send_dma_buff(&dma_queue, &rdma_buff, &remote_segment, use_sysdma);
 
     rdma_buff.done = 1;
-    send_dma_buff(&dma_queue, &rdma_buff, &remote_segment);
+    send_dma_buff(&dma_queue, &rdma_buff, &remote_segment, use_sysdma);
 
     SCIRemoveDMAQueue(dma_queue, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIRemoveDMAQueue", false);
@@ -219,7 +221,8 @@ int main(int argc, char *argv[]) {
     remote_segment_size = SCIGetRemoteSegmentSize(remote_segment);
     printf("Connected to remote segment of size %ld\n", remote_segment_size);
 
-    if (strcmp(mode, "dma") == 0) dma(v_dev, remote_segment);
+    if (strcmp(mode, "dma") == 0) dma(v_dev, remote_segment, 0);
+    else if (strcmp(mode, "sysdma") == 0) dma(v_dev, remote_segment, 1);
     else if (strcmp(mode, "rma") == 0) rma(remote_segment);
     else {
         fprintf(stderr, "Invalid mode\n");
