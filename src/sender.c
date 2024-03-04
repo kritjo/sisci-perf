@@ -12,11 +12,8 @@
 #include "printfo.h"
 
 #include "rdma_buff.h"
-
-#define NO_FLAGS 0
-#define NO_CALLBACK 0
-#define NO_ARG 0
-#define NO_OFFSET 0
+#include "rma.h"
+#include "sisci_glob_defs.h"
 
 #define ADAPTER_NO 0 // From /etc/dis/dishosts.conf
 
