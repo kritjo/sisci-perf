@@ -30,6 +30,7 @@ void print_usage(char *prog_name) {
     printf("           dma                    : Use DMA from network adapter to remote segment\n");
     printf("           sysdma                 : Use DMA provided by the host system\n");
     printf("           rma                    : Map remote segment, and write to it directly\n");
+    printf("           rma-check              : Map remote segment, and write to it directly, then flush and check\n");
 
     exit(EXIT_FAILURE);
 }
@@ -92,12 +93,15 @@ void dma(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool use_sysdma)
     print_sisci_error(&error, "SCIRemoveDMAQueue", false);
 }
 
-void rma(sci_remote_segment_t remote_segment) {
+void rma(sci_remote_segment_t remote_segment, bool check) {
     volatile rdma_buff_t *remote_address;
     sci_map_t remote_map;
     sci_error_t error;
     size_t remote_segment_size;
+    sci_sequence_t sequence;
+    sci_sequence_status_t sequence_status = SCI_SEQ_OK;
     rdma_buff_t rdma_buff;
+
     rdma_buff.done = 0;
     strcpy(rdma_buff.word, "OK");
 
@@ -106,12 +110,42 @@ void rma(sci_remote_segment_t remote_segment) {
     remote_address = (volatile rdma_buff_t*)SCIMapRemoteSegment(
             remote_segment, &remote_map,0 /* offset */, remote_segment_size,
             0 /* address hint */, NO_FLAGS, &error);
-
     print_sisci_error(&error, "SCIMapRemoteSegment", true);
+
+    SCICreateMapSequence(remote_map, &sequence, NO_FLAGS, &error);
+    print_sisci_error(&error, "SCICreateMapSequence", true);
+
+    if (check) {
+        do {
+            sequence_status = SCIStartSequence(sequence, NO_FLAGS, &error);
+            print_sisci_error(&error, "SCIStartSequence", true);
+        } while (sequence_status == SCI_SEQ_RETRIABLE || sequence_status == SCI_SEQ_PENDING);
+        if (sequence_status == SCI_SEQ_NOT_RETRIABLE) {
+            fprintf(stderr, "SCIStartSequence failed, fatal error\n");
+            exit(EXIT_FAILURE);
+        }
+    }
 
     *remote_address = rdma_buff;
     remote_address->done = 1;
     printf("Wrote to remote segment\n");
+
+    if (check) {
+        printf("Flushing remote segment\n");
+        SCIFlush(sequence, NO_FLAGS);
+
+        printf("Checking sequence\n");
+        sequence_status = SCICheckSequence(sequence, NO_FLAGS, &error);
+        print_sisci_error(&error, "SCICheckSequence", true);
+        if (sequence_status == SCI_SEQ_OK) printf("Sequence OK\n");
+        else {
+            fprintf(stderr, "Sequence not OK\n");
+            exit(EXIT_FAILURE);
+        }
+
+        SCIRemoveSequence(sequence, NO_FLAGS, &error);
+        print_sisci_error(&error, "SCIRemoveSequence", false);
+    }
 
     SCIUnmapSegment(remote_map, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIUnmapSegment", false);
@@ -221,9 +255,10 @@ int main(int argc, char *argv[]) {
     remote_segment_size = SCIGetRemoteSegmentSize(remote_segment);
     printf("Connected to remote segment of size %ld\n", remote_segment_size);
 
-    if (strcmp(mode, "dma") == 0) dma(v_dev, remote_segment, 0);
-    else if (strcmp(mode, "sysdma") == 0) dma(v_dev, remote_segment, 1);
-    else if (strcmp(mode, "rma") == 0) rma(remote_segment);
+    if (strcmp(mode, "dma") == 0) dma(v_dev, remote_segment, false);
+    else if (strcmp(mode, "sysdma") == 0) dma(v_dev, remote_segment, true);
+    else if (strcmp(mode, "rma") == 0) rma(remote_segment, false);
+    else if (strcmp(mode, "rma-check") == 0) rma(remote_segment, true);
     else {
         fprintf(stderr, "Invalid mode\n");
         exit(EXIT_FAILURE);
