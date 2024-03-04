@@ -14,6 +14,7 @@
 #include "rdma_buff.h"
 #include "rma.h"
 #include "sisci_glob_defs.h"
+#include "dma.h"
 
 void print_usage(char *prog_name) {
     printf("usage: %s (-nid <opt> | -an <opt>) <mode>\n", prog_name);
