@@ -11,7 +11,6 @@
 #include "error_util.h"
 #include "printfo.h"
 
-#include "rdma_buff.h"
 #include "rma.h"
 #include "sisci_glob_defs.h"
 #include "dma.h"
