@@ -77,9 +77,7 @@ int parse_id_args(int argc, char *argv[], unsigned int *rnid, unsigned int *chan
             ARG_PARSE(channel_id, &arg, argc, argv, parse_uint, print_usage);
         }
         else if (strcmp(argv[arg], "-chdc") == 0) {
-            DEBUG_PRINT("Setting channel id to dont care\n");
             ARG_PARSE(channel_id, &arg, argc, argv, set_dont_care_channel_id, print_usage);
-            DEBUG_PRINT("Channel id set to dont care\n");
         }
         else if (arg == argc-1) {
             arg++;
