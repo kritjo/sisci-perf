@@ -1,5 +1,5 @@
-#include <printf.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "lib_dma.h"
 #include "sisci_api.h"
 #include "sisci_glob_defs.h"
