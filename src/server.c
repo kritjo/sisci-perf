@@ -33,8 +33,8 @@ int main(int argc, char *argv[]) {
     sci_map_t local_map;
     rdma_buff_t *rdma_buff;
     unsigned int local_node_id;
-    unsigned int server_id = -1;
-    unsigned int channel_id = -1;
+    unsigned int server_id = UNINITIALIZED_ARG;
+    unsigned int channel_id = UNINITIALIZED_ARG;
     char *mode;
     sci_dma_channel_t dma_channel;
 
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
             &error);
     print_sisci_error(&error, "SCICreateSegment", true);
 
-    if (channel_id == -1) {
+    if (channel_id == UNINITIALIZED_ARG) {
         SCIPrepareSegment(local_segment,
                           ADAPTER_NO,
                           NO_FLAGS,

@@ -34,12 +34,12 @@ int main(int argc, char *argv[]) {
     sci_remote_segment_t remote_segment;
     size_t remote_segment_size;
     int remote_reachable;
-    unsigned int server_id = -1;
-    unsigned int channel_id = -1;
+    unsigned int server_id = UNINITIALIZED_ARG;
+    unsigned int channel_id = UNINITIALIZED_ARG;
     char *mode;
 
     if (parse_id_args(argc, argv, &server_id, &channel_id, print_usage) != argc) print_usage(argv[0]);
-    if (server_id == -1) print_usage(argv[0]);
+    if (server_id == UNINITIALIZED_ARG) print_usage(argv[0]);
     mode = argv[argc-1];
     if (strcmp(mode, "dma") != 0 && strcmp(mode, "rma") != 0 && strcmp(mode, "sysdma") != 0 && strcmp(mode, "rma-check") != 0) print_usage(argv[0]);
 
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
     remote_segment_size = SCIGetRemoteSegmentSize(remote_segment);
     printf("Connected to remote segment of size %ld\n", remote_segment_size);
 
-    if (strcmp(mode, "dma") == 0) dma_send_test(v_dev, remote_segment, false, -1);
+    if (strcmp(mode, "dma") == 0) dma_send_test(v_dev, remote_segment, false, UNINITIALIZED_ARG);
     else if (strcmp(mode, "sysdma") == 0) dma_send_test(v_dev, remote_segment, true, channel_id);
     else if (strcmp(mode, "rma") == 0) rma(remote_segment, false);
     else if (strcmp(mode, "rma-check") == 0) rma(remote_segment, true);

@@ -12,12 +12,12 @@
 #include "sisci_glob_defs.h"
 
 #define ARG_INIT(num_ptr) \
-            do { *num_ptr = -1; } while (0)
+            do { if (*num_ptr != UNINITIALIZED_ARG) print_usage(argv[0]); } while (0)
 
 #define ARG_PARSE(num_ptr, arg, argc, argv, parse_func, print_usage) \
-            do { if (*num_ptr != -1) print_usage(argv[0]); \
+            do { if (*num_ptr != UNINITIALIZED_ARG) print_usage(argv[0]); \
             parse_func(arg, argv, num_ptr); \
-            if (*num_ptr == -1) print_usage(argv[0]); } while (0)
+            if (*num_ptr == UNINITIALIZED_ARG) print_usage(argv[0]); } while (0)
 
 static void parse_uint(int *arg, char *argv[], unsigned int *server_node_id) {
     long strtol_tmp;
@@ -66,6 +66,7 @@ int parse_id_args(int argc, char *argv[], unsigned int *rnid, unsigned int *chan
     int arg;
 
     for (arg = 1; arg < argc; arg++) {
+        DEBUG_PRINT("Parsing argument: %s\n", argv[arg]);
         if (strcmp(argv[arg], "-nid") == 0) {
             ARG_PARSE(rnid, &arg, argc, argv, parse_uint, print_usage);
         }
@@ -76,7 +77,9 @@ int parse_id_args(int argc, char *argv[], unsigned int *rnid, unsigned int *chan
             ARG_PARSE(channel_id, &arg, argc, argv, parse_uint, print_usage);
         }
         else if (strcmp(argv[arg], "-chdc") == 0) {
+            DEBUG_PRINT("Setting channel id to dont care\n");
             ARG_PARSE(channel_id, &arg, argc, argv, set_dont_care_channel_id, print_usage);
+            DEBUG_PRINT("Channel id set to dont care\n");
         }
         else if (arg == argc-1) {
             arg++;
