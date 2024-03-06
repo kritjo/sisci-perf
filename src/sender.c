@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
     if (parse_id_args(argc, argv, &receiver_id, &channel_id, print_usage) != argc) print_usage(argv[0]);
     if (receiver_id == -1) print_usage(argv[0]);
     mode = argv[argc-1];
-    if (strcmp(mode, "dma") != 0 && strcmp(mode, "rma") != 0 && strcmp(mode, "sysdma") != 0 && strcmp(mode, "rma-check") != 0 && strcmp(mode, "dma-channel") != 0) print_usage(argv[0]);
+    if (strcmp(mode, "dma") != 0 && strcmp(mode, "rma") != 0 && strcmp(mode, "sysdma") != 0 && strcmp(mode, "rma-check") != 0) print_usage(argv[0]);
 
     SCIInitialize(NO_FLAGS, &error);
     print_sisci_error(&error, "SCIInitialize", true); 
