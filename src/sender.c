@@ -72,8 +72,8 @@ int main(int argc, char *argv[]) {
     remote_segment_size = SCIGetRemoteSegmentSize(remote_segment);
     printf("Connected to remote segment of size %ld\n", remote_segment_size);
 
-    if (strcmp(mode, "dma") == 0) dma(v_dev, remote_segment, false);
-    else if (strcmp(mode, "sysdma") == 0) dma(v_dev, remote_segment, true);
+    if (strcmp(mode, "dma") == 0) dma(v_dev, remote_segment, false, -1);
+    else if (strcmp(mode, "sysdma") == 0) dma(v_dev, remote_segment, true, channel_id);
     else if (strcmp(mode, "rma") == 0) rma(remote_segment, false);
     else if (strcmp(mode, "rma-check") == 0) rma(remote_segment, true);
     else {
