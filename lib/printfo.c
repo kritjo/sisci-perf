@@ -12,7 +12,7 @@
 void print_all(unsigned int adapter_no) {
     print_local_adapter(adapter_no);
     print_adapter_card_type(adapter_no);
-    //print_dma_availability(adapter_no); This function does maybe not work idk
+    print_dma_availability(adapter_no);
 }
 
 void print_local_adapter(unsigned int adapter_no) {
@@ -61,5 +61,21 @@ void print_dma_availability(unsigned int adapter_no) {
     if (avail) printf(" (%u)", avail);
     else printf(" NO (%u)", avail);
     printf(" adapter DMA capabilities\n");
+
+    SCIQuery(SCI_Q_DMA, &query, SCI_FLAG_DMA_SYSDMA, &error);
+    print_sisci_error(&error, "SCIQuery", false);
+
+    printf("Adapter %u has", adapter_no);
+    if (avail) printf(" (%u)", avail);
+    else printf(" NO (%u)", avail);
+    printf(" system DMA capabilities\n");
+
+    SCIQuery(SCI_Q_DMA, &query, SCI_FLAG_DMA_GLOBAL, &error);
+    print_sisci_error(&error, "SCIQuery", false);
+
+    printf("Adapter %u has", adapter_no);
+    if (avail) printf(" (%u)", avail);
+    else printf(" NO (%u)", avail);
+    printf(" global DMA capabilities\n");
 } 
 

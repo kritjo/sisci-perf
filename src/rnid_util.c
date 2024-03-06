@@ -12,13 +12,13 @@
 #include "sisci_glob_defs.h"
 
 #define ARG_INIT(num_ptr) \
-            *num_ptr = -1;
+            do { *num_ptr = -1; } while (0)
 
 #define ARG_PARSE(num_ptr, arg, argc, argv, parse_func, print_usage) \
-            if (*num_ptr != -1) print_usage(argv[0]); \
+            do { if (*num_ptr != -1) print_usage(argv[0]); \
             if (arg+1 == argc) print_usage(argv[0]); \
             parse_func(argv[arg + 1], num_ptr); \
-            if (*num_ptr == -1) print_usage(argv[0]);
+            if (*num_ptr == -1) print_usage(argv[0]); } while (0)
 
 
 static void parse_uint(char *arg, unsigned int *receiver_node_id) {
@@ -59,19 +59,19 @@ static void parse_an(char *arg, unsigned int *receiver_node_id) {
 }
 
 int parse_id_args(int argc, char *argv[], unsigned int *rnid, unsigned int *channel_id, void (*print_usage)(char *)) {
-    ARG_INIT(rnid)
-    ARG_INIT(channel_id)
+    ARG_INIT(rnid);
+    ARG_INIT(channel_id);
     int arg;
 
     for (arg = 0; arg < argc; arg++) {
         if (strcmp(argv[arg], "-nid") == 0) {
-            ARG_PARSE(rnid, arg, argc, argv, parse_uint, print_usage)
+            ARG_PARSE(rnid, arg, argc, argv, parse_uint, print_usage);
         }
         else if (strcmp(argv[arg], "-an") == 0) {
-            ARG_PARSE(rnid, arg, argc, argv, parse_an, print_usage)
+            ARG_PARSE(rnid, arg, argc, argv, parse_an, print_usage);
         }
         else if (strcmp(argv[arg], "-chid") == 0) {
-            ARG_PARSE(channel_id, arg, argc, argv, parse_uint, print_usage)
+            ARG_PARSE(channel_id, arg, argc, argv, parse_uint, print_usage);
         }
     }
     return arg;

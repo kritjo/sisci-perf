@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "sisci_types.h"
 #include "sisci_error.h"
@@ -14,6 +15,8 @@
 #define SEND_SEG_ID 4589
 
 void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool use_sysdma, unsigned int channel_id) {
+    DEBUG_PRINT("Sending DMA segment using %s\n", use_sysdma ? "sysdma" : "dma");
+    if (channel_id != -1) DEBUG_PRINT("Channel id: %d\n", channel_id);
     sci_local_segment_t local_segment;
     rdma_buff_t* local_map_address;
     sci_map_t local_map;
@@ -35,20 +38,15 @@ void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool u
     local_map_address->done = 0;
     strcpy(local_map_address->word, "OK");
 
-    send_dma_buff(&dma_queue, local_segment, remote_segment, sizeof(rdma_buff_t), use_sysdma);
+    if (channel_id != -1) dma_channel_init(v_dev, local_segment, remote_segment, channel_id, &dma_queue, dma_channel);
+
+    send_dma_segment(&dma_queue, local_segment, remote_segment, sizeof(rdma_buff_t), use_sysdma);
 
     local_map_address->done = 1;
-    send_dma_buff(&dma_queue, local_segment, remote_segment, sizeof(rdma_buff_t), use_sysdma);
-
-    if (channel_id != 1) dma_channel_init(v_dev, local_segment, remote_segment, channel_id, &dma_queue, dma_channel);
-
-    send_dma_buff(&dma_queue, local_segment, remote_segment, sizeof(rdma_buff_t), use_sysdma);
-
-    local_map_address->done = 1;
-    send_dma_buff(&dma_queue, local_segment, remote_segment, sizeof(rdma_buff_t), use_sysdma);
+    send_dma_segment(&dma_queue, local_segment, remote_segment, sizeof(rdma_buff_t), use_sysdma);
 
     SCIRemoveSegment(local_segment, NO_FLAGS, &error);
 
-    if (channel_id != 1) dma_channel_destroy(dma_channel, local_segment, remote_segment);
+    if (channel_id != -1) dma_channel_destroy(dma_channel, local_segment, remote_segment);
     dma_destroy(local_map, remote_map, dma_queue);
 }

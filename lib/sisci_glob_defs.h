@@ -9,4 +9,7 @@
 #define ADAPTER_NO 0 // From /etc/dis/dishosts.conf
 #define RECEIVER_SEG_ID 1337
 
+#define DEBUG 1
+#define DEBUG_PRINT(fmt, ...) \
+    do { if (DEBUG) fprintf(stderr, fmt, ##__VA_ARGS__); } while (0)
 #endif //KRITJOLIB_SISCI_GLOB_DEFS

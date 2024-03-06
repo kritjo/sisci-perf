@@ -6,7 +6,8 @@
 #include "error_util.h"
 
 
-void send_dma_buff(sci_dma_queue_t *dma_queue, sci_local_segment_t local_segment, sci_remote_segment_t remote_segment, size_t size, bool use_sysdma) {
+void send_dma_segment(sci_dma_queue_t *dma_queue, sci_local_segment_t local_segment, sci_remote_segment_t remote_segment, size_t size, bool use_sysdma) {
+    DEBUG_PRINT("Sending DMA segment\n");
     sci_dma_queue_state_t dma_queue_state;
     sci_error_t error;
     unsigned int flags = use_sysdma ? SCI_FLAG_DMA_SYSDMA : NO_FLAGS;
@@ -37,6 +38,7 @@ void send_dma_buff(sci_dma_queue_t *dma_queue, sci_local_segment_t local_segment
 }
 
 void dma_init(sci_desc_t v_dev, sci_remote_segment_t remote_segment, size_t size, sci_dma_queue_t *dma_queue, sci_map_t remote_map) {
+    DEBUG_PRINT("Initializing DMA\n");
     sci_error_t error;
     sci_dma_queue_state_t dma_q_state;
 
@@ -47,8 +49,9 @@ void dma_init(sci_desc_t v_dev, sci_remote_segment_t remote_segment, size_t size
     print_sisci_error(&error, "SCICreateDMAQueue", true);
 
     dma_q_state = SCIDMAQueueState(*dma_queue);
-    if (dma_q_state == SCI_DMAQUEUE_IDLE)
-        printf("DMA queue is idle\n");
+    if (dma_q_state == SCI_DMAQUEUE_IDLE){
+        DEBUG_PRINT("DMA queue is idle\n");
+    }
     else {
         fprintf(stderr, "DMA queue is not idle\n");
         exit(EXIT_FAILURE);
@@ -56,6 +59,7 @@ void dma_init(sci_desc_t v_dev, sci_remote_segment_t remote_segment, size_t size
 }
 
 void dma_destroy(sci_map_t local_map, sci_map_t remote_map, sci_dma_queue_t dma_queue) {
+    DEBUG_PRINT("Destroying DMA queue\n");
     sci_error_t error;
     SCIRemoveDMAQueue(dma_queue, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIRemoveDMAQueue", false);
@@ -68,6 +72,7 @@ void dma_destroy(sci_map_t local_map, sci_map_t remote_map, sci_dma_queue_t dma_
 }
 
 void dma_channel_destroy(sci_dma_channel_t dma_channel, sci_local_segment_t local_segment, sci_remote_segment_t remote_segment) {
+    DEBUG_PRINT("Destroying DMA channel\n");
     sci_error_t error;
 
     SCIUnprepareRemoteSegmentForDMA(dma_channel, remote_segment, NO_FLAGS, &error);
@@ -81,6 +86,7 @@ void dma_channel_destroy(sci_dma_channel_t dma_channel, sci_local_segment_t loca
 }
 
 void dma_channel_init(sci_desc_t v_dev, sci_local_segment_t local_segment, sci_remote_segment_t remote_segment, unsigned int channel_id, sci_dma_queue_t *dma_queue, sci_dma_channel_t dma_channel) {
+    DEBUG_PRINT("Requesting DMA channel\n");
     sci_error_t error;
 
     SCIRequestDMAChannel(v_dev, &dma_channel, ADAPTER_NO, SCI_DMA_TYPE_SYSTEM, channel_id, NO_FLAGS, &error);

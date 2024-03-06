@@ -43,8 +43,8 @@ int main(int argc, char *argv[]) {
     if (strcmp(mode, "poll") != 0) print_usage(argv[0]);
 
     SCIInitialize(NO_FLAGS, &error);
-    print_sisci_error(&error, "SCIInitialize", true); 
-    printf("SCI initialization OK!\n");
+    print_sisci_error(&error, "SCIInitialize", true);
+    DEBUG_PRINT("SCI initialization OK!\n");
 
     print_all(ADAPTER_NO);
 
