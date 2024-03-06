@@ -21,22 +21,22 @@ void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool u
     sci_error_t error;
     rdma_buff_t* local_map_address;
 
-    sci_local_segment_t local_segment = NULL;
-    sci_map_t local_map = NULL;
-    sci_map_t remote_map = NULL;
-    sci_dma_queue_t dma_queue = NULL;
-    sci_dma_channel_t dma_channel = NULL;
-    dma_args_t dma_args = {v_dev, remote_segment, local_segment, sizeof(rdma_buff_t), dma_queue, remote_map, local_map, use_sysdma};
-    dma_channel_args_t dma_channel_args = {channel_id, dma_channel};
+    dma_args_t dma_args;
+    dma_args.v_dev = v_dev;
+    dma_args.remote_segment = remote_segment;
+    dma_args.size = sizeof(rdma_buff_t);
+    dma_args.use_sysdma = use_sysdma;
+    dma_channel_args_t dma_channel_args;
+    dma_channel_args.channel_id = channel_id;
 
     dma_init(&dma_args);
 
-    SCICreateSegment(v_dev, &local_segment, SEND_SEG_ID, sizeof(rdma_buff_t), NO_CALLBACK, NO_ARG, SCI_FLAG_PRIVATE, &error);
+    SCICreateSegment(v_dev, &dma_args.local_segment, SEND_SEG_ID, dma_args.size, NO_CALLBACK, NO_ARG, SCI_FLAG_PRIVATE, &error);
     print_sisci_error(&error, "SCICreateSegment", true);
 
-    SCIPrepareSegment(local_segment, ADAPTER_NO, NO_FLAGS, &error);
+    SCIPrepareSegment(dma_args.local_segment, ADAPTER_NO, NO_FLAGS, &error);
 
-    local_map_address = (rdma_buff_t*)SCIMapLocalSegment(local_segment, &local_map, NO_OFFSET, sizeof(rdma_buff_t), NO_SUG_ADDR, NO_FLAGS, &error);
+    local_map_address = (rdma_buff_t*)SCIMapLocalSegment(dma_args.local_segment, &dma_args.local_map, NO_OFFSET, dma_args.size, NO_SUG_ADDR, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIMapLocalSegment", true);
 
     local_map_address->done = 0;
@@ -49,7 +49,7 @@ void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool u
     local_map_address->done = 1;
     send_dma_segment(&dma_args);
 
-    SCIRemoveSegment(local_segment, NO_FLAGS, &error);
+    SCIRemoveSegment(dma_args.local_segment, NO_FLAGS, &error);
 
     if (channel_id != UNINITIALIZED_ARG) dma_channel_destroy(&dma_args, &dma_channel_args);
     dma_destroy(&dma_args);
