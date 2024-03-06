@@ -66,7 +66,6 @@ int parse_id_args(int argc, char *argv[], unsigned int *rnid, unsigned int *chan
     int arg;
 
     for (arg = 1; arg < argc; arg++) {
-        DEBUG_PRINT("Parsing argument: %s\n", argv[arg]);
         if (strcmp(argv[arg], "-nid") == 0) {
             ARG_PARSE(rnid, &arg, argc, argv, parse_uint, print_usage);
         }
@@ -78,7 +77,6 @@ int parse_id_args(int argc, char *argv[], unsigned int *rnid, unsigned int *chan
         }
         else if (strcmp(argv[arg], "-chdc") == 0) {
             ARG_PARSE(channel_id, &arg, argc, argv, set_dont_care_channel_id, print_usage);
-            printf("Channel id set to don't care: %u\n", *channel_id);
         }
         else if (arg == argc-1) {
             arg++;
