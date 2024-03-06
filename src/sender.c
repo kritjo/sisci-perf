@@ -18,11 +18,10 @@ void print_usage(char *prog_name) {
     printf("usage: %s (-nid <opt> | -an <opt> | -chid <opt>) <mode>\n", prog_name);
     printf("    -nid <receiver node id>       : Specify the receiver using node id\n");
     printf("    -an <receiver adapter name>   : Specify the receiver using its adapter name\n");
-    printf("    -chid <channel id>            : Specify the DMA channel id, required for mode dma-channel mode\n");
+    printf("    -chid <channel id>            : Specify the DMA channel id, only has effect for sysdma mode\n");
     printf("    <mode>                        : Mode of operation\n");
     printf("           dma                    : Use DMA from network adapter to remote segment\n");
     printf("           sysdma                 : Use DMA provided by the host system\n");
-    printf("           dma-channel              : Map remote segment, and write to it directly, then flush and check\n");
     printf("           rma                    : Map remote segment, and write to it directly\n");
     printf("           rma-check              : Map remote segment, and write to it directly, then flush and check\n");
 
@@ -36,14 +35,13 @@ int main(int argc, char *argv[]) {
     size_t remote_segment_size;
     int remote_reachable;
     unsigned int receiver_id = -1;
+    unsigned int channel_id = -1;
     char *mode;
-    bool is_channel = false;
 
-    if (parse_id_args(argc, argv, &receiver_id, &is_channel, print_usage) != argc) print_usage(argv[0]);
+    if (parse_id_args(argc, argv, &receiver_id, &channel_id, print_usage) != argc) print_usage(argv[0]);
     if (receiver_id == -1) print_usage(argv[0]);
     mode = argv[argc-1];
     if (strcmp(mode, "dma") != 0 && strcmp(mode, "rma") != 0 && strcmp(mode, "sysdma") != 0 && strcmp(mode, "rma-check") != 0 && strcmp(mode, "dma-channel") != 0) print_usage(argv[0]);
-    if (strcmp(mode, "dma-channel") == 0 && !is_channel) print_usage(argv[0]);
 
     SCIInitialize(NO_FLAGS, &error);
     print_sisci_error(&error, "SCIInitialize", true); 

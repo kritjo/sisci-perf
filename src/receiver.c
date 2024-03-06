@@ -22,7 +22,6 @@ void print_usage(char *prog_name) {
     printf("    -chid <channel id>            : Specify the DMA channel id, required for mode dma-channel\n");
     printf("    <mode>                        : Mode of operation\n");
     printf("           poll                   : Busy wait for transfer\n");
-    printf("           dma-channel            : Use DMA channel to receive data, with busy wait\n");
 
     exit(EXIT_FAILURE);
 }
@@ -35,14 +34,13 @@ int main(int argc, char *argv[]) {
     rdma_buff_t *rdma_buff;
     unsigned int local_node_id;
     unsigned int receiver_id = -1;
-    bool is_channel;
+    unsigned int channel_id = -1;
     char *mode;
     sci_dma_channel_t dma_channel;
 
-    if (parse_id_args(argc, argv, &receiver_id, &is_channel, print_usage) != argc) print_usage(argv[0]);
+    if (parse_id_args(argc, argv, &receiver_id, &channel_id, print_usage) != argc) print_usage(argv[0]);
     mode = argv[argc-1];
-    if (strcmp(mode, "poll") != 0 && strcmp(mode, "dma-channel") != 0) print_usage(argv[0]);
-    if (strcmp(mode, "dma-channel") == 0 && (!is_channel || receiver_id == -1)) print_usage(argv[0]);
+    if (strcmp(mode, "poll") != 0) print_usage(argv[0]);
 
     SCIInitialize(NO_FLAGS, &error);
     print_sisci_error(&error, "SCIInitialize", true); 
@@ -66,14 +64,14 @@ int main(int argc, char *argv[]) {
             &error);
     print_sisci_error(&error, "SCICreateSegment", true);
 
-    if (strcmp(mode, "dma-channel") != 0) {
+    if (channel_id == -1) {
         SCIPrepareSegment(local_segment,
                           ADAPTER_NO,
                           NO_FLAGS,
                           &error);
         print_sisci_error(&error, "SCIPrepareSegment", true);
     } else {
-        SCIRequestDMAChannel(v_dev, &dma_channel, ADAPTER_NO, SCI_DMA_TYPE_SYSTEM, SCI_DMA_CHANNEL_ID_DONTCARE, NO_FLAGS, &error);
+        SCIRequestDMAChannel(v_dev, &dma_channel, ADAPTER_NO, SCI_DMA_TYPE_SYSTEM, channel_id, NO_FLAGS, &error);
         print_sisci_error(&error, "SCIRequestDMAChannel", true);
 
         SCIPrepareLocalSegmentForDMA(dma_channel, local_segment, NO_FLAGS, &error);
