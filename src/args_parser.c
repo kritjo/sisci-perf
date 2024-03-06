@@ -5,7 +5,7 @@
 #include <errno.h>
 #include <limits.h>
 
-#include "rnid_util.h"
+#include "args_parser.h"
 #include "sisci_api.h"
 #include "sisci_error.h"
 #include "error_util.h"

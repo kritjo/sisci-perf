@@ -11,7 +11,7 @@
 #include "rdma_buff.h"
 #include "printfo.h"
 #include "sisci_glob_defs.h"
-#include "rnid_util.h"
+#include "args_parser.h"
 
 #define SERVER_SEG_SIZE 4096
 
@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
     print_sisci_error(&error, "SCIRemoveSegment", false);
 
     SCIClose(v_dev, NO_FLAGS, &error);
-    print_sisci_error(&error, "SCIClose", false); 
+    print_sisci_error(&error, "SCIClose", false);
 
     SCITerminate();
     printf("SCI termination OK!\n");

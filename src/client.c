@@ -12,7 +12,7 @@
 #include "rma.h"
 #include "sisci_glob_defs.h"
 #include "dma.h"
-#include "rnid_util.h"
+#include "args_parser.h"
 
 void print_usage(char *prog_name) {
     printf("usage: %s (-nid <opt> | -an <opt> | -chid <opt>) <mode>\n", prog_name);
