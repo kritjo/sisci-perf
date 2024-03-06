@@ -87,8 +87,9 @@ void dma_channel_destroy(dma_args_t *args, dma_channel_args_t *ch_args) {
 void dma_channel_init(dma_args_t *args, dma_channel_args_t *ch_args) {
     DEBUG_PRINT("Requesting DMA channel\n");
     sci_error_t error;
+    sci_dma_type_t dma_type = args->use_sysdma ? SCI_DMA_TYPE_SYSTEM : SCI_DMA_TYPE_ADAPTER;
 
-    SCIRequestDMAChannel(args->v_dev, &ch_args->dma_channel, ADAPTER_NO, SCI_DMA_TYPE_SYSTEM, ch_args->channel_id, NO_FLAGS, &error);
+    SCIRequestDMAChannel(args->v_dev, &ch_args->dma_channel, ADAPTER_NO, dma_type, ch_args->channel_id, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIRequestDMAChannel", true);
 
     SCIAssignDMAChannel(ch_args->dma_channel, args->dma_queue, NO_FLAGS, &error);
