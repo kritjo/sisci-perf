@@ -16,18 +16,16 @@
 
 #define ARG_PARSE(num_ptr, arg, argc, argv, parse_func, print_usage) \
             do { if (*num_ptr != -1) print_usage(argv[0]); \
-            if (arg+1 == argc) print_usage(argv[0]); \
-            parse_func(argv[arg + 1], num_ptr); \
+            parse_func(arg, argv, num_ptr); \
             if (*num_ptr == -1) print_usage(argv[0]); } while (0)
 
-
-static void parse_uint(char *arg, unsigned int *server_node_id) {
+static void parse_uint(int *arg, char *argv[], unsigned int *server_node_id) {
     long strtol_tmp;
     char *endptr;
 
     errno = 0;
 
-    strtol_tmp = strtol(arg, &endptr, 10);
+    strtol_tmp = strtol(argv[++*arg], &endptr, 10);
     if (errno != 0) {
         perror("strtol");
         exit(EXIT_FAILURE);
@@ -39,23 +37,27 @@ static void parse_uint(char *arg, unsigned int *server_node_id) {
     *server_node_id = (unsigned int) strtol_tmp;
 }
 
-static void parse_an(char *arg, unsigned int *server_node_id) {
+static void parse_an(int *arg, char *argv[], unsigned int *server_node_id) {
     dis_virt_adapter_t adapter_type;
     sci_error_t error;
     dis_nodeId_list_t nodelist;
 
-    SCIGetNodeIdByAdapterName(arg, &nodelist, &adapter_type, NO_FLAGS, &error);
+    SCIGetNodeIdByAdapterName(argv[++*arg], &nodelist, &adapter_type, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIGetNodeIdByAdapterName", true);
 
     if (nodelist[0] != 0) {
         printf("Found node with id %u matching adapter name\n", nodelist[0]);
         *server_node_id = nodelist[0];
     } else {
-        printf("No matching adapters found matching %s\n", arg);
+        printf("No matching adapters found matching %s\n", argv[*arg]);
         return;
     }
 
     if (nodelist[1] != 0) printf("    (multiple adapters found)\n");
+}
+
+static void set_dont_care_channel_id(int *arg, char *argv[], unsigned int *channel_id) {
+    *channel_id = SCI_DMA_CHANNEL_ID_DONTCARE;
 }
 
 int parse_id_args(int argc, char *argv[], unsigned int *rnid, unsigned int *channel_id, void (*print_usage)(char *)) {
@@ -63,15 +65,28 @@ int parse_id_args(int argc, char *argv[], unsigned int *rnid, unsigned int *chan
     ARG_INIT(channel_id);
     int arg;
 
-    for (arg = 0; arg < argc; arg++) {
+    for (arg = 1; arg < argc; arg++) {
+        DEBUG_PRINT("Parsing argument: %s\n", argv[arg]);
         if (strcmp(argv[arg], "-nid") == 0) {
-            ARG_PARSE(rnid, arg, argc, argv, parse_uint, print_usage);
+            ARG_PARSE(rnid, &arg, argc, argv, parse_uint, print_usage);
         }
         else if (strcmp(argv[arg], "-an") == 0) {
-            ARG_PARSE(rnid, arg, argc, argv, parse_an, print_usage);
+            ARG_PARSE(rnid, &arg, argc, argv, parse_an, print_usage);
         }
         else if (strcmp(argv[arg], "-chid") == 0) {
-            ARG_PARSE(channel_id, arg, argc, argv, parse_uint, print_usage);
+            ARG_PARSE(channel_id, &arg, argc, argv, parse_uint, print_usage);
+        }
+        else if (strcmp(argv[arg], "-chdc") == 0) {
+            ARG_PARSE(channel_id, &arg, argc, argv, set_dont_care_channel_id, print_usage);
+            printf("Channel id set to don't care: %u\n", *channel_id);
+        }
+        else if (arg == argc-1) {
+            arg++;
+            break;
+        }
+        else {
+            printf("Unknown argument: %s\n", argv[arg]);
+            print_usage(argv[0]);
         }
     }
     return arg;
