@@ -2,11 +2,11 @@ BUILD_DIR = build
 LIB_DIR = lib
 SRC_DIR = src
 
-CLIENT_SRC = $(SRC_DIR)/rma.c $(SRC_DIR)/dma.c $(SRC_DIR)/rnid_util.c $(SRC_DIR)/client.c
-CLIENT_OBJS = $(BUILD_DIR)/rma.o $(BUILD_DIR)/dma.o $(BUILD_DIR)/rnid_util.o $(BUILD_DIR)/client.o
+CLIENT_SRC = $(SRC_DIR)/rma.c $(SRC_DIR)/dma.c $(SRC_DIR)/args_parser.c $(SRC_DIR)/client.c
+CLIENT_OBJS = $(BUILD_DIR)/rma.o $(BUILD_DIR)/dma.o $(BUILD_DIR)/args_parser.o $(BUILD_DIR)/client.o
 
-SERVER_SRC = $(SRC_DIR)/rnid_util.c $(SRC_DIR)/server.c
-SERVER_OBJS = $(BUILD_DIR)/rnid_util.o $(BUILD_DIR)/server.o
+SERVER_SRC = $(SRC_DIR)/args_parser.c $(SRC_DIR)/server.c
+SERVER_OBJS = $(BUILD_DIR)/args_parser.o $(BUILD_DIR)/server.o
 
 LIB_SRC = $(wildcard $(LIB_DIR)/*.c)
 LIB_OBJS = $(LIB_SRC:$(LIB_DIR)/%.c=$(BUILD_DIR)/%.o)
