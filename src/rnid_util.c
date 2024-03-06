@@ -56,7 +56,7 @@ static void parse_an(int *arg, char *argv[], unsigned int *server_node_id) {
     if (nodelist[1] != 0) printf("    (multiple adapters found)\n");
 }
 
-static void set_dont_care_channel_id(int *arg, char *argv[], unsigned int *channel_id) {
+static void set_dont_care_channel_id(__attribute__((unused)) int *arg, __attribute__((unused)) char *argv[], unsigned int *channel_id) {
     *channel_id = SCI_DMA_CHANNEL_ID_DONTCARE;
 }
 
