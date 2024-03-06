@@ -21,7 +21,7 @@
             if (*num_ptr == -1) print_usage(argv[0]); } while (0)
 
 
-static void parse_uint(char *arg, unsigned int *receiver_node_id) {
+static void parse_uint(char *arg, unsigned int *server_node_id) {
     long strtol_tmp;
     char *endptr;
 
@@ -36,10 +36,10 @@ static void parse_uint(char *arg, unsigned int *receiver_node_id) {
     if (strtol_tmp > UINT_MAX || strtol_tmp < 0) return;
     if (*endptr != '\0') return;
 
-    *receiver_node_id = (unsigned int) strtol_tmp;
+    *server_node_id = (unsigned int) strtol_tmp;
 }
 
-static void parse_an(char *arg, unsigned int *receiver_node_id) {
+static void parse_an(char *arg, unsigned int *server_node_id) {
     dis_virt_adapter_t adapter_type;
     sci_error_t error;
     dis_nodeId_list_t nodelist;
@@ -49,7 +49,7 @@ static void parse_an(char *arg, unsigned int *receiver_node_id) {
 
     if (nodelist[0] != 0) {
         printf("Found node with id %u matching adapter name\n", nodelist[0]);
-        *receiver_node_id = nodelist[0];
+        *server_node_id = nodelist[0];
     } else {
         printf("No matching adapters found matching %s\n", arg);
         return;

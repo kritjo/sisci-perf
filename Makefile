@@ -2,11 +2,11 @@ BUILD_DIR = build
 LIB_DIR = lib
 SRC_DIR = src
 
-SENDER_SRC = $(SRC_DIR)/rma.c $(SRC_DIR)/dma.c $(SRC_DIR)/rnid_util.c $(SRC_DIR)/sender.c
-SENDER_OBJS = $(BUILD_DIR)/rma.o $(BUILD_DIR)/dma.o $(BUILD_DIR)/rnid_util.o $(BUILD_DIR)/sender.o
+CLIENT_SRC = $(SRC_DIR)/rma.c $(SRC_DIR)/dma.c $(SRC_DIR)/rnid_util.c $(SRC_DIR)/client.c
+CLIENT_OBJS = $(BUILD_DIR)/rma.o $(BUILD_DIR)/dma.o $(BUILD_DIR)/rnid_util.o $(BUILD_DIR)/client.o
 
-RECEIVER_SRC = $(SRC_DIR)/rnid_util.c $(SRC_DIR)/receiver.c
-RECEIVER_OBJS = $(BUILD_DIR)/rnid_util.o $(BUILD_DIR)/receiver.o
+SERVER_SRC = $(SRC_DIR)/rnid_util.c $(SRC_DIR)/server.c
+SERVER_OBJS = $(BUILD_DIR)/rnid_util.o $(BUILD_DIR)/server.o
 
 LIB_SRC = $(wildcard $(LIB_DIR)/*.c)
 LIB_OBJS = $(LIB_SRC:$(LIB_DIR)/%.c=$(BUILD_DIR)/%.o)
@@ -15,12 +15,12 @@ CC = gcc
 CFLAGS = -Wall -Werror -I/opt/DIS/include/ -I/opt/DIS/include/dis/ -I$(LIB_DIR)/ -g
 LDFLAGS = -L/opt/DIS/lib64/ -lsisci
 
-all: sender receiver
+all: client server
 
-sender: $(SENDER_OBJS) $(LIB_OBJS)
+client: $(CLIENT_OBJS) $(LIB_OBJS)
 	$(CC) $(CFLAGS) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS)
 
-receiver: $(RECEIVER_OBJS) $(LIB_OBJS)
+server: $(SERVER_OBJS) $(LIB_OBJS)
 	$(CC) $(CFLAGS) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
@@ -34,16 +34,16 @@ $(BUILD_DIR)/%.o: $(LIB_DIR)/%.c
 clean:
 	rm -rf build/
 
-debug_sender: all
+debug_client: all
 	valgrind --leak-check=full \
          --show-leak-kinds=all \
          --track-origins=yes \
-         ./build/sender
+         ./build/client
 
-debug_receiver: all
+debug_server: all
 	valgrind --leak-check=full \
          --show-leak-kinds=all \
          --track-origins=yes \
-         ./build/receiver
+         ./build/server
 
 .PHONY: all clean debug

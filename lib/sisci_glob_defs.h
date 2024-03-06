@@ -7,7 +7,7 @@
 #define NO_OFFSET 0
 #define NO_SUG_ADDR 0
 #define ADAPTER_NO 0 // From /etc/dis/dishosts.conf
-#define RECEIVER_SEG_ID 1337
+#define SERVER_SEG_ID 1337
 
 #define DEBUG 1
 #define DEBUG_PRINT(fmt, ...) \
