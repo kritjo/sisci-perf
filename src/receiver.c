@@ -13,12 +13,12 @@
 #include "sisci_glob_defs.h"
 #include "args_parser.h"
 
-#define SERVER_SEG_SIZE 4096
+#define RECEIVER_SEG_SIZE 4096
 
 void print_usage(char *prog_name) {
     printf("usage: %s [-nid <opt> | -an <opt>] [-chid <opt>] <mode>\n", prog_name);
-    printf("    -nid <client node id>         : Specify the client using node id\n");         // required later
-    printf("    -an <client adapter name>     : Specify the client using its adapter name\n");// required later
+    printf("    -nid <sender node id>         : Specify the sender using node id\n");         // required later
+    printf("    -an <sender adapter name>     : Specify the sender using its adapter name\n");// required later
     printf("    -chid <channel id>            : Specify the DMA channel id, required for mode dma-channel\n");
     printf("    <mode>                        : Mode of operation\n");
     printf("           poll                   : Busy wait for transfer\n");
@@ -33,12 +33,12 @@ int main(int argc, char *argv[]) {
     sci_map_t local_map;
     rdma_buff_t *rdma_buff;
     unsigned int local_node_id;
-    unsigned int server_id = UNINITIALIZED_ARG;
+    unsigned int receiver_id = UNINITIALIZED_ARG;
     unsigned int channel_id = UNINITIALIZED_ARG;
     char *mode;
     sci_dma_channel_t dma_channel;
 
-    if (parse_id_args(argc, argv, &server_id, &channel_id, print_usage) != argc) print_usage(argv[0]);
+    if (parse_id_args(argc, argv, &receiver_id, &channel_id, print_usage) != argc) print_usage(argv[0]);
     mode = argv[argc-1];
     if (strcmp(mode, "poll") != 0) print_usage(argv[0]);
 
@@ -56,8 +56,8 @@ int main(int argc, char *argv[]) {
 
     SCICreateSegment(v_dev,
             &local_segment,
-            SERVER_SEG_ID,
-            SERVER_SEG_SIZE,
+            RECEIVER_SEG_ID,
+            RECEIVER_SEG_SIZE,
             NO_CALLBACK,
             NO_ARG,
             NO_FLAGS,
@@ -81,13 +81,13 @@ int main(int argc, char *argv[]) {
     rdma_buff = (rdma_buff_t*) SCIMapLocalSegment(local_segment,
             &local_map,
             NO_OFFSET,
-            SERVER_SEG_SIZE,
+            RECEIVER_SEG_SIZE,
             NO_SUG_ADDR,
             NO_FLAGS,
             &error);
     print_sisci_error(&error, "SCIMapLocalSegment", true);
 
-    memset(rdma_buff, 0, SERVER_SEG_SIZE);
+    memset(rdma_buff, 0, RECEIVER_SEG_SIZE);
 
     SCISetSegmentAvailable(local_segment,
         ADAPTER_NO,

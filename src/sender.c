@@ -16,8 +16,8 @@
 
 void print_usage(char *prog_name) {
     printf("usage: %s (-nid <opt> | -an <opt> | -chid <opt>) <mode>\n", prog_name);
-    printf("    -nid <server node id>         : Specify the server using node id\n");
-    printf("    -an <server adapter name>     : Specify the server using its adapter name\n");
+    printf("    -nid <receiver node id>       : Specify the receiver using node id\n");
+    printf("    -an <receiver adapter name>   : Specify the receiver using its adapter name\n");
     printf("    -chid <channel id>            : Specify the DMA channel id, only has effect for sysdma mode\n");
     printf("    <mode>                        : Mode of operation\n");
     printf("           dma                    : Use DMA from network adapter to remote segment\n");
@@ -34,12 +34,12 @@ int main(int argc, char *argv[]) {
     sci_remote_segment_t remote_segment;
     size_t remote_segment_size;
     int remote_reachable;
-    unsigned int server_id = UNINITIALIZED_ARG;
+    unsigned int receiver_id = UNINITIALIZED_ARG;
     unsigned int channel_id = UNINITIALIZED_ARG;
     char *mode;
 
-    if (parse_id_args(argc, argv, &server_id, &channel_id, print_usage) != argc) print_usage(argv[0]);
-    if (server_id == UNINITIALIZED_ARG) print_usage(argv[0]);
+    if (parse_id_args(argc, argv, &receiver_id, &channel_id, print_usage) != argc) print_usage(argv[0]);
+    if (receiver_id == UNINITIALIZED_ARG) print_usage(argv[0]);
     mode = argv[argc-1];
     if (strcmp(mode, "dma") != 0 && strcmp(mode, "rma") != 0 && strcmp(mode, "sysdma") != 0 && strcmp(mode, "rma-check") != 0) print_usage(argv[0]);
 
@@ -51,15 +51,15 @@ int main(int argc, char *argv[]) {
     SCIOpen(&v_dev, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIOpen", true); 
 
-    remote_reachable = SCIProbeNode(v_dev, ADAPTER_NO, server_id, NO_FLAGS, &error);
-    printf("Probe said that server node (%d) was", server_id);
+    remote_reachable = SCIProbeNode(v_dev, ADAPTER_NO, receiver_id, NO_FLAGS, &error);
+    printf("Probe said that receiver node (%d) was", receiver_id);
     if (remote_reachable) printf(" reachable!\n");
     else printf(" NOT reachable!\n");
  
     SCIConnectSegment(v_dev,
                       &remote_segment,
-                      server_id,
-                      SERVER_SEG_ID,
+                      receiver_id,
+                      RECEIVER_SEG_ID,
                       ADAPTER_NO,
                       NO_CALLBACK,
                       NO_ARG,
