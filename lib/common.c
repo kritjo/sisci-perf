@@ -6,8 +6,11 @@
 #include "sisci_glob_defs.h"
 #include "error_util.h"
 
-void remote_connect_init(sci_desc_t v_dev, sci_remote_segment_t *remote_segment, size_t remote_segment_size, unsigned int receiver_id, sci_error_t error) {
+void remote_connect_init(sci_desc_t v_dev, sci_remote_segment_t *remote_segment, unsigned int receiver_id) {
     int remote_reachable;
+    size_t remote_segment_size;
+    sci_error_t error;
+
     remote_reachable = SCIProbeNode(v_dev, ADAPTER_NO, receiver_id, NO_FLAGS, &error);
     printf("Probe said that receiver node (%d) was", receiver_id);
     if (remote_reachable) printf(" reachable!\n");

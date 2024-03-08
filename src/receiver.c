@@ -18,7 +18,7 @@ void print_usage(char *prog_name) {
     printf("usage: %s [-nid <opt> | -an <opt>] [-chid <opt>] <mode>\n", prog_name);
     printf("    -nid <sender node id>         : Specify the sender using node id\n");         // required later
     printf("    -an <sender adapter name>     : Specify the sender using its adapter name\n");// required later
-    printf("    -chid <channel id>            : Specify the DMA channel id, required for mode dma-channel\n");
+    //printf("    -chid <channel id>            : Specify the DMA channel id, required for mode dma-channel\n");
     printf("    <mode>                        : Mode of operation\n");
     printf("           poll                   : Busy wait for transfer\n");
     printf("           rma                    : Map remote segment, and read from it directly\n");
@@ -43,19 +43,19 @@ static void poll(sci_desc_t v_dev, unsigned int local_node_id, unsigned int rece
                      &error);
     print_sisci_error(&error, "SCICreateSegment", true);
 
-    if (channel_id == UNINITIALIZED_ARG) {
+    //if (channel_id == UNINITIALIZED_ARG) {
         SCIPrepareSegment(local_segment,
                           ADAPTER_NO,
                           NO_FLAGS,
                           &error);
         print_sisci_error(&error, "SCIPrepareSegment", true);
-    } else {
-        SCIRequestDMAChannel(v_dev, &dma_channel, ADAPTER_NO, SCI_DMA_TYPE_SYSTEM, channel_id, NO_FLAGS, &error);
-        print_sisci_error(&error, "SCIRequestDMAChannel", true);
+    //} else {
+    //    SCIRequestDMAChannel(v_dev, &dma_channel, ADAPTER_NO, SCI_DMA_TYPE_SYSTEM, channel_id, NO_FLAGS, &error);
+    //    print_sisci_error(&error, "SCIRequestDMAChannel", true);
 
-        SCIPrepareLocalSegmentForDMA(dma_channel, local_segment, NO_FLAGS, &error);
-        print_sisci_error(&error, "SCIPrepareLocalSegmentForDMA", true);
-    }
+    //    SCIPrepareLocalSegmentForDMA(dma_channel, local_segment, NO_FLAGS, &error);
+    //   print_sisci_error(&error, "SCIPrepareLocalSegmentForDMA", true);
+    //}
 
     rdma_buff = (rdma_buff_t*) SCIMapLocalSegment(local_segment,
                                                   &local_map,
