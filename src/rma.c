@@ -8,7 +8,6 @@
 #include "lib_rma.h"
 
 void rma(sci_remote_segment_t remote_segment, bool check) {
-    volatile void *remote_address;
     volatile rdma_buff_t *remote_buff;
     sci_map_t remote_map;
     sci_sequence_t sequence;
@@ -17,14 +16,12 @@ void rma(sci_remote_segment_t remote_segment, bool check) {
     rdma_buff.done = 0;
     strcpy(rdma_buff.word, "OK");
 
-    rma_init(remote_segment, &remote_address, &remote_map);
-
+    rma_init(remote_segment, (volatile void **) &remote_buff, &remote_map);
 
     if (check) {
-        rma_sequence_init(&remote_map, &sequence);
+        rma_sequence_init(remote_map, &sequence);
     }
 
-    remote_buff = (volatile rdma_buff_t *) remote_address;
     *remote_buff = rdma_buff;
     remote_buff->done = 1;
     printf("Wrote to remote segment\n");
