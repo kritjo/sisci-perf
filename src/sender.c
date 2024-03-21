@@ -78,30 +78,7 @@ int main(int argc, char *argv[]) {
         rma(remote_segment, true);
     }
     else if (strcmp(mode, "provider") == 0) {
-        SCICreateSegment(v_dev,
-                         &local_segment,
-                         RECEIVER_SEG_ID,
-                         RECEIVER_SEG_SIZE,
-                         NO_CALLBACK,
-                         NO_ARG,
-                         NO_FLAGS,
-                         &error);
-        print_sisci_error(&error, "SCICreateSegment", true);
-
-        SCIPrepareSegment(local_segment,
-                          ADAPTER_NO,
-                          NO_FLAGS,
-                          &error);
-        print_sisci_error(&error, "SCIPrepareSegment", true);
-
-        rdma_buff = (rdma_buff_t*) SCIMapLocalSegment(local_segment,
-                                                      &local_map,
-                                                      NO_OFFSET,
-                                                      RECEIVER_SEG_SIZE,
-                                                      NO_SUG_ADDR,
-                                                      NO_FLAGS,
-                                                      &error);
-        print_sisci_error(&error, "SCIMapLocalSegment", true);
+        local_segment_init(v_dev, &local_segment, RECEIVER_SEG_SIZE, (void**)&rdma_buff, &local_map, done_callback, &receiver_id);
 
         memset(rdma_buff, 0, RECEIVER_SEG_SIZE);
 

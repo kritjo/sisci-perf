@@ -31,40 +31,8 @@ static void poll(sci_desc_t v_dev, unsigned int local_node_id, unsigned int rece
     sci_local_segment_t local_segment;
     sci_map_t local_map;
     rdma_buff_t *rdma_buff;
-    sci_dma_channel_t dma_channel;
 
-    SCICreateSegment(v_dev,
-                     &local_segment,
-                     RECEIVER_SEG_ID,
-                     RECEIVER_SEG_SIZE,
-                     NO_CALLBACK,
-                     NO_ARG,
-                     NO_FLAGS,
-                     &error);
-    print_sisci_error(&error, "SCICreateSegment", true);
-
-    //if (channel_id == UNINITIALIZED_ARG) {
-        SCIPrepareSegment(local_segment,
-                          ADAPTER_NO,
-                          NO_FLAGS,
-                          &error);
-        print_sisci_error(&error, "SCIPrepareSegment", true);
-    //} else {
-    //    SCIRequestDMAChannel(v_dev, &dma_channel, ADAPTER_NO, SCI_DMA_TYPE_SYSTEM, channel_id, NO_FLAGS, &error);
-    //    print_sisci_error(&error, "SCIRequestDMAChannel", true);
-
-    //    SCIPrepareLocalSegmentForDMA(dma_channel, local_segment, NO_FLAGS, &error);
-    //   print_sisci_error(&error, "SCIPrepareLocalSegmentForDMA", true);
-    //}
-
-    rdma_buff = (rdma_buff_t*) SCIMapLocalSegment(local_segment,
-                                                  &local_map,
-                                                  NO_OFFSET,
-                                                  RECEIVER_SEG_SIZE,
-                                                  NO_SUG_ADDR,
-                                                  NO_FLAGS,
-                                                  &error);
-    print_sisci_error(&error, "SCIMapLocalSegment", true);
+    local_segment_init(v_dev, &local_segment, RECEIVER_SEG_SIZE, (void**) &rdma_buff, &local_map, NO_CALLBACK, NO_ARG);
 
     memset(rdma_buff, 0, RECEIVER_SEG_SIZE);
 
