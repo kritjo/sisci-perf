@@ -32,7 +32,7 @@ static void poll(sci_desc_t v_dev, unsigned int local_node_id) {
     sci_map_t local_map;
     rdma_buff_t *rdma_buff;
 
-    local_segment_init(v_dev, &local_segment, RECEIVER_SEG_SIZE, (void**) &rdma_buff, &local_map, NO_CALLBACK, NO_ARG);
+    local_segment_init(v_dev, &local_segment, RECEIVER_SEG_SIZE, (void**) &rdma_buff, &local_map, NO_CALLBACK, NO_ARG, NO_FLAGS);
 
     memset(rdma_buff, 0, RECEIVER_SEG_SIZE);
 

@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
         rma(remote_segment, true);
     }
     else if (strcmp(mode, "provider") == 0) {
-        local_segment_init(v_dev, &local_segment, RECEIVER_SEG_SIZE, (void**)&rdma_buff, &local_map, done_callback, &receiver_id);
+        local_segment_init(v_dev, &local_segment, RECEIVER_SEG_SIZE, (void**)&rdma_buff, &local_map, done_callback, &receiver_id, SCI_FLAG_USE_CALLBACK);
 
         memset(rdma_buff, 0, RECEIVER_SEG_SIZE);
 
@@ -121,7 +121,6 @@ int main(int argc, char *argv[]) {
 
         signal(SIGINT, pause_handler);
         pause();
-
     }
     else {
         fprintf(stderr, "Invalid mode\n");
