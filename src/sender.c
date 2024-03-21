@@ -42,7 +42,6 @@ int main(int argc, char *argv[]) {
     sci_local_segment_t local_segment;
     rdma_buff_t *rdma_buff = NULL;
     sci_map_t local_map;
-    sci_segment_cb_reason_t reason;
     unsigned int receiver_id = UNINITIALIZED_ARG;
     unsigned int channel_id = UNINITIALIZED_ARG;
     unsigned int local_node_id;
