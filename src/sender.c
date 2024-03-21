@@ -102,23 +102,13 @@ int main(int argc, char *argv[]) {
                                &error);
         print_sisci_error(&error, "SCISetSegmentAvailable", true);
 
-        do {
-            reason = SCIWaitForLocalSegmentEvent(local_segment,
-                                                 &receiver_id,
-                                                 ADAPTER_NO,
-                                                 SCI_INFINITE_TIMEOUT,
-                                                 NO_FLAGS,
-                                                 &error);
-            print_sisci_error(&error, "SCIWaitForLocalSegmentEvent", true);
-        } while (reason != SCI_CB_CONNECT);
+        sleep(10);
 
-        printf("Segment connected\n");
         rdma_buff->done = 1;
-        printf("Node sleeping\n");
+
         while (1) {
             sleep(1);
         }
-
     }
     else {
         fprintf(stderr, "Invalid mode\n");
