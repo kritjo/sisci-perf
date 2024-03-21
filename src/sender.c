@@ -34,24 +34,6 @@ void print_usage(char *prog_name) {
     exit(EXIT_FAILURE);
 }
 
-sci_callback_action_t done_callback(void *arg,
-                                  sci_local_segment_t segment,
-                                  sci_segment_cb_reason_t reason,
-                                  unsigned int nodeId,
-                                  unsigned int localAdapterNo,
-                                  sci_error_t error)  {
-    if (reason == SCI_CB_DISCONNECT && nodeId == *(unsigned int*)arg) {
-        printf("Remote segment disconnected\n");
-        kill(getpid(), SIGINT);
-    }
-    printf("Callback called\n");
-
-    return SCI_CALLBACK_CONTINUE;
-}
-
-static void pause_handler(int sig) {
-    printf("Caught signal %d\n", sig);
-}
 
 int main(int argc, char *argv[]) {
     sci_desc_t v_dev;
@@ -60,6 +42,7 @@ int main(int argc, char *argv[]) {
     sci_local_segment_t local_segment;
     rdma_buff_t *rdma_buff = NULL;
     sci_map_t local_map;
+    sci_segment_cb_reason_t reason;
     unsigned int receiver_id = UNINITIALIZED_ARG;
     unsigned int channel_id = UNINITIALIZED_ARG;
     unsigned int local_node_id;
@@ -106,7 +89,7 @@ int main(int argc, char *argv[]) {
         rma(remote_segment, true);
     }
     else if (strcmp(mode, "provider") == 0) {
-        local_segment_init(v_dev, &local_segment, RECEIVER_SEG_SIZE, (void**)&rdma_buff, &local_map, done_callback, &receiver_id, SCI_FLAG_USE_CALLBACK);
+        local_segment_init(v_dev, &local_segment, RECEIVER_SEG_SIZE, (void**)&rdma_buff, &local_map, NO_CALLBACK, &receiver_id, NO_FLAGS);
 
         memset(rdma_buff, 0, RECEIVER_SEG_SIZE);
 
@@ -119,8 +102,23 @@ int main(int argc, char *argv[]) {
                                &error);
         print_sisci_error(&error, "SCISetSegmentAvailable", true);
 
-        signal(SIGINT, pause_handler);
-        pause();
+        do {
+            reason = SCIWaitForLocalSegmentEvent(local_segment,
+                                                 &receiver_id,
+                                                 ADAPTER_NO,
+                                                 SCI_INFINITE_TIMEOUT,
+                                                 NO_FLAGS,
+                                                 &error);
+            print_sisci_error(&error, "SCIWaitForLocalSegmentEvent", true);
+        } while (reason != SCI_CB_CONNECT);
+
+        printf("Segment connected\n");
+        rdma_buff->done = 1;
+        printf("Node sleeping\n");
+        while (1) {
+            sleep(1);
+        }
+
     }
     else {
         fprintf(stderr, "Invalid mode\n");
