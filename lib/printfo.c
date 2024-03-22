@@ -46,36 +46,23 @@ void print_adapter_card_type(unsigned int adapter_no) {
 }
 
 void print_dma_availability(unsigned int adapter_no) {
-    unsigned int avail;
     sci_query_dma_t query;
     sci_error_t error;
+    unsigned int flags[3] = {SCI_FLAG_DMA_ADAPTER, SCI_FLAG_DMA_SYSDMA, SCI_FLAG_DMA_GLOBAL};
+    unsigned int avail[3];
 
     query.subcommand = SCI_Q_DMA_AVAILABLE;
     query.localAdapterNo = adapter_no;
-    query.data = &avail;
 
-    SCIQuery(SCI_Q_DMA, &query, SCI_FLAG_DMA_ADAPTER, &error);
-    print_sisci_error(&error, "SCIQuery", false);
+    for (int i = 0; i < 3; i++) {
+        SCIQuery(SCI_Q_DMA, &query, flags[i], &error);
+        print_sisci_error(&error, "SCIQuery", false);
+        query.data = &avail[i];
+    }
 
-    printf("Adapter %u has", adapter_no);
-    if (avail) printf(" (%u)", avail);
-    else printf(" NO (%u)", avail);
-    printf(" adapter DMA capabilities\n");
-
-    SCIQuery(SCI_Q_DMA, &query, SCI_FLAG_DMA_SYSDMA, &error);
-    print_sisci_error(&error, "SCIQuery", false);
-
-    printf("Adapter %u has", adapter_no);
-    if (avail) printf(" (%u)", avail);
-    else printf(" NO (%u)", avail);
-    printf(" system DMA capabilities\n");
-
-    SCIQuery(SCI_Q_DMA, &query, SCI_FLAG_DMA_GLOBAL, &error);
-    print_sisci_error(&error, "SCIQuery", false);
-
-    printf("Adapter %u has", adapter_no);
-    if (avail) printf(" (%u)", avail);
-    else printf(" NO (%u)", avail);
-    printf(" global DMA capabilities\n");
+    printf("Adapter %u has DMA availability:\n", adapter_no);
+    printf("    Adapter: %s\n", avail[0] ? "Yes" : "No");
+    printf("    SysDMA: %s\n", avail[1] ? "Yes" : "No");
+    printf("    Global: %s\n", avail[2] ? "Yes" : "No");
 } 
 
