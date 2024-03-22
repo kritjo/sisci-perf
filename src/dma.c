@@ -53,10 +53,10 @@ void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool u
     local_map_address->done = 1;
     send_dma_segment(dma_queue, &local, &remote, NO_CALLBACK, NO_ARG, flags);
 
-    SCIUnmapSegment(local.map, flags, &error);
+    SCIUnmapSegment(local.map, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIUnmapSegment", false);
 
-    SCIRemoveSegment(local.segment, flags, &error);
+    SCIRemoveSegment(local.segment, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIRemoveSegment", false);
 
     destroy_dma(dma_queue, local.map, flags);
