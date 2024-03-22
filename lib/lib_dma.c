@@ -50,14 +50,17 @@ void send_dma_segment(
     }
 }
 
-void dma_init(sci_desc_t v_dev, sci_dma_queue_t *dma_queue, segment_remote_args_t *remote, unsigned int flags) {
+void init_dma(sci_desc_t v_dev, sci_dma_queue_t *dma_queue, segment_remote_args_t *remote, unsigned int flags) {
     OUT_NON_NULL_WARNING(remote->map);
     DEBUG_PRINT("Initializing DMA\n");
     sci_error_t error;
     sci_dma_queue_state_t dma_q_state;
 
-    SCIMapRemoteSegment(remote->segment, &remote->map, remote->offset, remote->segment_size, &remote->address, flags, &error);
-    print_sisci_error(&error, "SCIMapRemoteSegment", true);
+    if (!(flags & SCI_FLAG_DMA_GLOBAL)) {
+        SCIMapRemoteSegment(remote->segment, &remote->map, remote->offset, remote->segment_size, &remote->address,
+                            flags, &error);
+        print_sisci_error(&error, "SCIMapRemoteSegment", true);
+    }
 
     SCICreateDMAQueue(v_dev, dma_queue, ADAPTER_NO, 1, flags, &error);
     print_sisci_error(&error, "SCICreateDMAQueue", true);
@@ -72,12 +75,14 @@ void dma_init(sci_desc_t v_dev, sci_dma_queue_t *dma_queue, segment_remote_args_
     }
 }
 
-void dma_destroy(sci_dma_queue_t dma_queue, sci_map_t remote_map) {
+void destroy_dma(sci_dma_queue_t dma_queue, sci_map_t remote_map, unsigned int flags) {
     DEBUG_PRINT("Destroying DMA queue\n");
     sci_error_t error;
     SCIRemoveDMAQueue(dma_queue, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIRemoveDMAQueue", false);
 
-    SCIUnmapSegment(remote_map, NO_FLAGS, &error);
-    print_sisci_error(&error, "SCIUnmapSegment", false);
+    if (!(flags & SCI_FLAG_DMA_GLOBAL)) {
+        SCIUnmapSegment(remote_map, NO_FLAGS, &error);
+        print_sisci_error(&error, "SCIUnmapSegment", false);
+    }
 }

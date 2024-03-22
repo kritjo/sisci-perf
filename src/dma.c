@@ -35,7 +35,7 @@ void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool u
     segment_local_args_t local = {0};
     local.segment_size = sizeof(rdma_buff_t);
 
-    dma_init(v_dev, &dma_queue, &remote, NO_FLAGS);
+    init_dma(v_dev, &dma_queue, &remote, NO_FLAGS);
 
     SCICreateSegment(v_dev, &local.segment, SEND_SEG_ID, local.segment_size, NO_CALLBACK, NO_ARG, SCI_FLAG_PRIVATE, &error);
     print_sisci_error(&error, "SCICreateSegment", true);
@@ -59,5 +59,5 @@ void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool u
     SCIRemoveSegment(local.segment, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIRemoveSegment", false);
 
-    dma_destroy(dma_queue, local.map);
+    destroy_dma(dma_queue, local.map);
 }
