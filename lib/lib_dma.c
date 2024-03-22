@@ -14,11 +14,6 @@ void send_dma_segment(
         unsigned int flags) {
     sci_error_t error;
 
-    UNUSED_NON_NULL_WARNING(local->address);
-    UNUSED_NON_NULL_WARNING(local->map);
-    UNUSED_NON_NULL_WARNING(remote->address);
-    UNUSED_NON_NULL_WARNING(remote->map);
-
     if (local->segment_size != remote->segment_size) {
         fprintf(stderr, "Warning: local segment size (%ld) does not match remote segment size (%ld)\n", local->segment_size, remote->segment_size);
         exit(EXIT_FAILURE);

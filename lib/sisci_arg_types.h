@@ -9,10 +9,6 @@
     if (var != 0) { fprintf(stderr, "Warning: OUT PARAMETER %s is not NULL\n", #var); } \
 } while(0)
 
-#define UNUSED_NON_NULL_WARNING(var) do { \
-    if (var != 0) { fprintf(stderr, "Warning: UNUSED PARAMETER %s is not NULL and has no effect.\n", #var); } \
-} while(0)
-
 typedef struct {
     sci_local_segment_t segment;
     size_t segment_size;
