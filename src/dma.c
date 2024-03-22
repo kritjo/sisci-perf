@@ -15,7 +15,7 @@
 #define SEND_SEG_ID 4589
 
 void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool use_sysdma, bool use_globdma) {
-    DEBUG_PRINT("Sending DMA segment using\n");
+    DEBUG_PRINT("Sending DMA segment using ");
     if (use_sysdma) DEBUG_PRINT("System DMA\n");
     else if (use_globdma) DEBUG_PRINT("Global DMA\n");
     else DEBUG_PRINT("Any DMA\n");
