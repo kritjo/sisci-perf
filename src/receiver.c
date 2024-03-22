@@ -29,57 +29,53 @@ void print_usage(char *prog_name) {
 static void poll(sci_desc_t v_dev, unsigned int local_node_id) {
     sci_error_t error;
     rdma_buff_t *rdma_buff;
+    segment_local_args_t local;
 
-    segment_args_t sa;
-    sa.local.segment_size = RECEIVER_SEG_SIZE;
-    sa.callback_args.callback = NO_CALLBACK;
-    sa.callback_args.arg = NO_ARG;
+    local.segment_size = RECEIVER_SEG_SIZE;
 
-    local_segment_init(v_dev, &sa, NO_FLAGS);
+    init_local_segment(v_dev, &local, NO_CALLBACK, NO_ARG, RECEIVER_SEG_ID, NO_FLAGS);
 
-    memset(sa.local.address, 0, RECEIVER_SEG_SIZE);
+    memset(local.address, 0, RECEIVER_SEG_SIZE);
 
-    SCISetSegmentAvailable(sa.local.segment,
+    SCISetSegmentAvailable(local.segment,
                            ADAPTER_NO,
                            NO_FLAGS,
                            &error);
     print_sisci_error(&error, "SCISetSegmentAvailable", true);
 
     printf("Node %u waiting for transfer\n", local_node_id);
-    rdma_buff = (rdma_buff_t *) sa.local.address;
+    rdma_buff = (rdma_buff_t *) local.address;
     while (!rdma_buff->done);
     printf("RDMA Done! Word: %s\n", rdma_buff->word);
 
-    SCISetSegmentUnavailable(sa.local.segment, ADAPTER_NO, NO_FLAGS, &error);
+    SCISetSegmentUnavailable(local.segment, ADAPTER_NO, NO_FLAGS, &error);
     print_sisci_error(&error, "SCISetSegmentUnavailable", false);
 
-    SCIUnmapSegment(sa.local.map, NO_FLAGS, &error);
-    print_sisci_error(&error, "SCIUnmapSegment", false);
-
-    SCIRemoveSegment(sa.local.segment, NO_FLAGS, &error);
-    print_sisci_error(&error, "SCIRemoveSegment", false);
+    destroy_local_segment(&local, NO_FLAGS);
 }
 
 static void rma(sci_desc_t v_dev, unsigned int receiver_id) {
-    sci_map_t remote_map;
     volatile rdma_buff_t *rdma_buff;
-    sci_remote_segment_t remote_segment = NULL;
     sci_sequence_t remote_sequence;
+    segment_remote_args_t remote;
 
-    remote_connect_init(v_dev, &remote_segment, receiver_id);
+    init_remote_connect(v_dev, &remote.segment, receiver_id);
 
-    rma_init(remote_segment, (volatile void **) &rdma_buff, &remote_map);
+    rma_init(&remote);
     fprintf(stderr, "Remote segment mapped\n");
-    rma_sequence_init(remote_map, &remote_sequence);
+    rma_sequence_init(remote.map, &remote_sequence);
     rma_check(remote_sequence);
+
+    rdma_buff = (rdma_buff_t *) remote.address;
 
     printf("Node waiting for transfer\n");
 
     printf("Checking done\n");
     while (!rdma_buff->done);
     printf("RDMA Done! Word: %s\n", rdma_buff->word);
+    destroy_remote_connect(remote.segment, NO_FLAGS);
     rma_destroy_sequence(remote_sequence);
-    rma_destroy(remote_map);
+    rma_destroy(remote.map);
 }
 
 int main(int argc, char *argv[]) {

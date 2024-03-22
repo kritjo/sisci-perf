@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include "lib_rma.h"
@@ -6,21 +5,18 @@
 #include "sisci_api.h"
 #include "error_util.h"
 #include "sisci_glob_defs.h"
+#include "sisci_arg_types.h"
 
-void rma_init(sci_remote_segment_t remote_segment, volatile void **remote_address, sci_map_t *remote_map) {
-    printf("rma_init\n");
-    size_t remote_segment_size;
+void rma_init(segment_remote_args_t *remote) {
+    OUT_NON_NULL_WARNING(remote->segment_size);
     sci_error_t error;
 
-    printf("Initializing remote segment at %p\n", remote_segment);
-    remote_segment_size = SCIGetRemoteSegmentSize(remote_segment);
-    printf("Connected to remote segment of size %ld\n", remote_segment_size);
+    remote->segment_size = SCIGetRemoteSegmentSize(remote->segment);
 
-    *remote_address = SCIMapRemoteSegment(
-            remote_segment, remote_map,0 /* offset */, remote_segment_size,
+    remote->address = SCIMapRemoteSegment(
+            remote->segment, &remote->map,0 /* offset */, remote->segment_size,
             0 /* address hint */, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIMapRemoteSegment", true);
-    printf("Remote segment mapped at %p\n", *remote_address);
 }
 
 void rma_sequence_start(sci_sequence_t sequence) {

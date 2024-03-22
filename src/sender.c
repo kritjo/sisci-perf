@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <signal.h>
 #include <unistd.h>
 
 #include "sisci_api.h"
@@ -51,6 +50,7 @@ int main(int argc, char *argv[]) {
         strcmp(mode, "sysdma") != 0 &&
         strcmp(mode, "rma-check") != 0 &&
         strcmp(mode, "provider") != 0) print_usage(argv[0]);
+
     SCIInitialize(NO_FLAGS, &error);
     print_sisci_error(&error, "SCIInitialize", true);
 
@@ -64,41 +64,40 @@ int main(int argc, char *argv[]) {
     print_sisci_error(&error, "SCIGetLocalNodeId", true);
 
     if (strcmp(mode, "dma") == 0) {
-
-        remote_connect_init(v_dev, &remote_segment, receiver_id);
+        init_remote_connect(v_dev, &remote_segment, receiver_id);
         dma_send_test(v_dev, remote_segment, false);
+        destroy_remote_connect(remote_segment, NO_FLAGS);
     }
     else if (strcmp(mode, "sysdma") == 0) {
         fprintf(stderr, "SYSDMA is experimental!\n");
-        remote_connect_init(v_dev, &remote_segment, receiver_id);
+        init_remote_connect(v_dev, &remote_segment, receiver_id);
         dma_send_test(v_dev, remote_segment, true);
+        destroy_remote_connect(remote_segment, NO_FLAGS);
     }
     else if (strcmp(mode, "rma") == 0) {
-        printf("Connecting to remote segment, currently at %p\n", remote_segment);
-        remote_connect_init(v_dev, &remote_segment, receiver_id);
-        printf("Connecting to remote segment, currently at %p\n", remote_segment);
+        init_remote_connect(v_dev, &remote_segment, receiver_id);
         rma(remote_segment, false);
+        destroy_remote_connect(remote_segment, NO_FLAGS);
     }
     else if (strcmp(mode, "rma-check") == 0) {
-        remote_connect_init(v_dev, &remote_segment, receiver_id);
+        init_remote_connect(v_dev, &remote_segment, receiver_id);
         rma(remote_segment, true);
+        destroy_remote_connect(remote_segment, NO_FLAGS);
     }
     else if (strcmp(mode, "provider") == 0) {
-        segment_args_t sa;
-        sa.local.segment_size = RECEIVER_SEG_SIZE;
-        sa.callback_args.callback = NO_CALLBACK;
-        sa.callback_args.arg = NO_ARG;
+        segment_local_args_t local;
+        local.segment_size = RECEIVER_SEG_SIZE;
 
-        local_segment_init(v_dev, &sa, NO_FLAGS);
+        init_local_segment(v_dev, &local, NO_CALLBACK, NO_ARG, RECEIVER_SEG_ID, NO_FLAGS);
 
-        memset(sa.local.address, 0, RECEIVER_SEG_SIZE);
+        memset(local.address, 0, RECEIVER_SEG_SIZE);
 
-        rdma_buff = (rdma_buff_t *) sa.local.address;
+        rdma_buff = (rdma_buff_t *) local.address;
 
         rdma_buff->done = 0;
         strcpy(rdma_buff->word, "OK");
 
-        SCISetSegmentAvailable(sa.local.segment,
+        SCISetSegmentAvailable(local.segment,
                                ADAPTER_NO,
                                NO_FLAGS,
                                &error);
@@ -111,14 +110,13 @@ int main(int argc, char *argv[]) {
         while (1) {
             sleep(1);
         }
+
+        destroy_local_segment(&local, NO_FLAGS);
     }
     else {
         fprintf(stderr, "Invalid mode\n");
         exit(EXIT_FAILURE);
     }
-
-    SCIDisconnectSegment(remote_segment, NO_FLAGS, &error);
-    print_sisci_error(&error, "SCIDisconnectSegment", false);
 
     SCIClose(v_dev, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIClose", false);
