@@ -2,6 +2,7 @@
 #define KRITJOLIB_SISCI_RMA
 
 #include "sisci_types.h"
+#include "sisci_arg_types.h"
 
 void rma_init(segment_remote_args_t *remote);
 void rma_sequence_start(sci_sequence_t sequence);
