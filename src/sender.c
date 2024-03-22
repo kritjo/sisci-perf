@@ -23,8 +23,9 @@ void print_usage(char *prog_name) {
     printf("    -nid <receiver node id>       : Specify the receiver using node id\n");
     printf("    -an <receiver adapter name>   : Specify the receiver using its adapter name\n");
     printf("    <mode>                        : Mode of operation\n");
-    printf("           dma                    : Use DMA to write (no mode specified)\n");
-    printf("           sysdma                 : Use DMA to write provided by the host system\n");
+    printf("           dma-any                : Use DMA to write (no mode specified)\n");
+    printf("           dma-sys                : Use DMA to write provided by the host system\n");
+    printf("           dma-global             : Use DMA to write provided by the HCA global port\n");
     printf("           rma                    : Map remote segment, and write to it directly\n");
     printf("           rma-check              : Map remote segment, and write to it directly, then flush and check\n");
     printf("           provider               : Provide a segment for the receiver to read\n");
@@ -45,11 +46,12 @@ int main(int argc, char *argv[]) {
     if (parse_id_args(argc, argv, &receiver_id, print_usage) != argc) print_usage(argv[0]);
     if (receiver_id == UNINITIALIZED_ARG) print_usage(argv[0]);
     mode = argv[argc-1];
-    if (strcmp(mode, "dma") != 0 &&
-        strcmp(mode, "rma") != 0 &&
-        strcmp(mode, "sysdma") != 0 &&
-        strcmp(mode, "rma-check") != 0 &&
-        strcmp(mode, "provider") != 0) print_usage(argv[0]);
+    if (strcmp(mode, "dma-any")    != 0 &&
+        strcmp(mode, "dma-sys")    != 0 &&
+        strcmp(mode, "dma-global") != 0 &&
+        strcmp(mode, "rma")        != 0 &&
+        strcmp(mode, "rma-check")  != 0 &&
+        strcmp(mode, "provider")   != 0) print_usage(argv[0]);
 
     SCIInitialize(NO_FLAGS, &error);
     print_sisci_error(&error, "SCIInitialize", true);
@@ -63,15 +65,23 @@ int main(int argc, char *argv[]) {
     SCIGetLocalNodeId(ADAPTER_NO, &local_node_id, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIGetLocalNodeId", true);
 
-    if (strcmp(mode, "dma") == 0) {
+    bool use_sysdma = strcmp(mode, "dma-sys") == 0;
+    bool use_globdma = strcmp(mode, "dma-global") == 0;
+
+    if (strcmp(mode, "dma-any") == 0 || use_sysdma || use_globdma) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
-        dma_send_test(v_dev, remote_segment, false);
+        dma_send_test(v_dev, remote_segment, use_sysdma, use_globdma);
         destroy_remote_connect(remote_segment, NO_FLAGS);
     }
-    else if (strcmp(mode, "sysdma") == 0) {
+    else if (strcmp(mode, "dma-sys") == 0) {
         fprintf(stderr, "SYSDMA is experimental!\n");
         init_remote_connect(v_dev, &remote_segment, receiver_id);
-        dma_send_test(v_dev, remote_segment, true);
+        dma_send_test(v_dev, remote_segment, true, false);
+        destroy_remote_connect(remote_segment, NO_FLAGS);
+    }
+    else if (strcmp(mode, "dma-global") == 0) {
+        init_remote_connect(v_dev, &remote_segment, receiver_id);
+        dma_send_test(v_dev, remote_segment, false, true);
         destroy_remote_connect(remote_segment, NO_FLAGS);
     }
     else if (strcmp(mode, "rma") == 0) {
