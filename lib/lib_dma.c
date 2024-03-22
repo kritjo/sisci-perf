@@ -62,7 +62,7 @@ void init_dma(sci_desc_t v_dev, sci_dma_queue_t *dma_queue, segment_remote_args_
         print_sisci_error(&error, "SCIMapRemoteSegment", true);
     }
 
-    SCICreateDMAQueue(v_dev, dma_queue, ADAPTER_NO, 1, flags, &error);
+    SCICreateDMAQueue(v_dev, dma_queue, ADAPTER_NO, 1, NO_FLAGS, &error);
     print_sisci_error(&error, "SCICreateDMAQueue", true);
 
     dma_q_state = SCIDMAQueueState(*dma_queue);
