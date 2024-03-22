@@ -59,5 +59,5 @@ void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool u
     SCIRemoveSegment(local.segment, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIRemoveSegment", false);
 
-    destroy_dma(dma_queue, local.map, flags);
+    destroy_dma(dma_queue, remote.map, flags);
 }
