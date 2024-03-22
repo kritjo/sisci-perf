@@ -56,13 +56,8 @@ static void parse_an(int *arg, char *argv[], unsigned int *receiver_node_id) {
     if (nodelist[1] != 0) printf("    (multiple adapters found)\n");
 }
 
-static void set_dont_care_channel_id(__attribute__((unused)) int *arg, __attribute__((unused)) char *argv[], unsigned int *channel_id) {
-    *channel_id = SCI_DMA_CHANNEL_ID_DONTCARE;
-}
-
-int parse_id_args(int argc, char *argv[], unsigned int *rnid, unsigned int *channel_id, void (*print_usage)(char *)) {
+int parse_id_args(int argc, char *argv[], unsigned int *rnid, void (*print_usage)(char *)) {
     ARG_INIT(rnid);
-    ARG_INIT(channel_id);
     int arg;
 
     for (arg = 1; arg < argc; arg++) {
@@ -72,12 +67,6 @@ int parse_id_args(int argc, char *argv[], unsigned int *rnid, unsigned int *chan
         }
         else if (strcmp(argv[arg], "-an") == 0) {
             ARG_PARSE(rnid, &arg, argc, argv, parse_an, print_usage);
-        }
-        else if (strcmp(argv[arg], "-chid") == 0) {
-            ARG_PARSE(channel_id, &arg, argc, argv, parse_uint, print_usage);
-        }
-        else if (strcmp(argv[arg], "-chdc") == 0) {
-            ARG_PARSE(channel_id, &arg, argc, argv, set_dont_care_channel_id, print_usage);
         }
         else if (arg == argc-1) {
             arg++;

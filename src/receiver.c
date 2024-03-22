@@ -28,31 +28,35 @@ void print_usage(char *prog_name) {
 
 static void poll(sci_desc_t v_dev, unsigned int local_node_id) {
     sci_error_t error;
-    sci_local_segment_t local_segment;
-    sci_map_t local_map;
     rdma_buff_t *rdma_buff;
 
-    local_segment_init(v_dev, &local_segment, RECEIVER_SEG_SIZE, (void**) &rdma_buff, &local_map, NO_CALLBACK, NO_ARG, NO_FLAGS);
+    segment_args_t sa;
+    sa.local.segment_size = RECEIVER_SEG_SIZE;
+    sa.callback_args.callback = NO_CALLBACK;
+    sa.callback_args.arg = NO_ARG;
 
-    memset(rdma_buff, 0, RECEIVER_SEG_SIZE);
+    local_segment_init(v_dev, &sa, NO_FLAGS);
 
-    SCISetSegmentAvailable(local_segment,
+    memset(sa.local.address, 0, RECEIVER_SEG_SIZE);
+
+    SCISetSegmentAvailable(sa.local.segment,
                            ADAPTER_NO,
                            NO_FLAGS,
                            &error);
     print_sisci_error(&error, "SCISetSegmentAvailable", true);
 
     printf("Node %u waiting for transfer\n", local_node_id);
+    rdma_buff = (rdma_buff_t *) sa.local.address;
     while (!rdma_buff->done);
     printf("RDMA Done! Word: %s\n", rdma_buff->word);
 
-    SCISetSegmentUnavailable(local_segment, ADAPTER_NO, NO_FLAGS, &error);
+    SCISetSegmentUnavailable(sa.local.segment, ADAPTER_NO, NO_FLAGS, &error);
     print_sisci_error(&error, "SCISetSegmentUnavailable", false);
 
-    SCIUnmapSegment(local_map, NO_FLAGS, &error);
+    SCIUnmapSegment(sa.local.map, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIUnmapSegment", false);
 
-    SCIRemoveSegment(local_segment, NO_FLAGS, &error);
+    SCIRemoveSegment(sa.local.segment, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIRemoveSegment", false);
 }
 
@@ -83,10 +87,9 @@ int main(int argc, char *argv[]) {
     sci_error_t error;
     unsigned int local_node_id;
     unsigned int receiver_id = UNINITIALIZED_ARG;
-    unsigned int channel_id = UNINITIALIZED_ARG;
     char *mode;
 
-    if (parse_id_args(argc, argv, &receiver_id, &channel_id, print_usage) != argc) print_usage(argv[0]);
+    if (parse_id_args(argc, argv, &receiver_id, print_usage) != argc) print_usage(argv[0]);
     mode = argv[argc-1];
     if (strcmp(mode, "poll") != 0 &&
         strcmp(mode, "rma") != 0) print_usage(argv[0]);

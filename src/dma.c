@@ -15,9 +15,8 @@
 
 #define SEND_SEG_ID 4589
 
-void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool use_sysdma, unsigned int channel_id) {
+void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool use_sysdma) {
     DEBUG_PRINT("Sending DMA segment using %s\n", use_sysdma ? "sysdma" : "dma");
-    if (channel_id != UNINITIALIZED_ARG) DEBUG_PRINT("Channel id: %d\n", channel_id);
     sci_error_t error;
     rdma_buff_t* local_map_address;
 
@@ -26,8 +25,6 @@ void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool u
     dma_args.remote_segment = remote_segment;
     dma_args.size = sizeof(rdma_buff_t);
     dma_args.use_sysdma = use_sysdma;
-    dma_channel_args_t dma_channel_args;
-    dma_channel_args.channel_id = channel_id;
 
     dma_init(&dma_args);
 
@@ -42,8 +39,6 @@ void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool u
     local_map_address->done = 0;
     strcpy(local_map_address->word, "OK");
 
-    if (channel_id != UNINITIALIZED_ARG) dma_channel_init(&dma_args, &dma_channel_args);
-
     send_dma_segment(&dma_args);
 
     local_map_address->done = 1;
@@ -51,6 +46,5 @@ void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool u
 
     SCIRemoveSegment(dma_args.local_segment, NO_FLAGS, &error);
 
-    if (channel_id != UNINITIALIZED_ARG) dma_channel_destroy(&dma_args, &dma_channel_args);
     dma_destroy(&dma_args);
 }

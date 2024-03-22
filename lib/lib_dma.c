@@ -69,35 +69,3 @@ void dma_destroy(dma_args_t *args) {
     SCIUnmapSegment(args->remote_map, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIUnmapSegment", false);
 }
-
-void dma_channel_destroy(dma_args_t *args, dma_channel_args_t *ch_args) {
-    DEBUG_PRINT("Destroying DMA channel\n");
-    sci_error_t error;
-
-    SCIUnprepareRemoteSegmentForDMA(ch_args->dma_channel, args->remote_segment, NO_FLAGS, &error);
-    print_sisci_error(&error, "SCIUnprepareRemoteSegmentForDMA", true);
-
-    SCIUnprepareLocalSegmentForDMA(ch_args->dma_channel, args->local_segment, NO_FLAGS, &error);
-    print_sisci_error(&error, "SCIUnprepareLocalSegmentForDMA", true);
-
-    SCIReturnDMAChannel(ch_args->dma_channel, &error);
-    print_sisci_error(&error, "SCIReturnDMAChannel", true);
-}
-
-void dma_channel_init(dma_args_t *args, dma_channel_args_t *ch_args) {
-    DEBUG_PRINT("Requesting DMA channel\n");
-    sci_error_t error;
-    sci_dma_type_t dma_type = args->use_sysdma ? SCI_DMA_TYPE_SYSTEM : SCI_DMA_TYPE_ADAPTER;
-
-    SCIRequestDMAChannel(args->v_dev, &ch_args->dma_channel, ADAPTER_NO, dma_type, ch_args->channel_id, NO_FLAGS, &error);
-    print_sisci_error(&error, "SCIRequestDMAChannel", true);
-
-    SCIAssignDMAChannel(ch_args->dma_channel, args->dma_queue, NO_FLAGS, &error);
-    print_sisci_error(&error, "SCIAssignDMAChannel", true);
-
-    SCIPrepareLocalSegmentForDMA(ch_args->dma_channel, args->local_segment, NO_FLAGS, &error);
-    print_sisci_error(&error, "SCIPrepareLocalSegmentForDMA", true);
-
-    SCIPrepareRemoteSegmentForDMA(ch_args->dma_channel, args->remote_segment, NO_FLAGS, &error);
-    print_sisci_error(&error, "SCIPrepareRemoteSegmentForDMA", true);
-}

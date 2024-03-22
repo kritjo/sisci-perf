@@ -32,29 +32,29 @@ void remote_connect_init(sci_desc_t v_dev, sci_remote_segment_t *remote_segment,
     printf("Connected to remote segment of size %ld\n", remote_segment_size);
 }
 
-void local_segment_init(sci_desc_t v_dev, sci_local_segment_t *local_segment, size_t size, void **local_address, sci_map_t *local_map, sci_cb_local_segment_t callback, void *callback_arg, unsigned int flags) {
+void local_segment_init(sci_desc_t v_dev, segment_args_t *args, unsigned int create_flags) {
     sci_error_t error;
 
     SCICreateSegment(v_dev,
-                     local_segment,
+                     &args->local.segment,
                      RECEIVER_SEG_ID,
-                     size,
-                     callback,
-                     callback_arg,
-                     flags,
+                     args->local.segment_size,
+                     args->callback_args.callback,
+                     args->callback_args.arg,
+                     create_flags,
                      &error);
     print_sisci_error(&error, "SCICreateSegment", true);
 
-    SCIPrepareSegment(*local_segment,
+    SCIPrepareSegment(args->local.segment,
                       ADAPTER_NO,
                       NO_FLAGS,
                       &error);
     print_sisci_error(&error, "SCIPrepareSegment", true);
 
-    *local_address = SCIMapLocalSegment(*local_segment,
-                                                  local_map,
+    args->local.address = SCIMapLocalSegment(args->local.segment,
+                                                  &args->local.map,
                                                   NO_OFFSET,
-                                                  RECEIVER_SEG_SIZE,
+                                                  args->local.segment_size,
                                                   NO_SUG_ADDR,
                                                   NO_FLAGS,
                                                   &error);
