@@ -55,9 +55,9 @@ void print_dma_availability(unsigned int adapter_no) {
     query.localAdapterNo = adapter_no;
 
     for (int i = 0; i < 3; i++) {
+        query.data = &avail[i];
         SCIQuery(SCI_Q_DMA, &query, flags[i], &error);
         print_sisci_error(&error, "SCIQuery", false);
-        query.data = &avail[i];
     }
 
     printf("Adapter %u has DMA availability:\n", adapter_no);
