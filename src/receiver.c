@@ -29,7 +29,7 @@ void print_usage(char *prog_name) {
 static void poll(sci_desc_t v_dev, unsigned int local_node_id) {
     sci_error_t error;
     rdma_buff_t *rdma_buff;
-    segment_local_args_t local;
+    segment_local_args_t local = {0};
 
     local.segment_size = RECEIVER_SEG_SIZE;
 
@@ -57,7 +57,7 @@ static void poll(sci_desc_t v_dev, unsigned int local_node_id) {
 static void rma(sci_desc_t v_dev, unsigned int receiver_id) {
     volatile rdma_buff_t *rdma_buff;
     sci_sequence_t remote_sequence;
-    segment_remote_args_t remote;
+    segment_remote_args_t remote = {0};
 
     init_remote_connect(v_dev, &remote.segment, receiver_id);
 

@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
         destroy_remote_connect(remote_segment, NO_FLAGS);
     }
     else if (strcmp(mode, "provider") == 0) {
-        segment_local_args_t local;
+        segment_local_args_t local = {0};
         local.segment_size = RECEIVER_SEG_SIZE;
 
         init_local_segment(v_dev, &local, NO_CALLBACK, NO_ARG, RECEIVER_SEG_ID, NO_FLAGS);

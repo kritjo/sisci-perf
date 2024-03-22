@@ -20,14 +20,14 @@ void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool u
     rdma_buff_t* local_map_address;
     sci_dma_queue_t dma_queue;
 
-    segment_remote_args_t remote;
+    segment_remote_args_t remote = {0};
     remote.segment = remote_segment;
     remote.segment_size = sizeof(rdma_buff_t);
     remote.address = NO_SUG_ADDR;
     remote.offset = NO_OFFSET;
     remote.map = 0;
 
-    segment_local_args_t local;
+    segment_local_args_t local = {0};
     local.segment_size = sizeof(rdma_buff_t);
 
     dma_init(v_dev, &dma_queue, &remote, NO_FLAGS);
