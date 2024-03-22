@@ -73,9 +73,9 @@ static void rma(sci_desc_t v_dev, unsigned int receiver_id) {
     printf("Checking done\n");
     while (!rdma_buff->done);
     printf("RDMA Done! Word: %s\n", rdma_buff->word);
-    destroy_remote_connect(remote.segment, NO_FLAGS);
     rma_destroy_sequence(remote_sequence);
     rma_destroy(remote.map);
+    destroy_remote_connect(remote.segment, NO_FLAGS);
 }
 
 int main(int argc, char *argv[]) {
