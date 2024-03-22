@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 #include "common.h"
 #include "sisci_api.h"
@@ -35,6 +36,7 @@ void init_remote_connect(sci_desc_t v_dev, sci_remote_segment_t *remote_segment,
 void destroy_remote_connect(sci_remote_segment_t remote_segment, unsigned int flags) {
     sci_error_t error;
 
+    sleep(1);
     SCIDisconnectSegment(remote_segment, flags, &error);
     print_sisci_error(&error, "SCIDisconnectSegment", false);
 }
