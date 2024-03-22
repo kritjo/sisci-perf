@@ -9,6 +9,7 @@
 
 void rma_init(segment_remote_args_t *remote) {
     OUT_NON_NULL_WARNING(remote->segment_size);
+    OUT_NON_NULL_WARNING(remote->map);
     sci_error_t error;
 
     remote->segment_size = SCIGetRemoteSegmentSize(remote->segment);
