@@ -25,7 +25,7 @@ void print_usage(char *prog_name) {
     printf("    -an <receiver adapter name>   : Specify the receiver using its adapter name\n");
     printf("    -chid <channel id>            : Specify the DMA channel id, only has effect for sysdma mode\n");
     printf("    <mode>                        : Mode of operation\n");
-    printf("           globaldma              : Use the DMA controller at the receiver side\n");
+    printf("           dma                    : Use DMA to write (no mode specified)\n");
     printf("           sysdma                 : Use DMA to write provided by the host system\n");
     printf("           rma                    : Map remote segment, and write to it directly\n");
     printf("           rma-check              : Map remote segment, and write to it directly, then flush and check\n");
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
     SCIGetLocalNodeId(ADAPTER_NO, &local_node_id, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIGetLocalNodeId", true);
 
-    if (strcmp(mode, "globaldma") == 0) {
+    if (strcmp(mode, "dma") == 0) {
 
         remote_connect_init(v_dev, &remote_segment, receiver_id);
         dma_send_test(v_dev, remote_segment, false, UNINITIALIZED_ARG);
