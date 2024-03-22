@@ -18,7 +18,7 @@ void rma_init(sci_remote_segment_t remote_segment, volatile void **remote_addres
 
     *remote_address = SCIMapRemoteSegment(
             remote_segment, remote_map,0 /* offset */, remote_segment_size,
-            0 /* address hint */, SCI_FLAG_READONLY_MAP, &error);
+            0 /* address hint */, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIMapRemoteSegment", true);
     printf("Remote segment mapped at %p\n", *remote_address);
 }
