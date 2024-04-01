@@ -38,19 +38,6 @@ void send_dma_segment(
     DEBUG_PRINT("Sending DMA segment\n");
 
     if (use_local_addr) {
-    SCIStartDmaTransfer(
-            dma_queue,
-            local->segment,
-            remote->segment,
-            local->offset,
-            local->segment_size,
-            remote->offset,
-            callback,
-            callback_arg,
-            flags,
-            &error);
-    print_sisci_error(&error, "SCIStartDmaTransfer", true);
-    } else {
         SCIStartDmaTransferMem(
                 dma_queue,
                 local->address,
@@ -62,6 +49,19 @@ void send_dma_segment(
                 flags,
                 &error);
         print_sisci_error(&error, "SCIStartDmaTransferMem", true);
+    } else {
+        SCIStartDmaTransfer(
+                dma_queue,
+                local->segment,
+                remote->segment,
+                local->offset,
+                local->segment_size,
+                remote->offset,
+                callback,
+                callback_arg,
+                flags,
+                &error);
+        print_sisci_error(&error, "SCIStartDmaTransfer", true);
     }
 
     if (wait) {
