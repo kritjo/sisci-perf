@@ -5,8 +5,8 @@ SRC_DIR = src
 SENDER_SRC = $(SRC_DIR)/rma.c $(SRC_DIR)/dma.c $(SRC_DIR)/args_parser.c $(SRC_DIR)/sender.c
 SENDER_OBJS = $(BUILD_DIR)/rma.o $(BUILD_DIR)/dma.o $(BUILD_DIR)/args_parser.o $(BUILD_DIR)/sender.o
 
-RECEIVER_SRC = $(SRC_DIR)/args_parser.c $(SRC_DIR)/dma.c $(SRC_DIR)/receiver.c
-RECEIVER_OBJS = $(BUILD_DIR)/args_parser.o $(BUILD_DIR)/dma.o $(BUILD_DIR)/receiver.o
+RECEIVER_SRC = $(SRC_DIR)/args_parser.c $(SRC_DIR)/rma.c $(SRC_DIR)/dma.c $(SRC_DIR)/receiver.c
+RECEIVER_OBJS = $(BUILD_DIR)/args_parser.o $(BUILD_DIR)/rma.o $(BUILD_DIR)/dma.o $(BUILD_DIR)/receiver.o
 
 LIB_SRC = $(wildcard $(LIB_DIR)/*.c)
 LIB_OBJS = $(LIB_SRC:$(LIB_DIR)/%.c=$(BUILD_DIR)/%.o)

@@ -15,6 +15,7 @@
 #include "common.h"
 #include "lib_rma.h"
 #include "dma.h"
+#include "rma.h"
 
 void print_usage(char *prog_name) {
     printf("usage: %s [-nid <opt> | -an <opt>] [--use-local-addr] <mode>\n", prog_name);
@@ -58,35 +59,6 @@ static void poll(sci_desc_t v_dev, unsigned int local_node_id) {
     destroy_local_segment(&local, NO_FLAGS);
 }
 
-static void rma(sci_desc_t v_dev, unsigned int receiver_id, bool check) {
-    volatile rdma_buff_t *rdma_buff;
-    sci_sequence_t remote_sequence;
-    segment_remote_args_t remote = {0};
-
-    init_remote_connect(v_dev, &remote.segment, receiver_id);
-
-    rma_init(&remote);
-    fprintf(stderr, "Remote segment mapped\n");
-    if (check) {
-        rma_sequence_init(remote.map, &remote_sequence);
-        rma_check(remote_sequence);
-    }
-
-    rdma_buff = (rdma_buff_t *) remote.address;
-
-    printf("Node waiting for transfer\n");
-
-    printf("Checking done\n");
-    while (!rdma_buff->done);
-    printf("RDMA Done! Word: %s\n", rdma_buff->word);
-    if (check) {
-        rma_check(remote_sequence);
-        rma_destroy_sequence(remote_sequence);
-    }
-    rma_destroy(remote.map);
-    destroy_remote_connect(remote.segment, NO_FLAGS);
-}
-
 int main(int argc, char *argv[]) {
     sci_desc_t v_dev;
     sci_error_t error;
@@ -119,9 +91,13 @@ int main(int argc, char *argv[]) {
     if (strcmp(mode, "poll") == 0) {
         poll(v_dev, local_node_id);
     } else if (strcmp(mode, "rma") == 0) {
-        rma(v_dev, receiver_id, false);
+        init_remote_connect(v_dev, &remote_segment, receiver_id);
+        rma(remote_segment, false, false);
+        destroy_remote_connect(remote_segment, NO_FLAGS);
     } else if (strcmp(mode, "rma-check") == 0) {
-        rma(v_dev, receiver_id, true);
+        init_remote_connect(v_dev, &remote_segment, receiver_id);
+        rma(remote_segment, true, false);
+        destroy_remote_connect(remote_segment, NO_FLAGS);
     } else if (strcmp(mode, "dma-global") == 0) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
         dma_transfer(v_dev, remote_segment, false, true, use_local_addr, false);
