@@ -19,7 +19,7 @@ void wait_for_dma_queue(sci_dma_queue_t dma_queue, unsigned int flags) {
     }
 }
 
-void send_dma_segment(
+void transfer_dma_segment(
         sci_dma_queue_t dma_queue,
         segment_local_args_t *local,
         segment_remote_args_t *remote,

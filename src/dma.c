@@ -64,10 +64,10 @@ void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool u
     local_map_address->done = 0;
     strcpy(local_map_address->word, "OK");
 
-    send_dma_segment(dma_queue, &local, &remote, NO_CALLBACK, NO_ARG, true, use_local_addr, flags);
+    transfer_dma_segment(dma_queue, &local, &remote, NO_CALLBACK, NO_ARG, true, use_local_addr, flags);
 
     local_map_address->done = 1;
-    send_dma_segment(dma_queue, &local, &remote, NO_CALLBACK, NO_ARG, true, use_local_addr, flags);
+    transfer_dma_segment(dma_queue, &local, &remote, NO_CALLBACK, NO_ARG, true, use_local_addr, flags);
 
     if (!use_local_addr) {
         SCIUnmapSegment(local.map, NO_FLAGS, &error);
