@@ -14,15 +14,18 @@
 #include "args_parser.h"
 #include "common.h"
 #include "lib_rma.h"
+#include "dma.h"
 
 void print_usage(char *prog_name) {
-    printf("usage: %s [-nid <opt> | -an <opt>] [-chid <opt>] <mode>\n", prog_name);
+    printf("usage: %s [-nid <opt> | -an <opt>] [--use-local-addr] <mode>\n", prog_name);
     printf("    -nid <sender node id>         : Specify the sender using node id\n");
     printf("    -an <sender adapter name>     : Specify the sender using its adapter name\n");
+    printf("    --use-local-addr              : Do not create a local segment, use malloc\n");
     printf("    <mode>                        : Mode of operation\n");
     printf("           poll                   : Busy wait for transfer\n");
     printf("           rma                    : Map remote segment, and read from it directly\n");
     printf("           rma-check              : Map remote segment, and read from it directly, then flush and check\n");
+    printf("           dma-global             : Use DMA to read provided by the HCA global port\n");
 
     exit(EXIT_FAILURE);
 }
@@ -90,15 +93,16 @@ int main(int argc, char *argv[]) {
     unsigned int local_node_id;
     unsigned int receiver_id = UNINITIALIZED_ARG;
     unsigned int use_local_addr = UNINITIALIZED_ARG;
+    sci_remote_segment_t remote_segment = NULL;
     char *mode;
 
     if (parse_id_args(argc, argv, &receiver_id, &use_local_addr, print_usage) != argc) print_usage(argv[0]);
     mode = argv[argc-1];
     if (strcmp(mode, "poll") != 0 &&
+        strcmp(mode, "dma-global") != 0 &&
         strcmp(mode, "rma") != 0 &&
         strcmp(mode, "rma-check") != 0) print_usage(argv[0]);
-    if ((strcmp(mode, "rma") == 0 || strcmp(mode, "rma-check") == 0)
-    && receiver_id == UNINITIALIZED_ARG) print_usage(argv[0]);
+    if (strcmp(mode, "poll") != 0 && receiver_id == UNINITIALIZED_ARG) print_usage(argv[0]);
 
     SCIInitialize(NO_FLAGS, &error);
     print_sisci_error(&error, "SCIInitialize", true);
@@ -118,6 +122,10 @@ int main(int argc, char *argv[]) {
         rma(v_dev, receiver_id, false);
     } else if (strcmp(mode, "rma-check") == 0) {
         rma(v_dev, receiver_id, true);
+    } else if (strcmp(mode, "dma-global") == 0) {
+        init_remote_connect(v_dev, &remote_segment, receiver_id);
+        dma_transfer(v_dev, remote_segment, false, true, use_local_addr, true);
+        destroy_remote_connect(remote_segment, NO_FLAGS);
     } else {
         print_usage(argv[0]);
     }

@@ -72,18 +72,18 @@ int main(int argc, char *argv[]) {
 
     if (strcmp(mode, "dma-any") == 0 || use_sysdma || use_globdma) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
-        dma_send_test(v_dev, remote_segment, use_sysdma, use_globdma, use_local_addr);
+        dma_transfer(v_dev, remote_segment, use_sysdma, use_globdma, use_local_addr, true);
         destroy_remote_connect(remote_segment, NO_FLAGS);
     }
     else if (strcmp(mode, "dma-sys") == 0) {
         fprintf(stderr, "SYSDMA is experimental!\n");
         init_remote_connect(v_dev, &remote_segment, receiver_id);
-        dma_send_test(v_dev, remote_segment, true, false, use_local_addr);
+        dma_transfer(v_dev, remote_segment, true, false, use_local_addr, true);
         destroy_remote_connect(remote_segment, NO_FLAGS);
     }
     else if (strcmp(mode, "dma-global") == 0) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
-        dma_send_test(v_dev, remote_segment, false, true, use_local_addr);
+        dma_transfer(v_dev, remote_segment, false, true, use_local_addr, true);
         destroy_remote_connect(remote_segment, NO_FLAGS);
     }
     else if (strcmp(mode, "rma") == 0) {
@@ -108,16 +108,13 @@ int main(int argc, char *argv[]) {
 
         rdma_buff->done = 0;
         strcpy(rdma_buff->word, "OK");
+        rdma_buff->done = 1;
 
         SCISetSegmentAvailable(local.segment,
                                ADAPTER_NO,
                                NO_FLAGS,
                                &error);
         print_sisci_error(&error, "SCISetSegmentAvailable", true);
-
-        sleep(10);
-
-        rdma_buff->done = 1;
 
         while (1) {
             sleep(1);

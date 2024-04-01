@@ -15,7 +15,7 @@
 
 #define SEND_SEG_ID 4589
 
-void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool use_sysdma, bool use_globdma, bool use_local_addr) {
+void dma_transfer(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool use_sysdma, bool use_globdma, bool use_local_addr, bool send) {
     DEBUG_PRINT("Sending DMA segment using ");
     if (use_sysdma) DEBUG_PRINT("System DMA\n");
     else if (use_globdma) DEBUG_PRINT("Global DMA\n");
@@ -61,13 +61,22 @@ void dma_send_test(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool u
         local_map_address = (rdma_buff_t *) local.address;
     }
 
-    local_map_address->done = 0;
-    strcpy(local_map_address->word, "OK");
+    if (send) {
+        local_map_address->done = 0;
+        strcpy(local_map_address->word, "OK");
 
-    transfer_dma_segment(dma_queue, &local, &remote, NO_CALLBACK, NO_ARG, true, use_local_addr, flags);
+        transfer_dma_segment(dma_queue, &local, &remote, NO_CALLBACK, NO_ARG, true, use_local_addr, flags);
 
-    local_map_address->done = 1;
-    transfer_dma_segment(dma_queue, &local, &remote, NO_CALLBACK, NO_ARG, true, use_local_addr, flags);
+        local_map_address->done = 1;
+        transfer_dma_segment(dma_queue, &local, &remote, NO_CALLBACK, NO_ARG, true, use_local_addr, flags);
+    } else {
+        flags |= SCI_FLAG_DMA_READ;
+        while (!local_map_address->done) {
+            transfer_dma_segment(dma_queue, &local, &remote, NO_CALLBACK, NO_ARG, true, use_local_addr, flags);
+        }
+
+        printf("RDMA Done! Word: %s\n", local_map_address->word);
+    }
 
     if (!use_local_addr) {
         SCIUnmapSegment(local.map, NO_FLAGS, &error);
