@@ -4,6 +4,6 @@
 #include <stdbool.h>
 #include "sisci_types.h"
 
-void rma(sci_remote_segment_t remote_segment, bool check);
+void rma(sci_remote_segment_t remote_segment, bool check, bool send);
 
 #endif //KRITJO_SISCI_RMA

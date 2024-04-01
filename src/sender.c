@@ -88,12 +88,12 @@ int main(int argc, char *argv[]) {
     }
     else if (strcmp(mode, "rma") == 0) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
-        rma(remote_segment, false);
+        rma(remote_segment, false, true);
         destroy_remote_connect(remote_segment, NO_FLAGS);
     }
     else if (strcmp(mode, "rma-check") == 0) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
-        rma(remote_segment, true);
+        rma(remote_segment, true, true);
         destroy_remote_connect(remote_segment, NO_FLAGS);
     }
     else if (strcmp(mode, "provider") == 0) {
