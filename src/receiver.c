@@ -22,6 +22,7 @@ void print_usage(char *prog_name) {
     printf("    <mode>                        : Mode of operation\n");
     printf("           poll                   : Busy wait for transfer\n");
     printf("           rma                    : Map remote segment, and read from it directly\n");
+    printf("           rma-check              : Map remote segment, and read from it directly, then flush and check\n");
 
     exit(EXIT_FAILURE);
 }
@@ -54,7 +55,7 @@ static void poll(sci_desc_t v_dev, unsigned int local_node_id) {
     destroy_local_segment(&local, NO_FLAGS);
 }
 
-static void rma(sci_desc_t v_dev, unsigned int receiver_id) {
+static void rma(sci_desc_t v_dev, unsigned int receiver_id, bool check) {
     volatile rdma_buff_t *rdma_buff;
     sci_sequence_t remote_sequence;
     segment_remote_args_t remote = {0};
@@ -63,8 +64,10 @@ static void rma(sci_desc_t v_dev, unsigned int receiver_id) {
 
     rma_init(&remote);
     fprintf(stderr, "Remote segment mapped\n");
-    rma_sequence_init(remote.map, &remote_sequence);
-    rma_check(remote_sequence);
+    if (check) {
+        rma_sequence_init(remote.map, &remote_sequence);
+        rma_check(remote_sequence);
+    }
 
     rdma_buff = (rdma_buff_t *) remote.address;
 
@@ -73,7 +76,10 @@ static void rma(sci_desc_t v_dev, unsigned int receiver_id) {
     printf("Checking done\n");
     while (!rdma_buff->done);
     printf("RDMA Done! Word: %s\n", rdma_buff->word);
-    rma_destroy_sequence(remote_sequence);
+    if (check) {
+        rma_check(remote_sequence);
+        rma_destroy_sequence(remote_sequence);
+    }
     rma_destroy(remote.map);
     destroy_remote_connect(remote.segment, NO_FLAGS);
 }
@@ -89,8 +95,10 @@ int main(int argc, char *argv[]) {
     if (parse_id_args(argc, argv, &receiver_id, &use_local_addr, print_usage) != argc) print_usage(argv[0]);
     mode = argv[argc-1];
     if (strcmp(mode, "poll") != 0 &&
-        strcmp(mode, "rma") != 0) print_usage(argv[0]);
-    if (strcmp(mode, "rma") == 0 && receiver_id == UNINITIALIZED_ARG) print_usage(argv[0]);
+        strcmp(mode, "rma") != 0 &&
+        strcmp(mode, "rma-check") != 0) print_usage(argv[0]);
+    if ((strcmp(mode, "rma") == 0 || strcmp(mode, "rma-check") == 0)
+    && receiver_id == UNINITIALIZED_ARG) print_usage(argv[0]);
 
     SCIInitialize(NO_FLAGS, &error);
     print_sisci_error(&error, "SCIInitialize", true);
@@ -107,7 +115,9 @@ int main(int argc, char *argv[]) {
     if (strcmp(mode, "poll") == 0) {
         poll(v_dev, local_node_id);
     } else if (strcmp(mode, "rma") == 0) {
-        rma(v_dev, receiver_id);
+        rma(v_dev, receiver_id, false);
+    } else if (strcmp(mode, "rma-check") == 0) {
+        rma(v_dev, receiver_id, true);
     } else {
         print_usage(argv[0]);
     }
