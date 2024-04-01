@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
         rma(v_dev, receiver_id, true);
     } else if (strcmp(mode, "dma-global") == 0) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
-        dma_transfer(v_dev, remote_segment, false, true, use_local_addr, true);
+        dma_transfer(v_dev, remote_segment, false, true, use_local_addr, false);
         destroy_remote_connect(remote_segment, NO_FLAGS);
     } else {
         print_usage(argv[0]);
