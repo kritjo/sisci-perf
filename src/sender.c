@@ -19,9 +19,10 @@
 #include "lib_rma.h"
 
 void print_usage(char *prog_name) {
-    printf("usage: %s (-nid <opt> | -an <opt>) <mode>\n", prog_name);
+    printf("usage: %s (-nid <opt> | -an <opt>) [--use-local-addr] <mode>\n", prog_name);
     printf("    -nid <receiver node id>       : Specify the receiver using node id\n");
     printf("    -an <receiver adapter name>   : Specify the receiver using its adapter name\n");
+    printf("    --use-local-addr              : Do not create a local segment, use malloc\n");
     printf("    <mode>                        : Mode of operation\n");
     printf("           dma-any                : Use DMA to write (no mode specified)\n");
     printf("           dma-sys                : Use DMA to write provided by the host system\n");
@@ -40,10 +41,11 @@ int main(int argc, char *argv[]) {
     sci_remote_segment_t remote_segment = NULL;
     rdma_buff_t *rdma_buff;
     unsigned int receiver_id = UNINITIALIZED_ARG;
+    unsigned int use_local_addr = UNINITIALIZED_ARG;
     unsigned int local_node_id;
     char *mode;
 
-    if (parse_id_args(argc, argv, &receiver_id, print_usage) != argc) print_usage(argv[0]);
+    if (parse_id_args(argc, argv, &receiver_id, &use_local_addr, print_usage) != argc) print_usage(argv[0]);
     if (receiver_id == UNINITIALIZED_ARG) print_usage(argv[0]);
     mode = argv[argc-1];
     if (strcmp(mode, "dma-any")    != 0 &&
@@ -70,18 +72,18 @@ int main(int argc, char *argv[]) {
 
     if (strcmp(mode, "dma-any") == 0 || use_sysdma || use_globdma) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
-        dma_send_test(v_dev, remote_segment, use_sysdma, use_globdma);
+        dma_send_test(v_dev, remote_segment, use_sysdma, use_globdma, use_local_addr);
         destroy_remote_connect(remote_segment, NO_FLAGS);
     }
     else if (strcmp(mode, "dma-sys") == 0) {
         fprintf(stderr, "SYSDMA is experimental!\n");
         init_remote_connect(v_dev, &remote_segment, receiver_id);
-        dma_send_test(v_dev, remote_segment, true, false);
+        dma_send_test(v_dev, remote_segment, true, false, use_local_addr);
         destroy_remote_connect(remote_segment, NO_FLAGS);
     }
     else if (strcmp(mode, "dma-global") == 0) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
-        dma_send_test(v_dev, remote_segment, false, true);
+        dma_send_test(v_dev, remote_segment, false, true, use_local_addr);
         destroy_remote_connect(remote_segment, NO_FLAGS);
     }
     else if (strcmp(mode, "rma") == 0) {

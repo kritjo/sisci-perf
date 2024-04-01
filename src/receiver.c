@@ -83,9 +83,10 @@ int main(int argc, char *argv[]) {
     sci_error_t error;
     unsigned int local_node_id;
     unsigned int receiver_id = UNINITIALIZED_ARG;
+    unsigned int use_local_addr = UNINITIALIZED_ARG;
     char *mode;
 
-    if (parse_id_args(argc, argv, &receiver_id, print_usage) != argc) print_usage(argv[0]);
+    if (parse_id_args(argc, argv, &receiver_id, &use_local_addr, print_usage) != argc) print_usage(argv[0]);
     mode = argv[argc-1];
     if (strcmp(mode, "poll") != 0 &&
         strcmp(mode, "rma") != 0) print_usage(argv[0]);

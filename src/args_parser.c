@@ -56,8 +56,9 @@ static void parse_an(int *arg, char *argv[], unsigned int *receiver_node_id) {
     if (nodelist[1] != 0) printf("    (multiple adapters found)\n");
 }
 
-int parse_id_args(int argc, char *argv[], unsigned int *rnid, void (*print_usage)(char *)) {
+int parse_id_args(int argc, char *argv[], unsigned int *rnid, unsigned int *use_local_addr, void (*print_usage)(char *)) {
     ARG_INIT(rnid);
+    ARG_INIT(use_local_addr);
     int arg;
 
     for (arg = 1; arg < argc; arg++) {
@@ -67,6 +68,9 @@ int parse_id_args(int argc, char *argv[], unsigned int *rnid, void (*print_usage
         }
         else if (strcmp(argv[arg], "-an") == 0) {
             ARG_PARSE(rnid, &arg, argc, argv, parse_an, print_usage);
+        }
+        else if (strcmp(argv[arg], "--use-local-addr") == 0) {
+            *use_local_addr = 1;
         }
         else if (arg == argc-1) {
             arg++;
