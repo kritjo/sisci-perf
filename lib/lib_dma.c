@@ -5,12 +5,27 @@
 #include "sisci_glob_defs.h"
 #include "error_util.h"
 
+void wait_for_dma_queue(sci_dma_queue_t dma_queue, unsigned int flags) {
+    sci_error_t error;
+    SCIWaitForDMAQueue(dma_queue, SCI_INFINITE_TIMEOUT, flags, &error);
+    print_sisci_error(&error, "SCIWaitForDMAQueue", true);
+
+    sci_dma_queue_state_t dma_queue_state = SCIDMAQueueState(dma_queue);
+    if (dma_queue_state == SCI_DMAQUEUE_DONE)
+        printf("Transfer successful!\n");
+    else {
+        fprintf(stderr, "Transfer failed!\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
 void send_dma_segment(
         sci_dma_queue_t dma_queue,
         segment_local_args_t *local,
         segment_remote_args_t *remote,
         sci_cb_dma_t callback,
         void *callback_arg,
+        bool wait,
         unsigned int flags) {
     sci_error_t error;
 
@@ -33,15 +48,10 @@ void send_dma_segment(
             &error);
     print_sisci_error(&error, "SCIStartDmaTransferMem", true);
 
-    SCIWaitForDMAQueue(dma_queue, SCI_INFINITE_TIMEOUT, flags, &error);
-    print_sisci_error(&error, "SCIWaitForDMAQueue", true);
-
-    sci_dma_queue_state_t dma_queue_state = SCIDMAQueueState(dma_queue);
-    if (dma_queue_state == SCI_DMAQUEUE_DONE)
-        printf("Transfer successful!\n");
-    else {
-        fprintf(stderr, "Transfer failed!\n");
-        exit(EXIT_FAILURE);
+    if (wait) {
+        wait_for_dma_queue(dma_queue, flags);
+    } else {
+        printf("Transfer started, not waiting for completion\n");
     }
 }
 
