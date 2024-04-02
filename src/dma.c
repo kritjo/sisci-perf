@@ -35,15 +35,6 @@ void dma_transfer(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool us
 
     segment_local_args_t local = {0};
     local.segment_size = sizeof(rdma_buff_t);
-    if (use_local_addr) {
-        local.address = malloc(local.segment_size);
-        if (local.address == NULL) {
-            fprintf(stderr, "Failed to allocate memory for local segment\n");
-            exit(EXIT_FAILURE);
-        }
-    } else {
-        local.address = NO_SUG_ADDR;
-    }
 
     init_dma(v_dev, &dma_queue, &remote, flags);
 
@@ -58,6 +49,12 @@ void dma_transfer(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool us
                                                                NO_SUG_ADDR, NO_FLAGS, &error);
         print_sisci_error(&error, "SCIMapLocalSegment", true);
     } else {
+        local.address = malloc(local.segment_size);
+        if (local.address == NULL) {
+            fprintf(stderr, "Failed to allocate memory for local segment\n");
+            exit(EXIT_FAILURE);
+        }
+
         local_map_address = (rdma_buff_t *) local.address;
     }
 
