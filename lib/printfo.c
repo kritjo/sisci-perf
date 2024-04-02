@@ -90,7 +90,7 @@ void print_dma_availability(unsigned int adapter_no) {
     adapter_query.localAdapterNo = adapter_no;
 
     for (int port = 0; port < 4; port++) {
-        adapter_query.portNo = port;
+        adapter_query.portNo = -port;
         printf("Port %u:\n", port);
 
         for (int i = 0; i < 3; i++) {
