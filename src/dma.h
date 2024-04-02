@@ -5,6 +5,6 @@
 
 #include "sisci_types.h"
 
-void dma_transfer(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool use_sysdma, bool use_globdma, bool use_local_addr, bool send);
+void dma_transfer(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool use_sysdma, bool use_globdma, bool use_local_addr, bool send, bool request_channel);
 
 #endif //KRITJO_SISCI_DMA

@@ -15,7 +15,13 @@
 
 #define SEND_SEG_ID 4589
 
-void dma_transfer(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool use_sysdma, bool use_globdma, bool use_local_addr, bool send) {
+void dma_transfer(sci_desc_t v_dev,
+                  sci_remote_segment_t remote_segment,
+                  bool use_sysdma,
+                  bool use_globdma,
+                  bool use_local_addr,
+                  bool send,
+                  bool request_channel) {
     DEBUG_PRINT("Sending DMA segment using ");
     if (use_sysdma) DEBUG_PRINT("System DMA\n");
     else if (use_globdma) DEBUG_PRINT("Global DMA\n");
@@ -24,6 +30,7 @@ void dma_transfer(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool us
 
     sci_error_t error;
     rdma_buff_t* local_map_address;
+    sci_dma_channel_t dma_channel;
     sci_dma_queue_t dma_queue;
 
     segment_remote_args_t remote = {0};
@@ -37,6 +44,10 @@ void dma_transfer(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool us
     local.segment_size = sizeof(rdma_buff_t);
 
     init_dma(v_dev, &dma_queue, &remote, flags);
+
+    if (request_channel) {
+        init_dma_channel(v_dev, &dma_channel, SCI_DMA_TYPE_SYSTEM, dma_queue);
+    }
 
     if (!use_local_addr) {
         SCICreateSegment(v_dev, &local.segment, SEND_SEG_ID, local.segment_size, NO_CALLBACK, NO_ARG, SCI_FLAG_PRIVATE,
@@ -83,6 +94,10 @@ void dma_transfer(sci_desc_t v_dev, sci_remote_segment_t remote_segment, bool us
         print_sisci_error(&error, "SCIRemoveSegment", false);
     } else {
         free(local.address);
+    }
+
+    if (request_channel) {
+        destroy_dma_channel(dma_channel);
     }
 
     destroy_dma(dma_queue, remote.map, flags);

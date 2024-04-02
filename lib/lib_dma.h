@@ -10,5 +10,7 @@ void transfer_dma_segment(sci_dma_queue_t dma_queue, segment_local_args_t *local
 void wait_for_dma_queue(sci_dma_queue_t dma_queue, unsigned int flags);
 void init_dma(sci_desc_t v_dev, sci_dma_queue_t *dma_queue, segment_remote_args_t *remote, unsigned int flags);
 void destroy_dma(sci_dma_queue_t dma_queue, sci_map_t remote_map, unsigned int flags);
+void init_dma_channel(sci_desc_t v_dev, sci_dma_channel_t *dma_channel, sci_dma_type_t dma_type, sci_dma_queue_t dma_queue);
+void destroy_dma_channel(sci_dma_channel_t dma_channel);
 
 #endif //KRITJOLIB_SISCI_DMA

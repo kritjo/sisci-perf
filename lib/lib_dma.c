@@ -107,3 +107,21 @@ void destroy_dma(sci_dma_queue_t dma_queue, sci_map_t remote_map, unsigned int f
         print_sisci_error(&error, "SCIUnmapSegment", false);
     }
 }
+
+
+void init_dma_channel(sci_desc_t v_dev, sci_dma_channel_t *dma_channel, sci_dma_type_t dma_type, sci_dma_queue_t dma_queue) {
+    sci_error_t error;
+
+    SCIRequestDMAChannel(v_dev, dma_channel, ADAPTER_NO, dma_type, SCI_DMA_CHANNEL_ID_DONTCARE, NO_FLAGS, &error);
+    print_sisci_error(&error, "SCIRequestDMAChannel", true);
+
+    SCIAssignDMAChannel(*dma_channel, dma_queue, NO_FLAGS, &error);
+    print_sisci_error(&error, "SCIAssignDMAChannel", true);
+}
+
+void destroy_dma_channel(sci_dma_channel_t dma_channel) {
+    sci_error_t error;
+
+    SCIReturnDMAChannel(dma_channel, &error);
+    print_sisci_error(&error, "SCIReleaseDMAChannel", false);
+}

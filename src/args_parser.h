@@ -3,6 +3,6 @@
 
 #define UNINITIALIZED_ARG (-10)
 
-int parse_id_args(int argc, char *argv[], unsigned int *rnid, unsigned int *use_local_addr, void (*print_usage)(char *));
+int parse_id_args(int argc, char *argv[], unsigned int *rnid, unsigned int *use_local_addr, unsigned int *req_chnl, void (*print_usage)(char *));
 
 #endif //KRITJO_SISCI_RNID_UTIL

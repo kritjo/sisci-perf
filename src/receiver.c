@@ -22,6 +22,7 @@ void print_usage(char *prog_name) {
     printf("    -nid <sender node id>         : Specify the sender using node id\n");
     printf("    -an <sender adapter name>     : Specify the sender using its adapter name\n");
     printf("    --use-local-addr              : Do not create a local segment, use malloc\n");
+    printf("    --request-channel             : Request a DMA channel\n");
     printf("    <mode>                        : Mode of operation\n");
     printf("           poll                   : Busy wait for transfer\n");
     printf("           rma                    : Map remote segment, and read from it directly\n");
@@ -65,10 +66,11 @@ int main(int argc, char *argv[]) {
     unsigned int local_node_id;
     unsigned int receiver_id = UNINITIALIZED_ARG;
     unsigned int use_local_addr = UNINITIALIZED_ARG;
+    unsigned int req_chnl = UNINITIALIZED_ARG;
     sci_remote_segment_t remote_segment = NULL;
     char *mode;
 
-    if (parse_id_args(argc, argv, &receiver_id, &use_local_addr, print_usage) != argc) print_usage(argv[0]);
+    if (parse_id_args(argc, argv, &receiver_id, &use_local_addr, &req_chnl, print_usage) != argc) print_usage(argv[0]);
     mode = argv[argc-1];
     if (strcmp(mode, "poll") != 0 &&
         strcmp(mode, "dma-global") != 0 &&
@@ -100,7 +102,7 @@ int main(int argc, char *argv[]) {
         destroy_remote_connect(remote_segment, NO_FLAGS);
     } else if (strcmp(mode, "dma-global") == 0) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
-        dma_transfer(v_dev, remote_segment, false, true, use_local_addr, false);
+        dma_transfer(v_dev, remote_segment, false, true, use_local_addr, false, req_chnl);
         destroy_remote_connect(remote_segment, NO_FLAGS);
     } else {
         print_usage(argv[0]);
