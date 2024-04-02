@@ -82,14 +82,14 @@ void print_dma_availability(unsigned int adapter_no) {
     printf("    Global: %s\n", avail[2] ? "Yes" : "No");
     print_dma_capabilities(&dma_caps[2]);
 
-#if 0
+
     flags[0] = SCI_Q_ADAPTER_DMA_MTU;
     flags[1] = SCI_Q_ADAPTER_DMA_SIZE_ALIGNMENT;
     flags[2] = SCI_Q_ADAPTER_DMA_OFFSET_ALIGNMENT;
     sci_query_adapter_t adapter_query;
     adapter_query.localAdapterNo = adapter_no;
 
-    for (int port = 0; port < 4; port++) {
+    for (int port = 0; port < 40; port++) {
         adapter_query.portNo = port;
         printf("Port %u:\n", port);
 
@@ -104,7 +104,6 @@ void print_dma_availability(unsigned int adapter_no) {
         printf("    ADAPTER DMA SIZE ALIGNMENT: %u bytes\n", avail[1]);
         printf("    ADAPTER DMA OFFSET ALIGNMENT: %u bytes\n", avail[2]);
     }
-#endif // 0
 
 
 
