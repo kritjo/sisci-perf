@@ -64,5 +64,19 @@ void print_dma_availability(unsigned int adapter_no) {
     printf("    Adapter: %s\n", avail[0] ? "Yes" : "No");
     printf("    SysDMA: %s\n", avail[1] ? "Yes" : "No");
     printf("    Global: %s\n", avail[2] ? "Yes" : "No");
+
+    flags[0] = SCI_Q_ADAPTER_DMA_MTU;
+    flags[1] = SCI_Q_ADAPTER_DMA_SIZE_ALIGNMENT;
+    flags[2] = SCI_Q_ADAPTER_DMA_OFFSET_ALIGNMENT;
+
+    for (int i = 0; i < 3; i++) {
+        query.data = &avail[i];
+        SCIQuery(SCI_Q_ADAPTER, &query, flags[i], &error);
+        print_sisci_error(&error, "SCIQuery", false);
+    }
+
+    printf("    ADAPTER DMA MTU: %u bytes\n", avail[0]);
+    printf("    ADAPTER DMA size alignment: %u\n", avail[1]);
+    printf("    ADAPTER DMA offset alignment: %u\n", avail[2]);
 } 
 
