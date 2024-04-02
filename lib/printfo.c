@@ -71,7 +71,8 @@ void print_dma_availability(unsigned int adapter_no) {
 
     for (int i = 0; i < 3; i++) {
         query.data = &avail[i];
-        SCIQuery(SCI_Q_ADAPTER, &query, flags[i], &error);
+        query.subcommand = flags[i];
+        SCIQuery(SCI_Q_ADAPTER, &query, NO_FLAGS, &error);
         print_sisci_error(&error, "SCIQuery", false);
     }
 
