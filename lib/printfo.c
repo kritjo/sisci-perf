@@ -76,11 +76,11 @@ void print_dma_availability(unsigned int adapter_no) {
 
     printf("Adapter %u has DMA availability:\n", adapter_no);
     printf("    Adapter: %s\n", avail[0] ? "Yes" : "No");
-    print_dma_capabilities(&dma_caps[0]);
+    if (avail[0]) print_dma_capabilities(&dma_caps[0]);
     printf("    SysDMA: %s\n", avail[1] ? "Yes" : "No");
-    print_dma_capabilities(&dma_caps[1]);
+    if (avail[1]) print_dma_capabilities(&dma_caps[1]);
     printf("    Global: %s\n", avail[2] ? "Yes" : "No");
-    print_dma_capabilities(&dma_caps[2]);
+    if (avail[2]) print_dma_capabilities(&dma_caps[2]);
 
 
     flags[0] = SCI_Q_ADAPTER_DMA_MTU;
@@ -89,7 +89,7 @@ void print_dma_availability(unsigned int adapter_no) {
     sci_query_adapter_t adapter_query;
     adapter_query.localAdapterNo = adapter_no;
 
-    for (int port = 0; port < 40; port++) {
+    for (int port = 0; port < 4; port++) {
         adapter_query.portNo = port;
         printf("Port %u:\n", port);
 
