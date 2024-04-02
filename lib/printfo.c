@@ -68,16 +68,23 @@ void print_dma_availability(unsigned int adapter_no) {
     flags[0] = SCI_Q_ADAPTER_DMA_MTU;
     flags[1] = SCI_Q_ADAPTER_DMA_SIZE_ALIGNMENT;
     flags[2] = SCI_Q_ADAPTER_DMA_OFFSET_ALIGNMENT;
+    sci_query_adapter_t adapter_query;
+    adapter_query.localAdapterNo = adapter_no;
 
-    for (int i = 0; i < 3; i++) {
-        query.data = &avail[i];
-        query.subcommand = flags[i];
-        SCIQuery(SCI_Q_ADAPTER, &query, NO_FLAGS, &error);
-        print_sisci_error(&error, "SCIQuery", false);
+    for (int port = 0; port < 4; port++) {
+        adapter_query.portNo = port;
+        printf("Port %u:\n", port);
+
+        for (int i = 0; i < 3; i++) {
+            adapter_query.data = &avail[i];
+            adapter_query.subcommand = flags[i];
+            SCIQuery(SCI_Q_ADAPTER, &adapter_query, NO_FLAGS, &error);
+            print_sisci_error(&error, "SCIQuery", false);
+        }
+
+        printf("    ADAPTER DMA MTU: %u bytes\n", avail[0]);
+        printf("    ADAPTER DMA SIZE ALIGNMENT: %u bytes\n", avail[1]);
+        printf("    ADAPTER DMA OFFSET ALIGNMENT: %u bytes\n", avail[2]);
     }
-
-    printf("    ADAPTER DMA MTU: %u bytes\n", avail[0]);
-    printf("    ADAPTER DMA size alignment: %u\n", avail[1]);
-    printf("    ADAPTER DMA offset alignment: %u\n", avail[2]);
-} 
+}
 
