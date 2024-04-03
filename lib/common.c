@@ -32,20 +32,21 @@ void init_remote_connect(sci_desc_t v_dev, sci_remote_segment_t *remote_segment,
     printf("Connected to remote segment of size %ld\n", remote_segment_size);
 }
 
-void destroy_remote_connect(sci_remote_segment_t remote_segment, unsigned int flags) {
+void destroy_remote_connect(sci_remote_segment_t remote_segment) {
     sci_error_t error;
 
-    SCIDisconnectSegment(remote_segment, flags, &error);
+    SCIDisconnectSegment(remote_segment, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIDisconnectSegment", false);
 }
 
 void init_local_segment(
         sci_desc_t v_dev,
         segment_local_args_t *local,
-        sci_cb_local_segment_t callback,
-        void *callback_arg,
-        unsigned int receiver_seg_id,
-        unsigned int flags) {
+        segment_callback_args_t *callback,
+        unsigned int segment_id,
+        bool dma_source_only,
+        unsigned int create_flags,
+        unsigned int map_flags) {
     OUT_NON_NULL_WARNING(local->segment);
     OUT_NON_NULL_WARNING(local->map);
     OUT_NON_NULL_WARNING(local->offset);
@@ -56,17 +57,17 @@ void init_local_segment(
 
     SCICreateSegment(v_dev,
                      &local->segment,
-                     receiver_seg_id,
+                     segment_id,
                      local->segment_size,
-                     callback,
-                     callback_arg,
-                     flags,
+                     callback != NO_CALLBACK ? callback->function : NO_CALLBACK,
+                     callback != NO_CALLBACK ? callback->arg : NO_ARG,
+                     create_flags,
                      &error);
     print_sisci_error(&error, "SCICreateSegment", true);
 
     SCIPrepareSegment(local->segment,
                       ADAPTER_NO,
-                      flags,
+                      dma_source_only ? SCI_FLAG_DMA_SOURCE_ONLY : NO_FLAGS,
                       &error);
     print_sisci_error(&error, "SCIPrepareSegment", true);
 
@@ -75,17 +76,17 @@ void init_local_segment(
                                        local->offset,
                                        local->segment_size,
                                        suggest_addr,
-                                        flags,
+                                        map_flags,
                                        &error);
     print_sisci_error(&error, "SCIMapLocalSegment", true);
 }
 
-void destroy_local_segment(segment_local_args_t *local, unsigned int flags) {
+void destroy_local_segment(segment_local_args_t *local) {
     sci_error_t error;
 
-    SCIUnmapSegment(local->map, flags, &error);
+    SCIUnmapSegment(local->map, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIUnmapSegment", false);
 
-    SCIRemoveSegment(local->segment, flags, &error);
+    SCIRemoveSegment(local->segment, NO_FLAGS, &error);
     print_sisci_error(&error, "SCIRemoveSegment", false);
 }

@@ -75,34 +75,34 @@ int main(int argc, char *argv[]) {
     if (strcmp(mode, "dma-any") == 0 || use_sysdma || use_globdma) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
         dma_transfer(v_dev, remote_segment, use_sysdma, use_globdma, use_local_addr, true, req_chnl);
-        destroy_remote_connect(remote_segment, NO_FLAGS);
+        destroy_remote_connect(remote_segment);
     }
     else if (strcmp(mode, "dma-sys") == 0) {
         fprintf(stderr, "SYSDMA is experimental!\n");
         init_remote_connect(v_dev, &remote_segment, receiver_id);
         dma_transfer(v_dev, remote_segment, true, false, use_local_addr, true, req_chnl);
-        destroy_remote_connect(remote_segment, NO_FLAGS);
+        destroy_remote_connect(remote_segment);
     }
     else if (strcmp(mode, "dma-global") == 0) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
         dma_transfer(v_dev, remote_segment, false, true, use_local_addr, true, req_chnl);
-        destroy_remote_connect(remote_segment, NO_FLAGS);
+        destroy_remote_connect(remote_segment);
     }
     else if (strcmp(mode, "rma") == 0) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
         rma(remote_segment, false, true);
-        destroy_remote_connect(remote_segment, NO_FLAGS);
+        destroy_remote_connect(remote_segment);
     }
     else if (strcmp(mode, "rma-check") == 0) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
         rma(remote_segment, true, true);
-        destroy_remote_connect(remote_segment, NO_FLAGS);
+        destroy_remote_connect(remote_segment);
     }
     else if (strcmp(mode, "provider") == 0) {
         segment_local_args_t local = {0};
         local.segment_size = RECEIVER_SEG_SIZE;
 
-        init_local_segment(v_dev, &local, NO_CALLBACK, NO_ARG, RECEIVER_SEG_ID, NO_FLAGS);
+        init_local_segment(v_dev, &local, NO_CALLBACK, RECEIVER_SEG_ID, false, NO_FLAGS, NO_FLAGS);
 
         memset(local.address, 0, RECEIVER_SEG_SIZE);
 
@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
             sleep(1);
         }
 
-        destroy_local_segment(&local, NO_FLAGS);
+        destroy_local_segment(&local);
     }
     else {
         fprintf(stderr, "Invalid mode\n");

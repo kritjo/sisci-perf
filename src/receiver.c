@@ -39,7 +39,7 @@ static void poll(sci_desc_t v_dev, unsigned int local_node_id) {
 
     local.segment_size = RECEIVER_SEG_SIZE;
 
-    init_local_segment(v_dev, &local, NO_CALLBACK, NO_ARG, RECEIVER_SEG_ID, NO_FLAGS);
+    init_local_segment(v_dev, &local, NO_CALLBACK, RECEIVER_SEG_ID, false, NO_FLAGS, NO_FLAGS);
 
     memset(local.address, 0, RECEIVER_SEG_SIZE);
 
@@ -57,7 +57,7 @@ static void poll(sci_desc_t v_dev, unsigned int local_node_id) {
     SCISetSegmentUnavailable(local.segment, ADAPTER_NO, NO_FLAGS, &error);
     print_sisci_error(&error, "SCISetSegmentUnavailable", false);
 
-    destroy_local_segment(&local, NO_FLAGS);
+    destroy_local_segment(&local);
 }
 
 int main(int argc, char *argv[]) {
@@ -95,15 +95,15 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(mode, "rma") == 0) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
         rma(remote_segment, false, false);
-        destroy_remote_connect(remote_segment, NO_FLAGS);
+        destroy_remote_connect(remote_segment);
     } else if (strcmp(mode, "rma-check") == 0) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
         rma(remote_segment, true, false);
-        destroy_remote_connect(remote_segment, NO_FLAGS);
+        destroy_remote_connect(remote_segment);
     } else if (strcmp(mode, "dma-global") == 0) {
         init_remote_connect(v_dev, &remote_segment, receiver_id);
         dma_transfer(v_dev, remote_segment, false, true, use_local_addr, false, req_chnl);
-        destroy_remote_connect(remote_segment, NO_FLAGS);
+        destroy_remote_connect(remote_segment);
     } else {
         print_usage(argv[0]);
     }

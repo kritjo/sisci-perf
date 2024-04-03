@@ -25,4 +25,9 @@ typedef struct {
     unsigned int offset;
 } segment_remote_args_t;
 
+typedef struct {
+    sci_cb_local_segment_t function;
+    void *arg;
+} segment_callback_args_t;
+
 #endif //SISCI_PLAYGROUND_SISCI_ARG_TYPES_H
