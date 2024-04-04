@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
         destroy_remote_connect(remote_segment);
     } else if (strcmp(mode, "dma-global") == 0) {
         init_remote_connect(v_dev, &remote_segment, receiver_id, multicast ? SCI_FLAG_BROADCAST : NO_FLAGS);
-        dma_transfer(v_dev, remote_segment, false, true, use_local_addr != UNINITIALIZED_ARG, false, req_chnl != UNINITIALIZED_ARG);
+        dma_transfer(v_dev, remote_segment, false, true, use_local_addr != UNINITIALIZED_ARG, false, req_chnl != UNINITIALIZED_ARG, multicast);
         destroy_remote_connect(remote_segment);
     } else if (strcmp(mode, "int-provider") == 0) {
         sci_local_interrupt_t local_interrupt;

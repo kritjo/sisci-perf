@@ -81,18 +81,18 @@ int main(int argc, char *argv[]) {
 
     if (strcmp(mode, "dma-any") == 0 || use_sysdma || use_globdma) {
         init_remote_connect(v_dev, &remote_segment, receiver_id, multicast ? SCI_FLAG_BROADCAST : NO_FLAGS);
-        dma_transfer(v_dev, remote_segment, use_sysdma, use_globdma, use_local_addr != UNINITIALIZED_ARG, true, req_chnl != UNINITIALIZED_ARG);
+        dma_transfer(v_dev, remote_segment, use_sysdma, use_globdma, use_local_addr != UNINITIALIZED_ARG, true, req_chnl != UNINITIALIZED_ARG, multicast);
         destroy_remote_connect(remote_segment);
     }
     else if (strcmp(mode, "dma-sys") == 0) {
         fprintf(stderr, "SYSDMA is experimental!\n");
         init_remote_connect(v_dev, &remote_segment, receiver_id, multicast ? SCI_FLAG_BROADCAST : NO_FLAGS);
-        dma_transfer(v_dev, remote_segment, true, false, use_local_addr != UNINITIALIZED_ARG, true, req_chnl != UNINITIALIZED_ARG);
+        dma_transfer(v_dev, remote_segment, true, false, use_local_addr != UNINITIALIZED_ARG, true, req_chnl != UNINITIALIZED_ARG, multicast);
         destroy_remote_connect(remote_segment);
     }
     else if (strcmp(mode, "dma-global") == 0) {
         init_remote_connect(v_dev, &remote_segment, receiver_id, multicast ? SCI_FLAG_BROADCAST : NO_FLAGS);
-        dma_transfer(v_dev, remote_segment, false, true, use_local_addr != UNINITIALIZED_ARG, true, req_chnl != UNINITIALIZED_ARG);
+        dma_transfer(v_dev, remote_segment, false, true, use_local_addr != UNINITIALIZED_ARG, true, req_chnl != UNINITIALIZED_ARG, multicast);
         destroy_remote_connect(remote_segment);
     }
     else if (strcmp(mode, "rma") == 0) {
