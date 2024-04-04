@@ -22,6 +22,7 @@ void dma_transfer(sci_desc_t v_dev,
                   bool use_local_addr,
                   bool send,
                   bool request_channel) {
+    printf("Using local address: %d\n", use_local_addr);
     DEBUG_PRINT("Sending DMA segment using ");
     if (use_sysdma) DEBUG_PRINT("System DMA\n");
     else if (use_globdma) DEBUG_PRINT("Global DMA\n");
