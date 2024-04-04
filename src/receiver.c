@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
                                NO_ARG,
                                SCI_FLAG_USE_CALLBACK | SCI_FLAG_FIXED_INTNO,
                                &error);
-        print_sisci_error(&error, "SCICreateInterrupt", true);
+        print_sisci_error(&error, "SCICreateDataInterrupt", true);
 
         printf("Waiting for data interrupt with number %u\n", interrupt_no);
 
@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
         unsigned int length = 10;
 
         SCIWaitForDataInterrupt(local_interrupt, data, &length, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
-        print_sisci_error(&error, "SCIWaitForInterrupt", true);
+        print_sisci_error(&error, "SCIWaitForDataInterrupt", true);
 
         printf("Data in main: ");
         for (unsigned int i = 0; i < length; i++) {
