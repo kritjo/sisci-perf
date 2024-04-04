@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
     else if (strcmp(mode, "dint") == 0) {
         sci_remote_data_interrupt_t remote_data_interrupt = NULL;
 
-        SCIConnectDataInterrupt(v_dev, &remote_data_interrupt, receiver_id, ADAPTER_NO, 0, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
+        SCIConnectDataInterrupt(v_dev, &remote_data_interrupt, receiver_id, ADAPTER_NO, 1, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
         print_sisci_error(&error, "SCIConnectDataInterrupt", true);
 
         char data[] = "OK!";
