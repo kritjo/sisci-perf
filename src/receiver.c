@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdint.h>
+#include <unistd.h>
 
 #include "sisci_api.h"
 #include "sisci_error.h"
@@ -61,11 +62,6 @@ static void poll(sci_desc_t v_dev, unsigned int local_node_id) {
     print_sisci_error(&error, "SCISetSegmentUnavailable", false);
 
     destroy_local_segment(&local);
-}
-
-static sci_callback_action_t interrupt(void *_arg, sci_local_interrupt_t _interrupt, sci_error_t _status) {
-    printf("Interrupt received\n");
-    return SCI_CALLBACK_CONTINUE;
 }
 
 static sci_callback_action_t data_interrupt(void *_arg,
@@ -140,9 +136,9 @@ int main(int argc, char *argv[]) {
                            &local_interrupt,
                            ADAPTER_NO,
                            &interrupt_no,
-                           interrupt,
+                           NO_CALLBACK,
                            NO_ARG,
-                           SCI_FLAG_USE_CALLBACK | SCI_FLAG_FIXED_INTNO,
+                           SCI_FLAG_FIXED_INTNO,
                            &error);
         print_sisci_error(&error, "SCICreateInterrupt", true);
 
@@ -168,17 +164,7 @@ int main(int argc, char *argv[]) {
 
         printf("Waiting for data interrupt with number %u\n", interrupt_no);
 
-        char data[10];
-        unsigned int length = 10;
-
-        SCIWaitForDataInterrupt(local_interrupt, data, &length, UINT32_MAX, NO_FLAGS, &error);
-        print_sisci_error(&error, "SCIWaitForDataInterrupt", true);
-
-        printf("Data in main: ");
-        for (unsigned int i = 0; i < length; i++) {
-            printf("%c", ((char *) data)[i]);
-        }
-        printf("\n");
+        sleep(60);
 
         SCIRemoveDataInterrupt(local_interrupt, NO_FLAGS, &error);
     } else {
