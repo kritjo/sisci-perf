@@ -59,6 +59,13 @@ static void poll(sci_desc_t v_dev, unsigned int local_node_id, bool multicast) {
     while (!rdma_buff->done);
     printf("RDMA Done! Word: %s\n", rdma_buff->word);
 
+    if (multicast) {
+        while (1) {
+            sleep(1);
+            printf("Word: %s\n", rdma_buff->word);
+        }
+    }
+
     SCISetSegmentUnavailable(local.segment, ADAPTER_NO, NO_FLAGS, &error);
     print_sisci_error(&error, "SCISetSegmentUnavailable", false);
 
