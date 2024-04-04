@@ -6,7 +6,7 @@
 #include "sisci_glob_defs.h"
 #include "error_util.h"
 
-void init_remote_connect(sci_desc_t v_dev, sci_remote_segment_t *remote_segment, unsigned int receiver_id) {
+void init_remote_connect(sci_desc_t v_dev, sci_remote_segment_t *remote_segment, unsigned int receiver_id, unsigned int flags) {
     int remote_reachable;
     size_t remote_segment_size;
     sci_error_t error;
@@ -24,7 +24,7 @@ void init_remote_connect(sci_desc_t v_dev, sci_remote_segment_t *remote_segment,
                       NO_CALLBACK,
                       NO_ARG,
                       SCI_INFINITE_TIMEOUT,
-                      NO_FLAGS,
+                      flags,
                       &error);
     print_sisci_error(&error, "SCIConnectSegment", true);
 

@@ -5,7 +5,7 @@
 #include "sisci_error.h"
 #include "sisci_arg_types.h"
 
-void init_remote_connect(sci_desc_t v_dev, sci_remote_segment_t *remote_segment, unsigned int receiver_id);
+void init_remote_connect(sci_desc_t v_dev, sci_remote_segment_t *remote_segment, unsigned int receiver_id, unsigned int flags);
 void destroy_remote_connect(sci_remote_segment_t remote_segment);
 void init_local_segment(
         sci_desc_t v_dev,

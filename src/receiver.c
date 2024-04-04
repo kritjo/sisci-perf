@@ -20,9 +20,10 @@
 #include "rma.h"
 
 void print_usage(char *prog_name) {
-    printf("usage: %s [-nid <opt> | -an <opt>] [--use-local-addr] <mode>\n", prog_name);
+    printf("usage: %s [-nid <opt> | -an <opt> | --multicast] [--use-local-addr] <mode>\n", prog_name);
     printf("    -nid <sender node id>         : Specify the sender using node id\n");
     printf("    -an <sender adapter name>     : Specify the sender using its adapter name\n");
+    printf("    --multicast                   : Reflective memory\n");
     printf("    --use-local-addr              : Do not create a local segment, use malloc\n");
     printf("    --request-channel             : Request a DMA channel\n");
     printf("    <mode>                        : Mode of operation\n");
@@ -36,14 +37,14 @@ void print_usage(char *prog_name) {
     exit(EXIT_FAILURE);
 }
 
-static void poll(sci_desc_t v_dev, unsigned int local_node_id) {
+static void poll(sci_desc_t v_dev, unsigned int local_node_id, bool multicast) {
     sci_error_t error;
     rdma_buff_t *rdma_buff;
     segment_local_args_t local = {0};
 
     local.segment_size = RECEIVER_SEG_SIZE;
 
-    init_local_segment(v_dev, &local, NO_CALLBACK, RECEIVER_SEG_ID, false, NO_FLAGS, NO_FLAGS);
+    init_local_segment(v_dev, &local, NO_CALLBACK, RECEIVER_SEG_ID, false, multicast ? SCI_FLAG_BROADCAST : NO_FLAGS, NO_FLAGS);
 
     memset(local.address, 0, RECEIVER_SEG_SIZE);
 
@@ -84,11 +85,13 @@ int main(int argc, char *argv[]) {
     unsigned int receiver_id = UNINITIALIZED_ARG;
     unsigned int use_local_addr = UNINITIALIZED_ARG;
     unsigned int req_chnl = UNINITIALIZED_ARG;
+    bool multicast = false;
     sci_remote_segment_t remote_segment = NULL;
     char *mode;
 
     if (parse_id_args(argc, argv, &receiver_id, &use_local_addr, &req_chnl, print_usage) != argc) print_usage(argv[0]);
     mode = argv[argc-1];
+    if (receiver_id == DIS_BROADCAST_NODEID_GROUP_ALL) multicast = true;
     if (strcmp(mode, "poll") != 0 &&
         strcmp(mode, "dma-global") != 0 &&
         strcmp(mode, "rma") != 0 &&
@@ -115,17 +118,17 @@ int main(int argc, char *argv[]) {
     print_sisci_error(&error, "SCIOpen", true);
 
     if (strcmp(mode, "poll") == 0) {
-        poll(v_dev, local_node_id);
+        poll(v_dev, local_node_id, multicast);
     } else if (strcmp(mode, "rma") == 0) {
-        init_remote_connect(v_dev, &remote_segment, receiver_id);
+        init_remote_connect(v_dev, &remote_segment, receiver_id, multicast ? SCI_FLAG_BROADCAST : NO_FLAGS);
         rma(remote_segment, false, false);
         destroy_remote_connect(remote_segment);
     } else if (strcmp(mode, "rma-check") == 0) {
-        init_remote_connect(v_dev, &remote_segment, receiver_id);
+        init_remote_connect(v_dev, &remote_segment, receiver_id, multicast ? SCI_FLAG_BROADCAST : NO_FLAGS);
         rma(remote_segment, true, false);
         destroy_remote_connect(remote_segment);
     } else if (strcmp(mode, "dma-global") == 0) {
-        init_remote_connect(v_dev, &remote_segment, receiver_id);
+        init_remote_connect(v_dev, &remote_segment, receiver_id, multicast ? SCI_FLAG_BROADCAST : NO_FLAGS);
         dma_transfer(v_dev, remote_segment, false, true, use_local_addr, false, req_chnl);
         destroy_remote_connect(remote_segment);
     } else if (strcmp(mode, "int-provider") == 0) {

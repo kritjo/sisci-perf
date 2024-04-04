@@ -70,6 +70,10 @@ int parse_id_args(int argc, char *argv[], unsigned int *rnid, unsigned int *use_
         else if (strcmp(argv[arg], "-an") == 0) {
             ARG_PARSE(rnid, &arg, argc, argv, parse_an, print_usage);
         }
+        else if (strcmp(argv[arg], "--multicast") == 0) {
+            ARG_INIT(rnid);
+            *rnid = DIS_BROADCAST_NODEID_GROUP_ALL;
+        }
         else if (strcmp(argv[arg], "--use-local-addr") == 0) {
             *use_local_addr = 1;
         }

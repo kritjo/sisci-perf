@@ -19,9 +19,10 @@
 #include "lib_rma.h"
 
 void print_usage(char *prog_name) {
-    printf("usage: %s (-nid <opt> | -an <opt>) [--use-local-addr] <mode>\n", prog_name);
+    printf("usage: %s (-nid <opt> | -an <opt> | --multicast]) [--use-local-addr] <mode>\n", prog_name);
     printf("    -nid <receiver node id>       : Specify the receiver using node id\n");
     printf("    -an <receiver adapter name>   : Specify the receiver using its adapter name\n");
+    printf("    --multicast                   : Use multicast to send to multiple receivers\n");
     printf("    --use-local-addr              : Do not create a local segment, use malloc\n");
     printf("    --request-channel             : Request a DMA channel\n");
     printf("    <mode>                        : Mode of operation\n");
@@ -46,11 +47,13 @@ int main(int argc, char *argv[]) {
     unsigned int receiver_id = UNINITIALIZED_ARG;
     unsigned int use_local_addr = UNINITIALIZED_ARG;
     unsigned int req_chnl = UNINITIALIZED_ARG;
+    bool multicast = false;
     unsigned int local_node_id;
     char *mode;
 
     if (parse_id_args(argc, argv, &receiver_id, &use_local_addr, &req_chnl, print_usage) != argc) print_usage(argv[0]);
     if (receiver_id == UNINITIALIZED_ARG) print_usage(argv[0]);
+    if (receiver_id == DIS_BROADCAST_NODEID_GROUP_ALL) multicast = true;
     mode = argv[argc-1];
     if (strcmp(mode, "dma-any")    != 0 &&
         strcmp(mode, "dma-sys")    != 0 &&
@@ -77,28 +80,28 @@ int main(int argc, char *argv[]) {
     bool use_globdma = strcmp(mode, "dma-global") == 0;
 
     if (strcmp(mode, "dma-any") == 0 || use_sysdma || use_globdma) {
-        init_remote_connect(v_dev, &remote_segment, receiver_id);
+        init_remote_connect(v_dev, &remote_segment, receiver_id, multicast ? SCI_FLAG_BROADCAST : NO_FLAGS);
         dma_transfer(v_dev, remote_segment, use_sysdma, use_globdma, use_local_addr, true, req_chnl);
         destroy_remote_connect(remote_segment);
     }
     else if (strcmp(mode, "dma-sys") == 0) {
         fprintf(stderr, "SYSDMA is experimental!\n");
-        init_remote_connect(v_dev, &remote_segment, receiver_id);
+        init_remote_connect(v_dev, &remote_segment, receiver_id, multicast ? SCI_FLAG_BROADCAST : NO_FLAGS);
         dma_transfer(v_dev, remote_segment, true, false, use_local_addr, true, req_chnl);
         destroy_remote_connect(remote_segment);
     }
     else if (strcmp(mode, "dma-global") == 0) {
-        init_remote_connect(v_dev, &remote_segment, receiver_id);
+        init_remote_connect(v_dev, &remote_segment, receiver_id, multicast ? SCI_FLAG_BROADCAST : NO_FLAGS);
         dma_transfer(v_dev, remote_segment, false, true, use_local_addr, true, req_chnl);
         destroy_remote_connect(remote_segment);
     }
     else if (strcmp(mode, "rma") == 0) {
-        init_remote_connect(v_dev, &remote_segment, receiver_id);
+        init_remote_connect(v_dev, &remote_segment, receiver_id, multicast ? SCI_FLAG_BROADCAST : NO_FLAGS);
         rma(remote_segment, false, true);
         destroy_remote_connect(remote_segment);
     }
     else if (strcmp(mode, "rma-check") == 0) {
-        init_remote_connect(v_dev, &remote_segment, receiver_id);
+        init_remote_connect(v_dev, &remote_segment, receiver_id, multicast ? SCI_FLAG_BROADCAST : NO_FLAGS);
         rma(remote_segment, true, true);
         destroy_remote_connect(remote_segment);
     }
@@ -106,7 +109,7 @@ int main(int argc, char *argv[]) {
         segment_local_args_t local = {0};
         local.segment_size = RECEIVER_SEG_SIZE;
 
-        init_local_segment(v_dev, &local, NO_CALLBACK, RECEIVER_SEG_ID, false, NO_FLAGS, NO_FLAGS);
+        init_local_segment(v_dev, &local, NO_CALLBACK, RECEIVER_SEG_ID, false, multicast ? SCI_FLAG_BROADCAST : NO_FLAGS, NO_FLAGS);
 
         memset(local.address, 0, RECEIVER_SEG_SIZE);
 
