@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
 
         printf("Waiting for interrupt with number %u\n", interrupt_no);
 
-        SCIWaitForInterrupt(local_interrupt, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
+        SCIWaitForInterrupt(local_interrupt, UINT32_MAX, NO_FLAGS, &error);
         print_sisci_error(&error, "SCIWaitForInterrupt", true);
 
         SCIRemoveInterrupt(local_interrupt, NO_FLAGS, &error);
@@ -170,7 +170,7 @@ int main(int argc, char *argv[]) {
         char data[10];
         unsigned int length = 10;
 
-        SCIWaitForDataInterrupt(local_interrupt, data, &length, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
+        SCIWaitForDataInterrupt(local_interrupt, data, &length, UINT32_MAX, NO_FLAGS, &error);
         print_sisci_error(&error, "SCIWaitForDataInterrupt", true);
 
         printf("Data in main: ");
