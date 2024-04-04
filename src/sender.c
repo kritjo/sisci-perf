@@ -31,6 +31,8 @@ void print_usage(char *prog_name) {
     printf("           rma                    : Map remote segment, and write to it directly\n");
     printf("           rma-check              : Map remote segment, and write to it directly, then flush and check\n");
     printf("           provider               : Provide a segment for the receiver to read\n");
+    printf("           int                    : Invoke an interrupt\n");
+    printf("           dint                   : Invoke a data interrupt\n");
 
     exit(EXIT_FAILURE);
 }
@@ -55,7 +57,9 @@ int main(int argc, char *argv[]) {
         strcmp(mode, "dma-global") != 0 &&
         strcmp(mode, "rma")        != 0 &&
         strcmp(mode, "rma-check")  != 0 &&
-        strcmp(mode, "provider")   != 0) print_usage(argv[0]);
+        strcmp(mode, "provider")   != 0 &&
+        strcmp(mode, "int")        != 0 &&
+        strcmp(mode, "dint")       != 0) print_usage(argv[0]);
 
     SCIInitialize(NO_FLAGS, &error);
     print_sisci_error(&error, "SCIInitialize", true);
@@ -123,6 +127,36 @@ int main(int argc, char *argv[]) {
         }
 
         destroy_local_segment(&local);
+    }
+    else if (strcmp(mode, "int") == 0) {
+        sci_remote_interrupt_t remote_interrupt = NULL;
+
+        SCIConnectInterrupt(v_dev, &remote_interrupt, receiver_id, ADAPTER_NO, 0, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
+        print_sisci_error(&error, "SCIConnectInterrupt", true);
+
+        SCITriggerInterrupt(remote_interrupt, NO_FLAGS, &error);
+        print_sisci_error(&error, "SCITriggerInterrupt", true);
+
+        SCIDisconnectInterrupt(remote_interrupt, NO_FLAGS, &error);
+        print_sisci_error(&error, "SCIDisconnectInterrupt", false);
+
+        printf("Interrupt sent!\n");
+    }
+    else if (strcmp(mode, "dint") == 0) {
+        sci_remote_data_interrupt_t remote_data_interrupt = NULL;
+
+        SCIConnectDataInterrupt(v_dev, &remote_data_interrupt, receiver_id, ADAPTER_NO, 0, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
+        print_sisci_error(&error, "SCIConnectDataInterrupt", true);
+
+        char data[] = "OK!";
+
+        SCITriggerDataInterrupt(remote_data_interrupt, data, sizeof(data), NO_FLAGS, &error);
+        print_sisci_error(&error, "SCITriggerDataInterrupt", true);
+
+        SCIDisconnectDataInterrupt(remote_data_interrupt, NO_FLAGS, &error);
+        print_sisci_error(&error, "SCIDisconnectDataInterrupt", false);
+
+        printf("Data interrupt sent!\n");
     }
     else {
         fprintf(stderr, "Invalid mode\n");
