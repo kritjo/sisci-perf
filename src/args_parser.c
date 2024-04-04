@@ -78,6 +78,7 @@ int parse_id_args(int argc, char *argv[], unsigned int *rnid, unsigned int *use_
             *use_local_addr = 1;
         }
         else if (strcmp(argv[arg], "--request-channel") == 0) {
+            fprintf(stderr, "Requesting DMA channel, this is experimental!\n");
             *req_chnl = 1;
         }
         else if (arg == argc-1) {
