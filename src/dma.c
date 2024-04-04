@@ -21,13 +21,15 @@ void dma_transfer(sci_desc_t v_dev,
                   bool use_globdma,
                   bool use_local_addr,
                   bool send,
-                  bool request_channel) {
+                  bool request_channel,
+                  bool multicast) {
     printf("Using local address: %d\n", use_local_addr);
     DEBUG_PRINT("Sending DMA segment using ");
     if (use_sysdma) DEBUG_PRINT("System DMA\n");
     else if (use_globdma) DEBUG_PRINT("Global DMA\n");
     else DEBUG_PRINT("Any DMA\n");
     unsigned int flags = use_sysdma ? SCI_FLAG_DMA_SYSDMA : use_globdma ? SCI_FLAG_DMA_GLOBAL : NO_FLAGS;
+    if (multicast) flags |= SCI_FLAG_BROADCAST;
 
     sci_error_t error;
     rdma_buff_t* local_map_address;
@@ -44,7 +46,7 @@ void dma_transfer(sci_desc_t v_dev,
     segment_local_args_t local = {0};
     local.segment_size = sizeof(rdma_buff_t);
 
-    init_dma(v_dev, &dma_queue, &remote, flags);
+    init_dma(v_dev, &dma_queue, &remote, use_globdma);
 
     printf("Requesting DMA channel: %d\n", request_channel);
 
@@ -103,5 +105,5 @@ void dma_transfer(sci_desc_t v_dev,
         destroy_dma_channel(dma_channel);
     }
 
-    destroy_dma(dma_queue, remote.map, flags);
+    destroy_dma(dma_queue, remote.map, use_globdma);
 }
