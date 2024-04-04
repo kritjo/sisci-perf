@@ -98,7 +98,12 @@ int main(int argc, char *argv[]) {
         strcmp(mode, "rma-check") != 0 &&
         strcmp(mode, "int-provider") != 0 &&
         strcmp(mode, "dint-provider") != 0) print_usage(argv[0]);
-    if (strcmp(mode, "poll") != 0 && receiver_id == UNINITIALIZED_ARG) print_usage(argv[0]);
+    if ((
+            strcmp(mode, "dma-global") == 0 ||
+            strcmp(mode, "rma") == 0 ||
+            strcmp(mode, "rma-check") == 0
+        ) &&
+        receiver_id == UNINITIALIZED_ARG) print_usage(argv[0]);
 
     SCIInitialize(NO_FLAGS, &error);
     print_sisci_error(&error, "SCIInitialize", true);
