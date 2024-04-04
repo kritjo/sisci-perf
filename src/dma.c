@@ -45,6 +45,8 @@ void dma_transfer(sci_desc_t v_dev,
 
     init_dma(v_dev, &dma_queue, &remote, flags);
 
+    printf("Requesting DMA channel: %d\n", request_channel);
+
     if (request_channel) {
         init_dma_channel(v_dev, &dma_channel, use_sysdma ? SCI_DMA_TYPE_SYSTEM : use_globdma ? SCI_DMA_TYPE_GLOBAL : SCI_DMA_TYPE_DONTCARE, dma_queue);
     }
