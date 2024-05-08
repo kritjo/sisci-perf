@@ -42,3 +42,8 @@ include/divisible/*
 .idea/
 
 build/**/*
+
+## Callbacks
+
+**/.callback.*
+!**/.callback.*.template
