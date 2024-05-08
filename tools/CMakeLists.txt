@@ -1,2 +1,3 @@
 add_executable(print_node_id print_node_id.c)
 target_link_libraries(print_node_id PRIVATE SISCIGlobDefs)
+target_link_libraries(print_node_id PRIVATE sisci)
