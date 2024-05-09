@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#define DELIVERY_INTERRUPT_NO 0
+#define DELIVERY_INTERRUPT_NO 9573
 
 typedef enum {
     ORDER_TYPE_SEGMENT,
