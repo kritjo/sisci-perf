@@ -1,0 +1,3 @@
+add_executable(initiator_main initiator_main.c)
+target_link_libraries(initiator_main PRIVATE SISCIGlobDefs)
+target_link_libraries(initiator_main PRIVATE sisci)
