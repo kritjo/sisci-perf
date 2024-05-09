@@ -1,5 +1,3 @@
-
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -19,6 +17,7 @@ int main(int argc, char *argv[]) {
     unsigned int order_interrupt_no;
     sci_local_data_interrupt_t order_interrupt;
     sci_remote_data_interrupt_t delivery_interrupt;
+    sci_error_t error;
 
     long_tmp = strtol(argv[1], &endptr, 10);
     if (*argv[1] == '\0' || *endptr != '\0') {
@@ -39,7 +38,10 @@ int main(int argc, char *argv[]) {
 
     SEOE(SCICreateDataInterrupt, sd, &order_interrupt, ADAPTER_NO, &order_interrupt_no, NO_CALLBACK, NO_ARG, NO_FLAGS);
 
-    SEOE(SCIConnectDataInterrupt, sd, &delivery_interrupt, initiator_id, ADAPTER_NO, order_interrupt_no, SCI_INFINITE_TIMEOUT, NO_FLAGS);
+    do {
+        SCIConnectDataInterrupt( sd, &delivery_interrupt, initiator_id, ADAPTER_NO, order_interrupt_no,
+             SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
+    } while (error != SCI_ERR_OK);
 
     SEOE(SCIRemoveDataInterrupt, order_interrupt, NO_FLAGS);
 
