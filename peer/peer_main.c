@@ -278,6 +278,20 @@ int main(int argc, char *argv[]) {
 
     block_for_termination_signal();
 
+    for (unsigned int i = 0; i < ordered_segments_count; i++) {
+        SEOE(SCIRemoveSegment, ordered_segments[i], NO_FLAGS);
+    }
+
+    for (unsigned int i = 0; i < ordered_interrupts_count; i++) {
+        SEOE(SCIRemoveInterrupt, ordered_interrupts[i], NO_FLAGS);
+    }
+
+    for (unsigned int i = 0; i < ordered_data_interrupts_count; i++) {
+        SEOE(SCIRemoveDataInterrupt, ordered_data_interrupts[i], NO_FLAGS);
+    }
+
+    SEOE(SCIDisconnectDataInterrupt, delivery_interrupt, NO_FLAGS);
+
     SEOE(SCIRemoveDataInterrupt, order_interrupt, NO_FLAGS);
 
     SEOE(SCIClose, sd, NO_FLAGS);
