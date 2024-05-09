@@ -131,7 +131,7 @@ int main(int argc , char *argv[]) {
          &delivery_interrupt_no,
          delivery_callback,
          NO_ARG,
-         SCI_FLAG_FIXED_INTNO);
+         SCI_FLAG_FIXED_INTNO | SCI_FLAG_USE_CALLBACK);
 
     sa.sa_handler = cleanup_signal_handler;
     sa.sa_flags = 0;
