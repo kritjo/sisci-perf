@@ -1,3 +1,5 @@
+#!/bin/bash
+
 source .callback.build
 
 mkdir -p build

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo "Building the project"
 ./build.sh
 
