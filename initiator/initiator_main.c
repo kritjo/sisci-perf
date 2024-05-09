@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include "protocol.h"
 #include "sisci_api.h"
 #include "sisci_types.h"
@@ -17,50 +18,120 @@ static uint32_t order_init_interrupts_received = 0;
 
 static sci_remote_data_interrupt_t *order_interrupts;
 static sci_desc_t sd;
+static sci_local_data_interrupt_t delivery_interrupt;
 
 
 static void print_usage(char *argv[]) {
     printf("Usage: ./%s <number of peers> <peer id> <peer id> <peer id> ...\n", argv[0]);
 }
 
-static sci_callback_action_t delivery_callback(__attribute__((unused)) void *_arg,
-                                               __attribute__((unused)) sci_local_data_interrupt_t _interrupt,
-                                               void *data,
-                                               unsigned int length,
-                                               sci_error_t status) {
-    if (status != SCI_ERR_OK) {
-        fprintf(stderr, "Received error SCI status from delivery: %s\n", SCIGetErrorString(status));
-        kill(main_pid, SIGTERM);
+static volatile sig_atomic_t timer_expired = 0;
+static unsigned long long operations = 0;
+
+void timer_handler(int sig) {
+    printf("Timer expired\n");
+    timer_expired = 1;
+}
+
+static void write_pio(volatile char *data) {
+    while (!timer_expired) {
+        for (uint32_t i = 0; i < 4096; i++) {
+            data[i] = 0x01;
+            operations++;
+        }
     }
+}
 
-    if (length != sizeof(delivery_t)) {
-        fprintf(stderr, "Received invalid length %d from delivery\n", length);
-        kill(main_pid, SIGTERM);
-    }
-
-    delivery_t delivery = *(delivery_t *) data;
-
-    switch (delivery.status) {
-        case STATUS_TYPE_PROTOCOL:
-            // Only known type is ORDER_TYPE_DATA_INTERRUPT for protocol messages
-            if (delivery.commandType != COMMAND_TYPE_CREATE && delivery.deliveryType != ORDER_TYPE_DATA_INTERRUPT) {
-                fprintf(stderr, "Received invalid command type %d\n", delivery.commandType);
+static void read_pio(volatile char *data) {
+    while (!timer_expired) {
+        for (uint32_t i = 0; i < 4096; i++) {
+            if (data[i] != 0x01) {
+                fprintf(stderr, "Data mismatch at index %d: %d\n", i, data[i]);
                 kill(main_pid, SIGTERM);
             }
+            operations++;
+        }
+    }
+}
 
-            SEOE(SCIConnectDataInterrupt, sd, &order_interrupts[order_init_interrupts_received++], delivery.nodeId, ADAPTER_NO, delivery.id, SCI_INFINITE_TIMEOUT, NO_FLAGS);
-            printf("Connected to peer %d\n", delivery.nodeId);
+static void run_single_segment_experiment_pio() {
+    // Order one segment from one peer
+    sci_remote_segment_t segment;
+    sci_map_t map;
+    order_t order;
+    delivery_t delivery;
+    unsigned int size;
+    volatile char *data;
+    sci_error_t error;
+    struct sigaction sa = {0};
+    struct itimerval timer = {0};
 
-            break;
-        case STATUS_TYPE_SUCCESS:
-            break;
-        case STATUS_TYPE_FAILURE:
-            fprintf(stderr, "Received failure status\n");
-            kill(main_pid, SIGTERM);
-            break;
+    order.commandType = COMMAND_TYPE_CREATE;
+    order.orderType = ORDER_TYPE_SEGMENT;
+    order.size = 4096;
+
+    SEOE(SCITriggerDataInterrupt, order_interrupts[0], &order, sizeof(order), NO_FLAGS);
+
+    size = sizeof(delivery);
+
+    SEOE(SCIWaitForDataInterrupt, delivery_interrupt, &delivery, &size, SCI_INFINITE_TIMEOUT, NO_FLAGS);
+
+    if (delivery.commandType != COMMAND_TYPE_CREATE || delivery.deliveryType != ORDER_TYPE_SEGMENT || delivery.status != STATUS_TYPE_SUCCESS) {
+        fprintf(stderr, "Received invalid command type %d\n", delivery.commandType);
+        kill(main_pid, SIGTERM);
     }
 
-    return SCI_CALLBACK_CONTINUE;
+    SEOE(SCIConnectSegment, sd, &segment, delivery.nodeId, delivery.id, ADAPTER_NO, NO_CALLBACK, NO_ARG, SCI_INFINITE_TIMEOUT, NO_FLAGS);
+
+    data = SCIMapRemoteSegment(segment, &map, NO_OFFSET, 4096, NO_SUGGESTED_ADDRESS, NO_FLAGS, &error);
+    if (error != SCI_ERR_OK) {
+        fprintf(stderr, "Failed to map segment: %d\n", error);
+        kill(main_pid, SIGTERM);
+    }
+
+    sa.sa_handler = &timer_handler;
+    sigaction(SIGALRM, &sa, NULL);
+
+    timer.it_value.tv_sec = 2;
+
+    printf("Starting PIO write for 100 seconds\n");
+    operations = 0;
+    setitimer(ITIMER_REAL, &timer, NULL);
+    write_pio(data);
+
+    timer_expired = 0;
+
+    printf("Starting PIO read for 100 seconds\n");
+    operations = 0;
+    setitimer(ITIMER_REAL, &timer, NULL);
+    read_pio(data);
+
+    SEOE(SCIUnmapSegment, map, NO_FLAGS);
+
+    SEOE(SCIDisconnectSegment, segment, NO_FLAGS);
+
+    order.commandType = COMMAND_TYPE_DESTROY;
+
+    SEOE(SCITriggerDataInterrupt, order_interrupts[0], &order, sizeof(order), NO_FLAGS);
+
+    size = sizeof(delivery);
+
+    SEOE(SCIWaitForDataInterrupt, delivery_interrupt, &delivery, &size, SCI_INFINITE_TIMEOUT, NO_FLAGS);
+
+    if (delivery.commandType != COMMAND_TYPE_DESTROY || delivery.deliveryType != ORDER_TYPE_SEGMENT || delivery.status != STATUS_TYPE_SUCCESS) {
+        fprintf(stderr, "Received invalid command type %d\n", delivery.commandType);
+        kill(main_pid, SIGTERM);
+    }
+
+    printf("Segment destroyed\n");
+}
+
+static void run_single_segment_experiment() {
+    run_single_segment_experiment_pio();
+
+    // Write 4 bytes to the peer for 100 seconds using DMA, measuring the number of operations executed
+
+    // Read 4 bytes from the peer for 100 seconds using DMA, measuring the number of operations executed
 }
 
 int main(int argc , char *argv[]) {
@@ -68,10 +139,12 @@ int main(int argc , char *argv[]) {
     char *endptr;
 
     unsigned int delivery_interrupt_no = DELIVERY_INTERRUPT_NO;
-    static sci_local_data_interrupt_t delivery_interrupt;
-    static unsigned int *peer_ids;
+    unsigned int *peer_ids;
+    unsigned int length;
 
     main_pid = getpid();
+
+    delivery_t delivery;
 
     if (argc < 3) {
         print_usage(argv);
@@ -124,9 +197,26 @@ int main(int argc , char *argv[]) {
          &delivery_interrupt,
          ADAPTER_NO,
          &delivery_interrupt_no,
-         delivery_callback,
+         NO_CALLBACK,
          NO_ARG,
-         SCI_FLAG_FIXED_INTNO | SCI_FLAG_USE_CALLBACK);
+         SCI_FLAG_FIXED_INTNO);
+
+    while (order_init_interrupts_received < num_peers) {
+        length = sizeof(delivery);
+        SEOE(SCIWaitForDataInterrupt, delivery_interrupt, &delivery, &length, SCI_INFINITE_TIMEOUT, NO_FLAGS);
+
+        if (delivery.commandType != COMMAND_TYPE_CREATE && delivery.deliveryType != ORDER_TYPE_DATA_INTERRUPT) {
+            fprintf(stderr, "Received invalid command type %d\n", delivery.commandType);
+            kill(main_pid, SIGTERM);
+        }
+
+        SEOE(SCIConnectDataInterrupt, sd, &order_interrupts[order_init_interrupts_received++], delivery.nodeId, ADAPTER_NO, delivery.id, SCI_INFINITE_TIMEOUT, NO_FLAGS);
+        printf("Connected to peer %d\n", delivery.nodeId);
+    }
+
+    printf("All peers connected\n");
+
+    run_single_segment_experiment();
 
     block_for_termination_signal();
 
