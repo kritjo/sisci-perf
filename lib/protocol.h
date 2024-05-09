@@ -38,7 +38,7 @@ typedef struct {
     unsigned int id;
     unsigned int nodeId;
 
-    char message[80];
+    char message[40];
 } delivery_t;
 
 #endif //SISCI_PERF_PROTOCOL_H
