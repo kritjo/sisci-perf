@@ -13,6 +13,9 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Usage: %s <hostname>\n", argv[0]);
     }
 
+    SEOE(SCIInitialize, NO_FLAGS);
+
+
     SEOE(SCIGetNodeIdByAdapterName, argv[1], &nodelist, &adapter_type, NO_FLAGS);
 
     if (nodelist[0] != 0) {
@@ -28,4 +31,6 @@ int main(int argc, char *argv[]) {
     }
 
     printf("%u\n", nodeId);
+
+    SCITerminate();
 }
