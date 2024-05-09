@@ -8,21 +8,22 @@
 #include "sisci_api.h"
 #include "sisci_types.h"
 #include "sisci_glob_defs.h"
+#include "block_for_termination_signal.h"
 
 static pid_t main_pid;
-static uint32_t order_interrupts_received = 0;
+
+uint32_t num_peers;
+static uint32_t order_init_interrupts_received = 0;
+
 static sci_remote_data_interrupt_t *order_interrupts;
 static sci_desc_t sd;
 
-static volatile sig_atomic_t signal_received = 0;
 
 static void print_usage(char *argv[]) {
     printf("Usage: ./%s <number of peers> <peer id> <peer id> <peer id> ...\n", argv[0]);
 }
 
-static void cleanup_signal_handler(int sig) {
-    signal_received = sig;
-}
+
 
 static sci_callback_action_t delivery_callback(void *_arg,
                                                sci_local_data_interrupt_t _interrupt,
@@ -49,8 +50,8 @@ static sci_callback_action_t delivery_callback(void *_arg,
                 kill(main_pid, SIGTERM);
             }
 
-            SEOE(SCIConnectDataInterrupt, sd, &order_interrupts[order_interrupts_received++], delivery.nodeId, ADAPTER_NO, delivery.id, SCI_INFINITE_TIMEOUT, NO_FLAGS);
-            printf("Connected to peer %d's order interrupt\n", delivery.nodeId);
+            SEOE(SCIConnectDataInterrupt, sd, &order_interrupts[order_init_interrupts_received++], delivery.nodeId, ADAPTER_NO, delivery.id, SCI_INFINITE_TIMEOUT, NO_FLAGS);
+            printf("Connected to peer %d\n", delivery.nodeId);
 
             break;
         case STATUS_TYPE_SUCCESS:
@@ -65,12 +66,8 @@ static sci_callback_action_t delivery_callback(void *_arg,
 }
 
 int main(int argc , char *argv[]) {
-    uint32_t num_peers;
     long long_tmp;
     char *endptr;
-
-    struct sigaction sa;
-    sigset_t mask, oldmask;
 
     unsigned int delivery_interrupt_no = DELIVERY_INTERRUPT_NO;
     static sci_local_data_interrupt_t delivery_interrupt;
@@ -133,29 +130,11 @@ int main(int argc , char *argv[]) {
          NO_ARG,
          SCI_FLAG_FIXED_INTNO | SCI_FLAG_USE_CALLBACK);
 
-    sa.sa_handler = cleanup_signal_handler;
-    sa.sa_flags = 0;
-
-    sigaction(SIGINT, &sa, NULL);
-    sigaction(SIGTERM, &sa, NULL);
-    sigaction(SIGTSTP, &sa, NULL);
-
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGINT);
-    sigaddset(&mask, SIGTERM);
-    sigaddset(&mask, SIGTSTP);
-
-    sigprocmask(SIG_BLOCK, &mask, &oldmask);
-
-    while (!signal_received) {
-        sigsuspend(&oldmask);
-    }
-
-    sigprocmask(SIG_UNBLOCK, &mask, NULL);
+    block_for_termination_signal();
 
     SEOE(SCIRemoveDataInterrupt, delivery_interrupt, NO_FLAGS);
 
-    for (uint32_t i = 0; i < order_interrupts_received; i++) {
+    for (uint32_t i = 0; i < order_init_interrupts_received; i++) {
         SEOE(SCIDisconnectDataInterrupt, order_interrupts[i], NO_FLAGS);
     }
 
