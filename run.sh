@@ -38,8 +38,14 @@ done
 
 ./build/initiator/initiator_main $PEER_COUNT ${PEER_NODE_IDS[@]} &
 
-for PEER_HOSTNAME in ${PEER_HOSTNAMES[@]}
+for ITER in $(seq 0 $(expr $PEER_COUNT - 1))
 do
-    echo "Starting peer on $PEER_HOSTNAME"
-    ssh $PEER_HOSTNAME "cd $PWD && ./build/peer/peer_main $NODE_ID $PEER_COUNT ${PEER_NODE_IDS[@]}"
+    echo "Starting peer on ${PEER_HOSTNAMES[$ITER]}"
+    ssh ${PEER_HOSTNAMES[$ITER]} "cd $PWD && ./build/peer/peer_main $NODE_ID $PEER_COUNT ${PEER_NODE_IDS[@]}" &
+    PEER_PIDS[$ITER]=$!
 done
+
+# If we get a signal, kill all the peers
+trap 'kill ${PEER_PIDS[@]}' SIGINT
+
+wait ${PEER_PIDS[@]}
