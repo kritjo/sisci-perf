@@ -22,7 +22,10 @@ typedef struct {
     command_type_t commandType;
 
     size_t size;
+
+    unsigned int id;
 } order_t;
+
 typedef enum {
     STATUS_TYPE_PROTOCOL, // Meta status type
     STATUS_TYPE_SUCCESS,
