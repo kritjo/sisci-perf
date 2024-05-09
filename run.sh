@@ -41,7 +41,7 @@ INITIATOR_PID=$!
 
 for ITER in $(seq 0 $(expr $PEER_COUNT - 1))
 do
-    stdbuf -oL -eL ssh ${PEER_HOSTNAMES[$ITER]} cd $PWD && ./build/peer/peer_main $NODE_ID &
+    stdbuf -oL -eL ssh ${PEER_HOSTNAMES[$ITER]} "cd $PWD && stdbuf -oL -eL ./build/peer/peer_main $NODE_ID" &
     PEER_PIDS[$ITER]=$!
 done
 
