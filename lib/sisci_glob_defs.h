@@ -12,10 +12,10 @@
 // SISCI Exit On Error -- SEOE
 #define SEOE(func, ...) \
 do { \
-    sci_error_t error; \
-    func(__VA_ARGS__, &error); \
-    if (error != SCI_ERR_OK) { \
-        fprintf(stderr, "%s failed: %s\n", #func, SCIGetErrorString(error)); \
+    sci_error_t seoe_error; \
+    func(__VA_ARGS__, &seoe_error); \
+    if (seoe_error != SCI_ERR_OK) { \
+        fprintf(stderr, "%s failed: %s\n", #func, SCIGetErrorString(seoe_error)); \
         exit(EXIT_FAILURE); \
     } \
 } while (0)
