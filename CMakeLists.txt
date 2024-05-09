@@ -5,7 +5,7 @@ project(sisci-perf)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -I/opt/DIS/include/ -I/opt/DIS/include/dis/ -g -D_REENTRANT")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -I/opt/DIS/include/ -I/opt/DIS/include/dis/ -g -D_REENTRANT")
 
 # Set the path to the sisci library
 set(SISCI_LIB_DIR /opt/DIS/lib64)
