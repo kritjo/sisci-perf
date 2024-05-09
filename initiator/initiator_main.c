@@ -23,8 +23,6 @@ static void print_usage(char *argv[]) {
     printf("Usage: ./%s <number of peers> <peer id> <peer id> <peer id> ...\n", argv[0]);
 }
 
-
-
 static sci_callback_action_t delivery_callback(__attribute__((unused)) void *_arg,
                                                __attribute__((unused)) sci_local_data_interrupt_t _interrupt,
                                                void *data,
@@ -32,12 +30,12 @@ static sci_callback_action_t delivery_callback(__attribute__((unused)) void *_ar
                                                sci_error_t status) {
     if (status != SCI_ERR_OK) {
         fprintf(stderr, "Received error SCI status from delivery: %s\n", SCIGetErrorString(status));
-        kill(main_pid, SIGUSR1);
+        kill(main_pid, SIGTERM);
     }
 
     if (length != sizeof(delivery_t)) {
         fprintf(stderr, "Received invalid length %d from delivery\n", length);
-        kill(main_pid, SIGUSR1);
+        kill(main_pid, SIGTERM);
     }
 
     delivery_t delivery = *(delivery_t *) data;
