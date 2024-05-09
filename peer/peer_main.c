@@ -154,6 +154,7 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 free(tmp_ordered_segments);
                 ordered_segments_count--;
 
+                delivery_notification(STATUS_TYPE_SUCCESS, COMMAND_TYPE_DESTROY, ORDER_TYPE_SEGMENT, order->id);
                 break;
             case ORDER_TYPE_INTERRUPT:
                 new_ordered_interrupts = (typeof(new_ordered_interrupts)) malloc((ordered_interrupts_count - 1) * sizeof(*new_ordered_interrupts)); // NOLINT(*-sizeof-expression)
@@ -184,6 +185,7 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 ordered_interrupt_nos = new_ordered_interrupt_nos;
                 free(tmp_ordered_interrupt_nos);
 
+                delivery_notification(STATUS_TYPE_SUCCESS, COMMAND_TYPE_DESTROY, ORDER_TYPE_INTERRUPT, order->id);
                 break;
             case ORDER_TYPE_DATA_INTERRUPT:
                 new_ordered_data_interrupts = (typeof(new_ordered_data_interrupts)) malloc((ordered_data_interrupts_count - 1) * sizeof(*new_ordered_data_interrupts)); // NOLINT(*-sizeof-expression)
@@ -214,6 +216,7 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 ordered_data_interrupt_nos = new_ordered_data_interrupt_nos;
                 free(tmp_ordered_data_interrupt_nos);
 
+                delivery_notification(STATUS_TYPE_SUCCESS, COMMAND_TYPE_DESTROY, ORDER_TYPE_DATA_INTERRUPT, order->id);
                 break;
         }
     } else {
