@@ -8,10 +8,29 @@ NODE_ID=$(./build/tools/print_node_id)
 echo "The current node (initiator) has node id: |$NODE_ID|"
 
 if [ "$PEER_HOSTNAME" == "" ]; then
-    echo "PEER_HOSTNAME is not set. Enter the peer hostname:"
+    echo "PEER_HOSTNAME is not set. Enter at least one peer hostname, multiple hostnames can be separated by space:"
     read PEER_HOSTNAME
 fi
 
-PEER_NODE_ID=$(./build/tools/print_node_id_from_hostname $PEER_HOSTNAME)
+PEER_HOSTNAMES=($(echo "$PEER_HOSTNAME" | tr ' ' '\n'))
 
-echo "The peer node has node id: |$PEER_NODE_ID|"
+PEER_COUNT=${#PEER_HOSTNAMES[@]}
+
+for ITER in $(seq 0 $(expr $PEER_COUNT - 1))
+do
+    PEER_NODE_IDS[$ITER]=$(./build/tools/print_node_id_from_hostname ${PEER_HOSTNAMES[$ITER]})
+done
+
+for ITER in $(seq 0 $(expr $PEER_COUNT - 1))
+do
+    echo "The peer node with hostname |${PEER_HOSTNAMES[$ITER]}| has node id: |${PEER_NODE_IDS[$ITER]}|"
+    ITER=$(expr $ITER + 1)
+done
+
+./build/initiator/initiator_main $PEER_COUNT ${PEER_NODE_IDS[@]} &
+
+for PEER_HOSTNAME in ${PEER_HOSTNAMES[@]}
+do
+    echo "Starting peer on $PEER_HOSTNAME"
+    ssh $PEER_HOSTNAME "cd $PWD && ./build/peer/peer_main $NODE_ID $PEER_COUNT ${PEER_NODE_IDS[@]}"
+done
