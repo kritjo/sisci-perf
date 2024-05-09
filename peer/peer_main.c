@@ -1,17 +1,27 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#include <signal.h>
 #include "sisci_glob_defs.h"
 #include "sisci_api.h"
 
+static volatile sig_atomic_t signal_received = 0;
+
 void print_usage(char *argv[]) {
     fprintf(stderr, "Usage: %s <initiator_id>\n", argv[0]);
+}
+
+static void cleanup_signal_handler(int sig) {
+    signal_received = sig;
 }
 
 int main(int argc, char *argv[]) {
     unsigned int initiator_id;
     long long_tmp;
     char *endptr;
+
+    struct sigaction sa;
+    sigset_t mask, oldmask;
 
     sci_desc_t sd;
     unsigned int order_interrupt_no;
@@ -42,6 +52,26 @@ int main(int argc, char *argv[]) {
         SCIConnectDataInterrupt( sd, &delivery_interrupt, initiator_id, ADAPTER_NO, order_interrupt_no,
              SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
     } while (error != SCI_ERR_OK);
+
+    sa.sa_handler = cleanup_signal_handler;
+    sa.sa_flags = 0;
+
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+    sigaction(SIGTSTP, &sa, NULL);
+
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGINT);
+    sigaddset(&mask, SIGTERM);
+    sigaddset(&mask, SIGTSTP);
+
+    sigprocmask(SIG_BLOCK, &mask, &oldmask);
+
+    while (!signal_received) {
+        sigsuspend(&oldmask);
+    }
+
+    sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
     SEOE(SCIRemoveDataInterrupt, order_interrupt, NO_FLAGS);
 

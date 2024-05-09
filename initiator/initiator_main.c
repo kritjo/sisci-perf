@@ -14,8 +14,14 @@ static uint32_t order_interrupts_received = 0;
 static sci_remote_data_interrupt_t *order_interrupts;
 static sci_desc_t sd;
 
+static volatile sig_atomic_t signal_received = 0;
+
 static void print_usage(char *argv[]) {
     printf("Usage: ./%s <number of peers> <peer id> <peer id> <peer id> ...\n", argv[0]);
+}
+
+static void cleanup_signal_handler(int sig) {
+    signal_received = sig;
 }
 
 static sci_callback_action_t delivery_callback(void *_arg,
@@ -40,7 +46,7 @@ static sci_callback_action_t delivery_callback(void *_arg,
             // Only known type is ORDER_TYPE_DATA_INTERRUPT for protocol messages
             if (delivery.commandType != COMMAND_TYPE_CREATE && delivery.deliveryType != ORDER_TYPE_DATA_INTERRUPT) {
                 fprintf(stderr, "Received invalid command type %d\n", delivery.commandType);
-                kill(main_pid, SIGUSR1);
+                kill(main_pid, SIGTERM);
             }
 
             SEOE(SCIConnectDataInterrupt, sd, &order_interrupts[order_interrupts_received++], delivery.nodeId, ADAPTER_NO, delivery.id, SCI_INFINITE_TIMEOUT, NO_FLAGS);
@@ -51,7 +57,7 @@ static sci_callback_action_t delivery_callback(void *_arg,
             break;
         case STATUS_TYPE_FAILURE:
             fprintf(stderr, "Received failure status\n");
-            kill(main_pid, SIGUSR1);
+            kill(main_pid, SIGTERM);
             break;
     }
 
@@ -60,15 +66,15 @@ static sci_callback_action_t delivery_callback(void *_arg,
 
 int main(int argc , char *argv[]) {
     uint32_t num_peers;
-    unsigned int *peer_ids;
     long long_tmp;
     char *endptr;
 
-    unsigned int delivery_interrupt_no = DELIVERY_INTERRUPT_NO;
-    sci_local_data_interrupt_t delivery_interrupt;
+    struct sigaction sa;
+    sigset_t mask, oldmask;
 
-    int sig;
-    sigset_t sigset;
+    unsigned int delivery_interrupt_no = DELIVERY_INTERRUPT_NO;
+    static sci_local_data_interrupt_t delivery_interrupt;
+    static unsigned int *peer_ids;
 
     main_pid = getpid();
 
@@ -127,20 +133,25 @@ int main(int argc , char *argv[]) {
          NO_ARG,
          SCI_FLAG_FIXED_INTNO);
 
-    if (sigemptyset(&sigset) == -1) {
-        perror("sigemptyset");
-        exit(EXIT_FAILURE);
-    }
-    if (sigaddset(&sigset, SIGUSR1) == -1) {
-        perror("sigaddset");
-        exit(EXIT_FAILURE);
+    sa.sa_handler = cleanup_signal_handler;
+    sa.sa_flags = 0;
+
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+    sigaction(SIGTSTP, &sa, NULL);
+
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGINT);
+    sigaddset(&mask, SIGTERM);
+    sigaddset(&mask, SIGTSTP);
+
+    sigprocmask(SIG_BLOCK, &mask, &oldmask);
+
+    while (!signal_received) {
+        sigsuspend(&oldmask);
     }
 
-    printf("Initiator waiting on order interrupt connections...\n");
-    if (sigwait(&sigset, &sig) > 0) {
-        fprintf(stderr, "sigwait called with invalid sigset_t\n");
-        exit(EXIT_FAILURE);
-    }
+    sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
     SEOE(SCIRemoveDataInterrupt, delivery_interrupt, NO_FLAGS);
 
