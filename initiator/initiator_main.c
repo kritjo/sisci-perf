@@ -25,8 +25,8 @@ static void print_usage(char *argv[]) {
 
 
 
-static sci_callback_action_t delivery_callback(void *_arg,
-                                               sci_local_data_interrupt_t _interrupt,
+static sci_callback_action_t delivery_callback(__attribute__((unused)) void *_arg,
+                                               __attribute__((unused)) sci_local_data_interrupt_t _interrupt,
                                                void *data,
                                                unsigned int length,
                                                sci_error_t status) {
@@ -94,7 +94,7 @@ int main(int argc , char *argv[]) {
 
     num_peers = (typeof(num_peers)) long_tmp;
 
-    if (argc != num_peers + 2) {
+    if (argc != (int) num_peers + 2) {
         print_usage(argv);
         exit(EXIT_FAILURE);
     }

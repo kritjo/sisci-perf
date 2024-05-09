@@ -1,21 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
-#include <signal.h>
 #include "sisci_glob_defs.h"
 #include "sisci_api.h"
 #include "protocol.h"
 #include "print_node_id.h"
 #include "block_for_termination_signal.h"
 
-static volatile sig_atomic_t signal_received = 0;
-
 void print_usage(char *argv[]) {
     fprintf(stderr, "Usage: %s <initiator_id>\n", argv[0]);
-}
-
-static void cleanup_signal_handler(int sig) {
-    signal_received = sig;
 }
 
 int main(int argc, char *argv[]) {
@@ -23,9 +16,6 @@ int main(int argc, char *argv[]) {
     unsigned int initiator_id;
     long long_tmp;
     char *endptr;
-
-    struct sigaction sa;
-    sigset_t mask, oldmask;
 
     sci_desc_t sd;
     unsigned int order_interrupt_no;
