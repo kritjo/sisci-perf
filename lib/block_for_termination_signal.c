@@ -10,7 +10,7 @@ static void cleanup_signal_handler(int sig) {
 }
 
 void block_for_termination_signal() {
-    struct sigaction sa;
+    struct sigaction sa = {0};
     sigset_t mask, oldmask;
 
     sa.sa_handler = cleanup_signal_handler;
@@ -21,6 +21,7 @@ void block_for_termination_signal() {
     sigaction(SIGTSTP, &sa, NULL);
 
     sigemptyset(&mask);
+    sigemptyset(&oldmask);
     sigaddset(&mask, SIGINT);
     sigaddset(&mask, SIGTERM);
     sigaddset(&mask, SIGTSTP);
