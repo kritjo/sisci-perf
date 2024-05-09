@@ -9,13 +9,19 @@
 #define NO_OFFSET 0
 #define NO_SUGGESTED_ADDRESS 0
 
+#include <unistd.h>
+#include <limits.h>
+#include <stdio.h>
+
 // SISCI Exit On Error -- SEOE
 #define SEOE(func, ...) \
-do { \
+do {                    \
+    char hostname[HOST_NAME_MAX + 1]; \
+    gethostname(hostname, HOST_NAME_MAX + 1); \
     sci_error_t seoe_error; \
     func(__VA_ARGS__, &seoe_error); \
     if (seoe_error != SCI_ERR_OK) { \
-        fprintf(stderr, "%s failed: %s\n", #func, SCIGetErrorString(seoe_error)); \
+        fprintf(stderr, "[%s] %s failed: %s\n", hostname, #func, SCIGetErrorString(seoe_error)); \
         exit(EXIT_FAILURE); \
     } \
 } while (0)
