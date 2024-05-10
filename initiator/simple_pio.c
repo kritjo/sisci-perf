@@ -1,26 +1,20 @@
 #include <sisci_api.h>
-#include <sys/time.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdint.h>
-#include <string.h>
 #include "simple_pio.h"
 #include "sisci_glob_defs.h"
 #include "protocol.h"
+#include "timer_controlled_variable.h"
 
 
-static volatile sig_atomic_t timer_expired = 0;
+static volatile sig_atomic_t *timer_expired;
 static unsigned long long operations = 0;
 
-static void timer_handler(__attribute__((unused)) int sig) {
-    printf("    operations: %llu\n", operations);
-    timer_expired = 1;
-}
-
 static void write_pio(volatile char *data) {
-    while (!timer_expired) {
+    while (!*timer_expired) {
         for (uint32_t i = 0; i < SEGMENT_SIZE; i++) {
             data[i] = 0x01;
             operations++;
@@ -29,7 +23,7 @@ static void write_pio(volatile char *data) {
 }
 
 static void read_pio(volatile char *data, pid_t main_pid) {
-    while (!timer_expired) {
+    while (!*timer_expired) {
         for (uint32_t i = 0; i < SEGMENT_SIZE; i++) {
             if (data[i] != 0x01) {
                 fprintf(stderr, "Data mismatch at index %d: %d\n", i, data[i]);
@@ -49,8 +43,9 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
     unsigned int size;
     volatile char *data;
     sci_error_t error;
-    struct sigaction sa = {0};
-    struct itimerval timer = {0};
+
+    init_timer(MEASURE_SECONDS);
+    timer_expired = get_timer_expired();
 
     order.commandType = COMMAND_TYPE_CREATE;
     order.orderType = ORDER_TYPE_SEGMENT;
@@ -75,29 +70,19 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
         kill(main_pid, SIGTERM);
     }
 
-    sa.sa_handler = &timer_handler;
-    sigaction(SIGALRM, &sa, NULL);
-
-    timer.it_value.tv_sec = MEASURE_SECONDS;
-
     printf("Starting PIO write for %d seconds\n", MEASURE_SECONDS);
     operations = 0;
-    setitimer(ITIMER_REAL, &timer, NULL);
+    start_timer();
     write_pio(data);
-
-    timer_expired = 0;
+    printf("    operations: %llu\n", operations);
 
     printf("Starting PIO read for %d seconds\n", MEASURE_SECONDS);
     operations = 0;
-    setitimer(ITIMER_REAL, &timer, NULL);
+    start_timer();
     read_pio(data, main_pid);
+    printf("    operations: %llu\n", operations);
 
-    memset(&sa, 0, sizeof(sa));
-    sa.sa_handler = SIG_DFL;
-    if (sigaction(SIGALRM, &sa, NULL) == -1) {
-        perror("Failed to reset signal handler");
-        kill(main_pid, SIGTERM);
-    }
+    destroy_timer();
 
     SEOE(SCIUnmapSegment, map, NO_FLAGS);
 

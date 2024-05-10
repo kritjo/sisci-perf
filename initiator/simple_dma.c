@@ -1,13 +1,12 @@
 #include <sisci_api.h>
 #include <unistd.h>
-#include <sys/time.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "simple_dma.h"
 #include "protocol.h"
 #include "sisci_glob_defs.h"
+#include "timer_controlled_variable.h"
 
 static volatile sig_atomic_t timer_expired = 0;
 static unsigned long long operations = 0;
@@ -35,8 +34,8 @@ void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote
     sci_map_t local_map;
     char *local_ptr;
 
-    struct sigaction sa = {0};
-    struct itimerval timer = {0};
+    init_timer(MEASURE_SECONDS);
+    timer_expired = get_timer_expired();
 
     order.commandType = COMMAND_TYPE_CREATE;
     order.orderType = ORDER_TYPE_GLOBAL_DMA_SEGMENT;
@@ -55,11 +54,6 @@ void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote
 
     SEOE(SCIConnectSegment, sd, &segment, delivery.nodeId, delivery.id, ADAPTER_NO, NO_CALLBACK, NO_ARG, SCI_INFINITE_TIMEOUT, NO_FLAGS);
 
-    sa.sa_handler = &timer_handler;
-    sigaction(SIGALRM, &sa, NULL);
-
-    timer.it_value.tv_sec = MEASURE_SECONDS;
-
     SEOE(SCICreateSegment, sd, &local_segment, 0, SEGMENT_SIZE, NO_CALLBACK, NO_ARG, SCI_FLAG_AUTO_ID);
 
     local_ptr = (typeof(local_ptr)) SCIMapLocalSegment(local_segment, &local_map, NO_OFFSET, SEGMENT_SIZE, NO_SUGGESTED_ADDRESS, NO_FLAGS, &error);
@@ -74,22 +68,15 @@ void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote
 
     printf("Starting DMA write for %d seconds\n", MEASURE_SECONDS);
     operations = 0;
-    setitimer(ITIMER_REAL, &timer, NULL);
+    start_timer();
     write_dma(local_segment, segment);
-
-    timer_expired = 0;
 
     printf("Starting DMA read for %d seconds\n", MEASURE_SECONDS);
     operations = 0;
-    setitimer(ITIMER_REAL, &timer, NULL);
+    start_timer();
     read_dma(local_segment, segment);
 
-    memset(&sa, 0, sizeof(sa));
-    sa.sa_handler = SIG_DFL;
-    if (sigaction(SIGALRM, &sa, NULL) == -1) {
-        perror("Failed to reset signal handler");
-        kill(main_pid, SIGTERM);
-    }
+    destroy_timer();
 
     SEOE(SCIUnmapSegment, local_map, NO_FLAGS);
 
@@ -107,7 +94,4 @@ void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote
         fprintf(stderr, "Received invalid command type %d\n", delivery.commandType);
         kill(main_pid, SIGTERM);
     }
-
-    printf("Segment destroyed\n");
-
 }
