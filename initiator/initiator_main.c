@@ -110,7 +110,6 @@ int main(int argc , char *argv[]) {
 
     run_single_segment_experiment_pio(sd, main_pid, order_interrupts[0], delivery_interrupt);
 
-    block_for_termination_signal();
 
     SEOE(SCIRemoveDataInterrupt, delivery_interrupt, NO_FLAGS);
 
