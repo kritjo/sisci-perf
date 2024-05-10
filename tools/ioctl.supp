@@ -1,0 +1,14 @@
+{
+   <ioctl_ignore>
+   Memcheck:Param
+   ioctl(generic)
+   ...
+   fun:main
+}
+{
+   <ioctl_ignore>
+   Memcheck:Param
+   ioctl(generic)
+   ...
+   fun:clone
+}

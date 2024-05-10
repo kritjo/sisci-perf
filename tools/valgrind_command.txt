@@ -1,0 +1,1 @@
+valgrind --leak-check=full --track-origins=yes -s --show-leak-kinds=all --suppressions=tools/ioctl.supp
