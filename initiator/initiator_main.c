@@ -11,6 +11,8 @@
 #include "simple_pio.h"
 #include "scale_up_pio.h"
 #include "simple_dma.h"
+#include "scale_out_pio.h"
+#include "initiator_main.h"
 
 static pid_t main_pid;
 
@@ -56,6 +58,11 @@ int main(int argc , char *argv[]) {
     }
 
     num_peers = (typeof(num_peers)) long_tmp;
+
+    if (num_peers > MAX_PEERS) {
+        fprintf(stderr, "Number of peers must be less than or equal to %d\n", MAX_PEERS);
+        exit(EXIT_FAILURE);
+    }
 
     if (argc != (int) num_peers + 2) {
         print_usage(argv);
@@ -114,6 +121,9 @@ int main(int argc , char *argv[]) {
 
     printf("################### SCALE-UP EXPERIMENTS ##################\n");
     run_scale_up_segment_experiment_pio(sd, main_pid, order_interrupts[0], delivery_interrupt);
+
+    printf("################## SCALE-OUT EXPERIMENTS ##################\n");
+    run_scale_out_segment_experiment_pio(sd, main_pid, num_peers, order_interrupts, delivery_interrupt);
 
     printf("##################### EXPERIMENTS END #####################\n");
 
