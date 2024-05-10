@@ -8,23 +8,19 @@
 #include "sisci_glob_defs.h"
 #include "timer_controlled_variable.h"
 
-static volatile sig_atomic_t timer_expired = 0;
-static unsigned long long operations = 0;
+__attribute__((unused)) static volatile sig_atomic_t *timer_expired;
+__attribute__((unused)) static unsigned long long operations = 0;
 
-static void timer_handler(__attribute__((unused)) int sig) {
-    printf("    operations: %llu\n", operations);
-    timer_expired = 1;
-}
-
-static void write_dma(sci_local_segment_t local_segment, sci_remote_segment_t remote_segment) {
+static void write_dma(__attribute__((unused)) sci_local_segment_t local_segment,
+                      __attribute__((unused)) sci_remote_segment_t remote_segment) {
 
 }
 
-static void read_dma(sci_local_segment_t local_segment, sci_remote_segment_t remote_segment) {
+static void read_dma(__attribute__((unused)) sci_local_segment_t local_segment, __attribute__((unused)) sci_remote_segment_t remote_segment) {
 
 }
 
-void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote_data_interrupt_t order_interrupt, sci_local_data_interrupt_t delivery_interrupt) {
+__attribute__((unused)) void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote_data_interrupt_t order_interrupt, sci_local_data_interrupt_t delivery_interrupt) {
     sci_remote_segment_t segment;
     order_t order;
     delivery_t delivery;
