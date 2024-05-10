@@ -29,12 +29,10 @@ volatile sig_atomic_t *get_timer_expired() {
 
 void start_timer() {
     timer_expired = 0;
-    printf("Timer starting\n");
     if (setitimer(ITIMER_REAL, &timer, NULL) == -1) {
         perror("Failed to start timer");
         exit(EXIT_FAILURE);
     }
-    printf("Timer started\n");
 }
 
 void destroy_timer() {
