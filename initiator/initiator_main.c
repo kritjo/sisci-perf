@@ -4,12 +4,10 @@
 #include <limits.h>
 #include <signal.h>
 #include <unistd.h>
-#include <sys/time.h>
 #include "protocol.h"
 #include "sisci_api.h"
 #include "sisci_types.h"
 #include "sisci_glob_defs.h"
-#include "block_for_termination_signal.h"
 #include "simple_pio.h"
 
 static pid_t main_pid;
