@@ -87,9 +87,9 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
 
                 SEOE(SCISetSegmentAvailable, ordered_segments[ordered_segments_count], ADAPTER_NO, NO_FLAGS);
 
-                ordered_segments_count++;
+                delivery_notification(STATUS_TYPE_SUCCESS, COMMAND_TYPE_CREATE, order->orderType, SCIGetLocalSegmentId(ordered_segments[ordered_segments_count]));
 
-                delivery_notification(STATUS_TYPE_SUCCESS, COMMAND_TYPE_CREATE, order->orderType, id);
+                ordered_segments_count++;
                 break;
             case ORDER_TYPE_INTERRUPT:
                 ordered_interrupts = (typeof(ordered_interrupts)) reallocarray(ordered_interrupts, ordered_interrupts_count +1, sizeof(*ordered_interrupts));  // NOLINT(*-sizeof-expression)
@@ -135,6 +135,7 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 break;
         }
     } else if (order->commandType == COMMAND_TYPE_DESTROY) {
+        printf("Received destroy order\n");
         switch (order->orderType) {
             case ORDER_TYPE_SEGMENT:
             case ORDER_TYPE_GLOBAL_DMA_SEGMENT:
