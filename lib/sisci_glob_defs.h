@@ -1,16 +1,31 @@
-#ifndef KRITJOLIB_SISCI_GLOB_DEFS
-#define KRITJOLIB_SISCI_GLOB_DEFS
+#ifndef SISCI_PERF_SISCI_GLOB_DEFS_H
+#define SISCI_PERF_SISCI_GLOB_DEFS_H
+
+#define SEGMENT_SIZE 4096
+
+#define ADAPTER_NO 0
 
 #define NO_FLAGS 0
 #define NO_CALLBACK 0
 #define NO_ARG 0
 #define NO_OFFSET 0
-#define NO_SUG_ADDR 0
-#define ADAPTER_NO 0 // From /etc/dis/dishosts.conf
-#define RECEIVER_SEG_ID 1
-#define RECEIVER_SEG_SIZE 4096
+#define NO_SUGGESTED_ADDRESS 0
 
-#define DEBUG 1
-#define DEBUG_PRINT(fmt, ...) \
-    do { if (DEBUG) fprintf(stderr, fmt, ##__VA_ARGS__); } while (0)
-#endif //KRITJOLIB_SISCI_GLOB_DEFS
+#include <unistd.h>
+#include <limits.h>
+#include <stdio.h>
+
+// SISCI Exit On Error -- SEOE
+#define SEOE(func, ...) \
+do {                    \
+    char hostname[HOST_NAME_MAX + 1]; \
+    gethostname(hostname, HOST_NAME_MAX + 1); \
+    sci_error_t seoe_error; \
+    func(__VA_ARGS__, &seoe_error); \
+    if (seoe_error != SCI_ERR_OK) { \
+        fprintf(stderr, "[%s] %s failed: %s\n", hostname, #func, SCIGetErrorString(seoe_error)); \
+        exit(EXIT_FAILURE); \
+    } \
+} while (0)
+
+#endif //SISCI_PERF_SISCI_GLOB_DEFS_H
