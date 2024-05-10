@@ -2,6 +2,7 @@
 
 echo "Building the project"
 ./build.sh || exit 1
+echo "Project built successfully"
 
 NODE_ID=$(./build/tools/print_node_id)
 
@@ -41,11 +42,16 @@ INITIATOR_PID=$!
 
 for ITER in $(seq 0 $(expr $PEER_COUNT - 1))
 do
-    stdbuf -oL -eL ssh ${PEER_HOSTNAMES[$ITER]} "cd $PWD && stdbuf -oL -eL ./build/peer/peer_main $NODE_ID" &
-    PEER_PIDS[$ITER]=$!
+    RAND_FILE=$(mktemp)
+    stdbuf -oL -eL ssh ${PEER_HOSTNAMES[$ITER]} "stdbuf -oL -eL $PWD/build/peer/peer_main $NODE_ID & echo \$! > $RAND_FILE" &
+    sleep 0.1
+    scp ${PEER_HOSTNAMES[$ITER]}:$RAND_FILE $RAND_FILE
+    PEER_PIDS[$ITER]=$(cat $RAND_FILE)
 done
 
-# If we get a signal, kill all the peers and the initiator
-trap "kill $INITIATOR_PID; kill ${PEER_PIDS[@]}; exit 1" INT TERM TSTP
+wait $INITIATOR_PID
 
-wait ${PEER_PIDS[@]}
+for ITER in $(seq 0 $(expr $PEER_COUNT - 1))
+do
+  ssh ${PEER_HOSTNAMES[$ITER]} "kill -INT ${PEER_PIDS[$ITER]}"
+done
