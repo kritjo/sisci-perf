@@ -89,7 +89,7 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
 
                 ordered_segments_count++;
 
-                delivery_notification(STATUS_TYPE_SUCCESS, COMMAND_TYPE_CREATE, ORDER_TYPE_SEGMENT, id);
+                delivery_notification(STATUS_TYPE_SUCCESS, COMMAND_TYPE_CREATE, order->orderType, id);
                 break;
             case ORDER_TYPE_INTERRUPT:
                 ordered_interrupts = (typeof(ordered_interrupts)) reallocarray(ordered_interrupts, ordered_interrupts_count +1, sizeof(*ordered_interrupts));  // NOLINT(*-sizeof-expression)
@@ -160,7 +160,7 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 free(tmp_ordered_segments);
                 ordered_segments_count--;
 
-                delivery_notification(STATUS_TYPE_SUCCESS, COMMAND_TYPE_DESTROY, ORDER_TYPE_SEGMENT, order->id);
+                delivery_notification(STATUS_TYPE_SUCCESS, COMMAND_TYPE_DESTROY, order->orderType, order->id);
                 break;
             case ORDER_TYPE_INTERRUPT:
                 new_ordered_interrupts = (typeof(new_ordered_interrupts)) malloc((ordered_interrupts_count - 1) * sizeof(*new_ordered_interrupts)); // NOLINT(*-sizeof-expression)
