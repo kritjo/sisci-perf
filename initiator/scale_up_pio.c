@@ -15,8 +15,7 @@ static volatile sig_atomic_t timer_expired = 0;
 static unsigned long long operations = 0;
 
 static void timer_handler(__attribute__((unused)) int sig) {
-    printf("Timer expired\n");
-    printf("Operations: %llu\n", operations);
+    printf("    operations: %llu\n", operations);
     timer_expired = 1;
 }
 

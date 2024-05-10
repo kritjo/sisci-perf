@@ -258,7 +258,6 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
 }
 
 int main(int argc, char *argv[]) {
-    printf("Starting peer\n");
     unsigned int initiator_id;
     long long_tmp;
     char *endptr;

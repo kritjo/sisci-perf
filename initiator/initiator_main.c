@@ -102,14 +102,16 @@ int main(int argc , char *argv[]) {
         }
 
         SEOE(SCIConnectDataInterrupt, sd, &order_interrupts[order_init_interrupts_received++], delivery.nodeId, ADAPTER_NO, delivery.id, SCI_INFINITE_TIMEOUT, NO_FLAGS);
-        printf("Connected to peer %d\n", delivery.nodeId);
     }
 
-    printf("All peers connected\n");
 
+    printf("##################### PIO EXPERIMENTS #####################\n");
     run_single_segment_experiment_pio(sd, main_pid, order_interrupts[0], delivery_interrupt);
+
+    printf("################### SCALE-UP EXPERIMENTS ##################\n");
     run_scale_up_segment_experiment_pio(sd, main_pid, order_interrupts[0], delivery_interrupt);
 
+    printf("##################### EXPERIMENTS END #####################\n");
 
     SEOE(SCIRemoveDataInterrupt, delivery_interrupt, NO_FLAGS);
 
