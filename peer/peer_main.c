@@ -135,7 +135,6 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 break;
         }
     } else if (order->commandType == COMMAND_TYPE_DESTROY) {
-        printf("Received destroy order\n");
         switch (order->orderType) {
             case ORDER_TYPE_SEGMENT:
             case ORDER_TYPE_GLOBAL_DMA_SEGMENT:

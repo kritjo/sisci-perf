@@ -67,7 +67,6 @@ void run_scale_up_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remo
 
             SEOE(SCIConnectSegment, sd, &segment[i], delivery.nodeId, delivery.id, ADAPTER_NO, NO_CALLBACK, NO_ARG,
                  SCI_INFINITE_TIMEOUT, NO_FLAGS);
-            printf("Connected segment %d\n", delivery.id);
 
             data[i] = SCIMapRemoteSegment(segment[i], &map[i], NO_OFFSET, SEGMENT_SIZE, NO_SUGGESTED_ADDRESS, NO_FLAGS,
                                           &error);
