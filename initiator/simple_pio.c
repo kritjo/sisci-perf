@@ -82,11 +82,33 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
     read_pio(data, main_pid);
     printf("    operations: %llu\n", operations);
 
-    destroy_timer();
-
     SEOE(SCIUnmapSegment, map, NO_FLAGS);
 
     SEOE(SCIDisconnectSegment, segment, NO_FLAGS);
+
+    SEOE(SCIConnectSegment, sd, &segment, delivery.nodeId, delivery.id, ADAPTER_NO, NO_CALLBACK, NO_ARG, SCI_INFINITE_TIMEOUT, NO_FLAGS);
+
+    data = SCIMapRemoteSegment(segment, &map, NO_OFFSET, SEGMENT_SIZE, NO_SUGGESTED_ADDRESS, SCI_FLAG_IO_MAP_IOSPACE, &error);
+    if (error != SCI_ERR_OK) {
+        fprintf(stderr, "Failed to map segment: %d\n", error);
+        kill(main_pid, SIGTERM);
+    }
+
+    printf("Starting PIO write in io-space for %d seconds\n", MEASURE_SECONDS);
+    operations = 0;
+    start_timer();
+    write_pio(data);
+    printf("    operations: %llu\n", operations);
+
+    printf("Starting PIO read in io-space for %d seconds\n", MEASURE_SECONDS);
+    operations = 0;
+    start_timer();
+    read_pio(data, main_pid);
+    printf("    operations: %llu\n", operations);
+
+    SEOE(SCIUnmapSegment, map, NO_FLAGS);
+
+    destroy_timer();
 
     order.commandType = COMMAND_TYPE_DESTROY;
     order.id = delivery.id;
