@@ -49,6 +49,9 @@ do
     PEER_PIDS[$ITER]=$(cat $RAND_FILE)
 done
 
+# Trap signals and forward them to the child processes
+trap "kill -INT $INITIATOR_PID" INT TERM TSTP
+
 wait $INITIATOR_PID
 
 for ITER in $(seq 0 $(expr $PEER_COUNT - 1))
