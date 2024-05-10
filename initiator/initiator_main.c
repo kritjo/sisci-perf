@@ -9,6 +9,7 @@
 #include "sisci_types.h"
 #include "sisci_glob_defs.h"
 #include "simple_pio.h"
+#include "scale_up_pio.h"
 
 static pid_t main_pid;
 
@@ -107,6 +108,7 @@ int main(int argc , char *argv[]) {
     printf("All peers connected\n");
 
     run_single_segment_experiment_pio(sd, main_pid, order_interrupts[0], delivery_interrupt);
+    run_scale_up_segment_experiment_pio(sd, main_pid, order_interrupts[0], delivery_interrupt);
 
 
     SEOE(SCIRemoveDataInterrupt, delivery_interrupt, NO_FLAGS);
