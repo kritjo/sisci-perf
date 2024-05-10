@@ -94,6 +94,7 @@ void run_scale_up_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remo
             SEOE(SCIDisconnectSegment, segment[i], NO_FLAGS);
 
             order.commandType = COMMAND_TYPE_DESTROY;
+            order.id = SCIGetRemoteSegmentId(segment[i]);
 
             SEOE(SCITriggerDataInterrupt, order_interrupt, &order, sizeof(order), NO_FLAGS);
 
