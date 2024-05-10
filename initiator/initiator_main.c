@@ -10,6 +10,7 @@
 #include "sisci_glob_defs.h"
 #include "simple_pio.h"
 #include "scale_up_pio.h"
+#include "simple_dma.h"
 
 static pid_t main_pid;
 
@@ -107,6 +108,9 @@ int main(int argc , char *argv[]) {
 
     printf("##################### PIO EXPERIMENTS #####################\n");
     run_single_segment_experiment_pio(sd, main_pid, order_interrupts[0], delivery_interrupt);
+
+    printf("##################### DMA EXPERIMENTS #####################\n");
+    run_single_segment_experiment_dma(sd, main_pid, order_interrupts[0], delivery_interrupt);
 
     printf("################### SCALE-UP EXPERIMENTS ##################\n");
     run_scale_up_segment_experiment_pio(sd, main_pid, order_interrupts[0], delivery_interrupt);
