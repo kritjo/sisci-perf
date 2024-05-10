@@ -96,6 +96,8 @@ __attribute__((unused)) void run_single_segment_experiment_dma(sci_desc_t sd, pi
 
     SEOE(SCIDisconnectSegment, segment, NO_FLAGS);
 
+    SEOE(SCIRemoveSegment, local_segment, NO_FLAGS);
+
     order.commandType = COMMAND_TYPE_DESTROY;
     order.id = delivery.id;
 
