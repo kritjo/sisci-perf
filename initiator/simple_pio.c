@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <string.h>
 #include "simple_pio.h"
 #include "sisci_glob_defs.h"
 #include "protocol.h"
@@ -92,6 +93,13 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
     setitimer(ITIMER_REAL, &timer, NULL);
     read_pio(data, main_pid);
 
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = SIG_DFL;
+    if (sigaction(SIGALRM, &sa, NULL) == -1) {
+        perror("Failed to reset signal handler");
+        kill(main_pid, SIGTERM);
+    }
+
     SEOE(SCIUnmapSegment, map, NO_FLAGS);
 
     SEOE(SCIDisconnectSegment, segment, NO_FLAGS);
@@ -108,6 +116,4 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
         fprintf(stderr, "Received invalid command type %d\n", delivery.commandType);
         kill(main_pid, SIGTERM);
     }
-
-    printf("Segment destroyed\n");
 }

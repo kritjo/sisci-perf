@@ -4,7 +4,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 #include "simple_dma.h"
 #include "protocol.h"
 #include "sisci_glob_defs.h"
@@ -84,6 +84,13 @@ void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote
     operations = 0;
     setitimer(ITIMER_REAL, &timer, NULL);
     read_dma(local_segment, segment);
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = SIG_DFL;
+    if (sigaction(SIGALRM, &sa, NULL) == -1) {
+        perror("Failed to reset signal handler");
+        kill(main_pid, SIGTERM);
+    }
 
     SEOE(SCIUnmapSegment, local_map, NO_FLAGS);
 
