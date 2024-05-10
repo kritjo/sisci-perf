@@ -139,7 +139,7 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
             case ORDER_TYPE_SEGMENT:
             case ORDER_TYPE_GLOBAL_DMA_SEGMENT:
                 new_ordered_segments = (typeof(new_ordered_segments)) malloc((ordered_segments_count - 1) * sizeof(*new_ordered_segments)); // NOLINT(*-sizeof-expression)
-                if (new_ordered_segments == NULL) {
+                if (new_ordered_segments == NULL && ordered_segments_count > 1) {
                     perror("Failed to allocate memory for new ordered segments");
                     delivery_notification(STATUS_TYPE_FAILURE, COMMAND_TYPE_DESTROY, ORDER_TYPE_SEGMENT, order->id);
                     kill(main_pid, SIGTERM);
@@ -164,7 +164,7 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 break;
             case ORDER_TYPE_INTERRUPT:
                 new_ordered_interrupts = (typeof(new_ordered_interrupts)) malloc((ordered_interrupts_count - 1) * sizeof(*new_ordered_interrupts)); // NOLINT(*-sizeof-expression)
-                if (new_ordered_interrupts == NULL) {
+                if (new_ordered_interrupts == NULL && ordered_interrupts_count > 1) {
                     perror("Failed to allocate memory for new ordered interrupts");
                     delivery_notification(STATUS_TYPE_FAILURE, COMMAND_TYPE_DESTROY, ORDER_TYPE_INTERRUPT, order->id);
                     kill(main_pid, SIGTERM);
@@ -185,7 +185,7 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 free(tmp_ordered_interrupts);
 
                 new_ordered_interrupt_nos = (typeof(new_ordered_interrupt_nos)) malloc((ordered_interrupts_count - 1) * sizeof(*new_ordered_interrupt_nos)); // NOLINT(*-sizeof-expression)
-                if (new_ordered_interrupt_nos == NULL) {
+                if (new_ordered_interrupt_nos == NULL && ordered_interrupts_count > 1) {
                     perror("Failed to allocate memory for new ordered interrupt numbers");
                     delivery_notification(STATUS_TYPE_FAILURE, COMMAND_TYPE_DESTROY, ORDER_TYPE_INTERRUPT, order->id);
                     kill(main_pid, SIGTERM);
@@ -202,12 +202,13 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 tmp_ordered_interrupt_nos = ordered_interrupt_nos;
                 ordered_interrupt_nos = new_ordered_interrupt_nos;
                 free(tmp_ordered_interrupt_nos);
+                ordered_interrupts_count--;
 
                 delivery_notification(STATUS_TYPE_SUCCESS, COMMAND_TYPE_DESTROY, ORDER_TYPE_INTERRUPT, order->id);
                 break;
             case ORDER_TYPE_DATA_INTERRUPT:
                 new_ordered_data_interrupts = (typeof(new_ordered_data_interrupts)) malloc((ordered_data_interrupts_count - 1) * sizeof(*new_ordered_data_interrupts)); // NOLINT(*-sizeof-expression)
-                if (new_ordered_data_interrupts == NULL) {
+                if (new_ordered_data_interrupts == NULL && ordered_data_interrupts_count > 1) {
                     perror("Failed to allocate memory for new ordered data interrupts");
                     delivery_notification(STATUS_TYPE_FAILURE, COMMAND_TYPE_DESTROY, ORDER_TYPE_DATA_INTERRUPT, order->id);
                     kill(main_pid, SIGTERM);
@@ -228,7 +229,7 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 free(tmp_ordered_data_interrupts);
 
                 new_ordered_data_interrupt_nos = (typeof(new_ordered_data_interrupt_nos)) malloc((ordered_data_interrupts_count - 1) * sizeof(*new_ordered_data_interrupt_nos)); // NOLINT(*-sizeof-expression)
-                if (new_ordered_data_interrupt_nos == NULL) {
+                if (new_ordered_data_interrupt_nos == NULL && ordered_data_interrupts_count > 1) {
                     perror("Failed to allocate memory for new ordered data interrupt numbers");
                     delivery_notification(STATUS_TYPE_FAILURE, COMMAND_TYPE_DESTROY, ORDER_TYPE_DATA_INTERRUPT, order->id);
                     kill(main_pid, SIGTERM);
@@ -245,6 +246,7 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 tmp_ordered_data_interrupt_nos = ordered_data_interrupt_nos;
                 ordered_data_interrupt_nos = new_ordered_data_interrupt_nos;
                 free(tmp_ordered_data_interrupt_nos);
+                ordered_data_interrupts_count--;
 
                 delivery_notification(STATUS_TYPE_SUCCESS, COMMAND_TYPE_DESTROY, ORDER_TYPE_DATA_INTERRUPT, order->id);
                 break;
@@ -328,4 +330,8 @@ int main(int argc, char *argv[]) {
 
     SEOE(SCIClose, sd, NO_FLAGS);
     SCITerminate();
+
+    free(ordered_segments);
+    free(ordered_interrupts);
+    free(ordered_interrupt_nos);
 }
