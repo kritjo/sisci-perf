@@ -21,7 +21,7 @@ void timer_handler(__attribute__((unused)) int sig) {
 
 static void write_pio(volatile char *data) {
     while (!timer_expired) {
-        for (uint32_t i = 0; i < 4096; i++) {
+        for (uint32_t i = 0; i < SEGMENT_SIZE; i++) {
             data[i] = 0x01;
             operations++;
         }
@@ -30,7 +30,7 @@ static void write_pio(volatile char *data) {
 
 static void read_pio(volatile char *data, pid_t main_pid) {
     while (!timer_expired) {
-        for (uint32_t i = 0; i < 4096; i++) {
+        for (uint32_t i = 0; i < SEGMENT_SIZE; i++) {
             if (data[i] != 0x01) {
                 fprintf(stderr, "Data mismatch at index %d: %d\n", i, data[i]);
                 kill(main_pid, SIGTERM);
@@ -54,7 +54,7 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
 
     order.commandType = COMMAND_TYPE_CREATE;
     order.orderType = ORDER_TYPE_SEGMENT;
-    order.size = 4096;
+    order.size = SEGMENT_SIZE;
 
     SEOE(SCITriggerDataInterrupt, order_interrupt, &order, sizeof(order), NO_FLAGS);
 
@@ -69,7 +69,7 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
 
     SEOE(SCIConnectSegment, sd, &segment, delivery.nodeId, delivery.id, ADAPTER_NO, NO_CALLBACK, NO_ARG, SCI_INFINITE_TIMEOUT, NO_FLAGS);
 
-    data = SCIMapRemoteSegment(segment, &map, NO_OFFSET, 4096, NO_SUGGESTED_ADDRESS, NO_FLAGS, &error);
+    data = SCIMapRemoteSegment(segment, &map, NO_OFFSET, SEGMENT_SIZE, NO_SUGGESTED_ADDRESS, NO_FLAGS, &error);
     if (error != SCI_ERR_OK) {
         fprintf(stderr, "Failed to map segment: %d\n", error);
         kill(main_pid, SIGTERM);

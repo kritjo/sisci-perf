@@ -1,6 +1,8 @@
 #ifndef SISCI_PERF_SISCI_GLOB_DEFS_H
 #define SISCI_PERF_SISCI_GLOB_DEFS_H
 
+#define SEGMENT_SIZE 4096
+
 #define ADAPTER_NO 0
 
 #define NO_FLAGS 0
