@@ -55,13 +55,11 @@ void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote
     SEOE(SCICreateDMAQueue, sd, &dma_queue, NO_CALLBACK, NO_ARG, NO_FLAGS);
 
     printf("Starting DMA write for %d seconds\n", MEASURE_SECONDS);
-    operations = 0;
     start_timer();
     write_dma(local_segment, segment, dma_queue);
     printf("    operations: %llu\n", operations);
 
     printf("Starting DMA read for %d seconds\n", MEASURE_SECONDS);
-    operations = 0;
     start_timer();
     read_dma(local_segment, segment, dma_queue);
     printf("    operations: %llu\n", operations);

@@ -43,13 +43,11 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
     }
 
     printf("Starting PIO write for %d seconds\n", MEASURE_SECONDS);
-    operations = 0;
     start_timer();
     write_pio_byte(data, SEGMENT_SIZE, 1);
     printf("    operations: %llu\n", operations);
 
     printf("Starting PIO read for %d seconds\n", MEASURE_SECONDS);
-    operations = 0;
     start_timer();
     read_pio_byte(data, SEGMENT_SIZE, 1);
     printf("    operations: %llu\n", operations);
@@ -67,13 +65,11 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
     }
 
     printf("Starting PIO write in io-space for %d seconds\n", MEASURE_SECONDS);
-    operations = 0;
     start_timer();
     write_pio_byte(data, SEGMENT_SIZE, 1);
     printf("    operations: %llu\n", operations);
 
     printf("Starting PIO read in io-space for %d seconds\n", MEASURE_SECONDS);
-    operations = 0;
     start_timer();
     read_pio_byte(data, SEGMENT_SIZE, 1);
     printf("    operations: %llu\n", operations);
