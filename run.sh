@@ -50,11 +50,18 @@ do
 done
 
 # Trap signals and forward them to the child processes
-trap "kill -INT $INITIATOR_PID" INT TERM TSTP
+trap "kill $INITIATOR_PID" INT TERM TSTP
 
 wait $INITIATOR_PID
 
 for ITER in $(seq 0 $(expr $PEER_COUNT - 1))
 do
   ssh ${PEER_HOSTNAMES[$ITER]} "kill -INT ${PEER_PIDS[$ITER]}"
+done
+
+sleep 1
+
+for ITER in $(seq 0 $(expr $PEER_COUNT - 1))
+do
+  ssh ${PEER_HOSTNAMES[$ITER]} "kill -KILL ${PEER_PIDS[$ITER]}"
 done
