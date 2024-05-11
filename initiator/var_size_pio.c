@@ -10,7 +10,6 @@
 #include "common_read_write_functions.h"
 
 void run_var_size_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote_data_interrupt_t order_interrupt, sci_local_data_interrupt_t delivery_interrupt) {
-    // Order one segment from one peer
     sci_remote_segment_t segment;
     sci_map_t map;
     order_t order;

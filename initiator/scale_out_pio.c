@@ -11,7 +11,6 @@
 #include "common_read_write_functions.h"
 
 void run_scale_out_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, uint32_t num_peers, sci_remote_data_interrupt_t *order_interrupts, sci_local_data_interrupt_t delivery_interrupt) {
-    // Order one segment from one peer
     sci_remote_segment_t segment[MAX_PEERS];
     sci_map_t map[MAX_PEERS];
     order_t order;
