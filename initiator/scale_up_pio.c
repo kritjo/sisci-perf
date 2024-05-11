@@ -7,31 +7,8 @@
 #include "scale_up_pio.h"
 #include "sisci_glob_defs.h"
 #include "protocol.h"
-#include "timer_controlled_variable.h"
+#include "common_read_write_functions.h"
 
-static volatile sig_atomic_t *timer_expired;
-static unsigned long long operations = 0;
-
-static void write_pio(volatile char *data[], uint32_t num_segments) {
-    while (!*timer_expired) {
-        for (uint32_t i = 0; i < SEGMENT_SIZE; i++) {
-            data[i % num_segments][i] = 0x01;
-            operations++;
-        }
-    }
-}
-
-static void read_pio(volatile char *data[], uint32_t num_segments, pid_t main_pid) {
-    while (!*timer_expired) {
-        for (uint32_t i = 0; i < SEGMENT_SIZE; i++) {
-            if (data[i % num_segments][i] != 0x01) {
-                fprintf(stderr, "Data mismatch at index %d: %d\n", i, data[i % num_segments][i]);
-                kill(main_pid, SIGTERM);
-            }
-            operations++;
-        }
-    }
-}
 
 void run_scale_up_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote_data_interrupt_t order_interrupt, sci_local_data_interrupt_t delivery_interrupt) {
     // Order one segment from one peer
@@ -40,11 +17,10 @@ void run_scale_up_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remo
     order_t order;
     delivery_t delivery;
     unsigned int size;
-    volatile char *data[MAX_SEGMENTS];
+    volatile void *data[MAX_SEGMENTS];
     sci_error_t error;
 
     init_timer(MEASURE_SECONDS);
-    timer_expired = get_timer_expired();
 
     for (uint32_t segments_this_round = 1; segments_this_round <= MAX_SEGMENTS; segments_this_round++) {
 
@@ -79,13 +55,13 @@ void run_scale_up_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remo
         printf("Starting PIO write for %d seconds with %d segments on same peer\n", MEASURE_SECONDS, segments_this_round);
         operations = 0;
         start_timer();
-        write_pio(data, segments_this_round);
+        write_pio_byte(data, SEGMENT_SIZE, segments_this_round);
         printf("    operations: %llu\n", operations);
 
         printf("Starting PIO read for %d seconds with %d segments on same peer\n", MEASURE_SECONDS, segments_this_round);
         operations = 0;
         start_timer();
-        read_pio(data, segments_this_round, main_pid);
+        read_pio_byte(data, SEGMENT_SIZE, segments_this_round);
         printf("    operations: %llu\n", operations);
 
         for (uint32_t i = 0; i < segments_this_round; i++) {

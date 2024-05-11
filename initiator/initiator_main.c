@@ -13,6 +13,7 @@
 #include "simple_dma.h"
 #include "scale_out_pio.h"
 #include "initiator_main.h"
+#include "var_size_pio.h"
 
 static pid_t main_pid;
 

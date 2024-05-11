@@ -3,34 +3,13 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
+
 #include "simple_dma.h"
 #include "protocol.h"
 #include "sisci_glob_defs.h"
-#include "timer_controlled_variable.h"
+#include "common_read_write_functions.h"
 
-static volatile sig_atomic_t *timer_expired;
-static unsigned long long operations = 0;
-
-static void write_dma(sci_local_segment_t local_segment, sci_remote_segment_t remote_segment, sci_dma_queue_t dma_queue) {
-    while (!*timer_expired) {
-        for (uint32_t i = 0; i < SEGMENT_SIZE; i++) {
-            SEOE(SCIStartDmaTransfer, dma_queue, local_segment, remote_segment, i, sizeof(char), i, NO_CALLBACK, NO_ARG, SCI_FLAG_DMA_GLOBAL);
-            operations++;
-        }
-    }
-}
-
-static void read_dma(sci_local_segment_t local_segment, sci_remote_segment_t remote_segment, sci_dma_queue_t dma_queue) {
-    while (!*timer_expired) {
-        for (uint32_t i = 0; i < SEGMENT_SIZE; i++) {
-            SEOE(SCIStartDmaTransfer, dma_queue, local_segment, remote_segment, i, sizeof(char), i, NO_CALLBACK, NO_ARG, SCI_FLAG_DMA_GLOBAL | SCI_FLAG_DMA_READ);
-            operations++;
-        }
-    }
-}
-
-__attribute__((unused)) void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote_data_interrupt_t order_interrupt, sci_local_data_interrupt_t delivery_interrupt) {
+void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote_data_interrupt_t order_interrupt, sci_local_data_interrupt_t delivery_interrupt) {
     sci_remote_segment_t segment;
     order_t order;
     delivery_t delivery;
@@ -42,7 +21,6 @@ __attribute__((unused)) void run_single_segment_experiment_dma(sci_desc_t sd, pi
     sci_dma_queue_t dma_queue;
 
     init_timer(MEASURE_SECONDS);
-    timer_expired = get_timer_expired();
 
     order.commandType = COMMAND_TYPE_CREATE;
     order.orderType = ORDER_TYPE_GLOBAL_DMA_SEGMENT;

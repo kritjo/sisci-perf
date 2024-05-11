@@ -3,11 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include "timer_controlled_variable.h"
+#include "common_read_write_functions.h"
 
-volatile sig_atomic_t timer_expired = 0;
 struct sigaction sa = {0};
 struct itimerval timer = {0};
+
+volatile sig_atomic_t timer_expired = 0;
 
 static void timer_handler(__attribute__((unused)) int sig) {
     timer_expired = 1;
@@ -21,10 +22,6 @@ void init_timer(time_t seconds) {
     }
 
     timer.it_value.tv_sec = seconds;
-}
-
-volatile sig_atomic_t *get_timer_expired() {
-    return &timer_expired;
 }
 
 void start_timer() {
