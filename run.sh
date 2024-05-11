@@ -7,7 +7,7 @@ echo "Project built successfully"
 NODE_ID=$(./build/tools/print_node_id)
 
 if [ "$NODE_ID" == "" ]; then
-    echo "NODE_ID is not set. Exiting."
+    echo "Could not get local node id. Exiting."
     exit 1
 fi
 
@@ -31,7 +31,7 @@ for ITER in $(seq 0 $(expr $PEER_COUNT - 1))
 do
     echo "The peer node with hostname ${PEER_HOSTNAMES[$ITER]} has node id: ${PEER_NODE_IDS[$ITER]}"
     if [ "${PEER_NODE_IDS[$ITER]}" == "" ]; then
-        echo "The node id for peer node with hostname ${PEER_HOSTNAMES[$ITER]} is not set. Exiting."
+        echo "Could not get the node id for peer node with hostname ${PEER_HOSTNAMES[$ITER]}. Exiting."
         exit 1
     fi
     ITER=$(expr $ITER + 1)
