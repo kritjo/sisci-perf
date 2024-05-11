@@ -125,6 +125,9 @@ int main(int argc , char *argv[]) {
     printf("################## SCALE-OUT EXPERIMENTS ##################\n");
     run_scale_out_segment_experiment_pio(sd, main_pid, num_peers, order_interrupts, delivery_interrupt);
 
+    printf("################## VAR-SIZE EXPERIMENTS ###################\n");
+    run_var_size_experiment_pio(sd, main_pid, order_interrupts[0], delivery_interrupt);
+
     printf("##################### EXPERIMENTS END #####################\n");
 
     SEOE(SCIRemoveDataInterrupt, delivery_interrupt, NO_FLAGS);
