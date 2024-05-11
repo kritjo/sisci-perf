@@ -1,15 +1,15 @@
 #include <sisci_api.h>
-#include <unistd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
-#include "simple_dma.h"
-#include "protocol.h"
+#include "var_size_dma.h"
 #include "sisci_glob_defs.h"
+#include "protocol.h"
 #include "common_read_write_functions.h"
 
-void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote_data_interrupt_t order_interrupt, sci_local_data_interrupt_t delivery_interrupt) {
+void run_var_size_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote_data_interrupt_t order_interrupt, sci_local_data_interrupt_t delivery_interrupt) {
     sci_remote_segment_t segment;
     order_t order;
     delivery_t delivery;
@@ -19,12 +19,13 @@ void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote
     sci_map_t local_map;
     char *local_ptr;
     sci_dma_queue_t dma_queue;
+    size_t transfer_size;
 
     init_timer(MEASURE_SECONDS);
 
     order.commandType = COMMAND_TYPE_CREATE;
     order.orderType = ORDER_TYPE_GLOBAL_DMA_SEGMENT;
-    order.size = SEGMENT_SIZE;
+    order.size = MAX_SEGMENT_SIZE;
 
     SEOE(SCITriggerDataInterrupt, order_interrupt, &order, sizeof(order), NO_FLAGS);
 
@@ -39,30 +40,35 @@ void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote
 
     SEOE(SCIConnectSegment, sd, &segment, delivery.nodeId, delivery.id, ADAPTER_NO, NO_CALLBACK, NO_ARG, SCI_INFINITE_TIMEOUT, NO_FLAGS);
 
-    SEOE(SCICreateSegment, sd, &local_segment, 0, SEGMENT_SIZE, NO_CALLBACK, NO_ARG, SCI_FLAG_AUTO_ID);
+    SEOE(SCICreateSegment, sd, &local_segment, 0, MAX_SEGMENT_SIZE, NO_CALLBACK, NO_ARG, SCI_FLAG_AUTO_ID);
     SEOE(SCIPrepareSegment, local_segment, ADAPTER_NO, NO_FLAGS);
 
-    local_ptr = (typeof(local_ptr)) SCIMapLocalSegment(local_segment, &local_map, NO_OFFSET, SEGMENT_SIZE, NO_SUGGESTED_ADDRESS, NO_FLAGS, &error);
+    local_ptr = (typeof(local_ptr)) SCIMapLocalSegment(local_segment, &local_map, NO_OFFSET, MAX_SEGMENT_SIZE, NO_SUGGESTED_ADDRESS, NO_FLAGS, &error);
     if (error != SCI_ERR_OK) {
         fprintf(stderr, "Error mapping local segment: %d\n", error);
         kill(main_pid, SIGTERM);
     }
 
-    for (unsigned int i = 0; i < SEGMENT_SIZE / sizeof(char); i++) {
+    for (unsigned int i = 0; i < MAX_SEGMENT_SIZE / sizeof(char); i++) {
         local_ptr[i] = (char) i;
     }
 
     SEOE(SCICreateDMAQueue, sd, &dma_queue, NO_CALLBACK, NO_ARG, NO_FLAGS);
 
-    printf("Starting DMA write one byte for %d seconds\n", MEASURE_SECONDS);
-    start_timer();
-    write_dma(local_segment, segment, dma_queue, 1);
-    printf("    operations: %llu\n", operations);
+    transfer_size = 64;
+    while (transfer_size < MAX_SEGMENT_SIZE) {
+        printf("Starting DMA write %zu bytes for %d seconds\n", transfer_size, MEASURE_SECONDS);
+        start_timer();
+        write_dma(local_segment, segment, dma_queue, transfer_size);
+        printf("    operations: %llu\n", operations);
 
-    printf("Starting DMA read one byte for %d seconds\n", MEASURE_SECONDS);
-    start_timer();
-    read_dma(local_segment, segment, dma_queue, 1);
-    printf("    operations: %llu\n", operations);
+        printf("Starting DMA read %zu bytes for %d seconds\n", transfer_size, MEASURE_SECONDS);
+        start_timer();
+        read_dma(local_segment, segment, dma_queue, transfer_size);
+        printf("    operations: %llu\n", operations);
+
+        transfer_size *= 2;
+    }
 
     destroy_timer();
 

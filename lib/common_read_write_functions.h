@@ -193,27 +193,25 @@ static inline void memcpy_read_pio(void *dest,
 
 static inline void write_dma(sci_local_segment_t local_segment,
                              sci_remote_segment_t remote_segment,
-                             sci_dma_queue_t dma_queue) {
+                             sci_dma_queue_t dma_queue,
+                             size_t transfer_size) {
     operations = 0;
     while (!timer_expired) {
-        for (uint32_t i = 0; i < SEGMENT_SIZE; i++) {
-            SEOE(SCIStartDmaTransfer, dma_queue, local_segment, remote_segment, i, sizeof(char), i, NO_CALLBACK, NO_ARG,
-                 SCI_FLAG_DMA_GLOBAL);
-            operations++;
-        }
+        SEOE(SCIStartDmaTransfer, dma_queue, local_segment, remote_segment, 0, transfer_size, 0, NO_CALLBACK, NO_ARG,
+             SCI_FLAG_DMA_GLOBAL);
+        operations += transfer_size;
     }
 }
 
 static inline void read_dma(sci_local_segment_t local_segment,
                             sci_remote_segment_t remote_segment,
-                            sci_dma_queue_t dma_queue) {
+                            sci_dma_queue_t dma_queue,
+                            size_t transfer_size) {
     operations = 0;
     while (!timer_expired) {
-        for (uint32_t i = 0; i < SEGMENT_SIZE; i++) {
-            SEOE(SCIStartDmaTransfer, dma_queue, local_segment, remote_segment, i, sizeof(char), i, NO_CALLBACK, NO_ARG,
-                 SCI_FLAG_DMA_GLOBAL | SCI_FLAG_DMA_READ);
-            operations++;
-        }
+        SEOE(SCIStartDmaTransfer, dma_queue, local_segment, remote_segment, 0, transfer_size, 0, NO_CALLBACK, NO_ARG,
+             SCI_FLAG_DMA_GLOBAL | SCI_FLAG_DMA_READ);
+        operations += transfer_size;
     }
 }
 
