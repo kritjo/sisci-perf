@@ -63,5 +63,7 @@ sleep 1
 
 for ITER in $(seq 0 $(expr $PEER_COUNT - 1))
 do
-  ssh ${PEER_HOSTNAMES[$ITER]} "kill -KILL ${PEER_PIDS[$ITER]}"
+  ssh ${PEER_HOSTNAMES[$ITER]} "kill -KILL ${PEER_PIDS[$ITER]} > /dev/null 2>&1"
 done
+
+echo "Exiting"
