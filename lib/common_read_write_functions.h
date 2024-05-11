@@ -13,7 +13,6 @@ extern volatile sig_atomic_t timer_expired;
 static unsigned long long operations;
 
 void init_timer(time_t seconds);
-volatile sig_atomic_t *get_timer_expired();
 void start_timer();
 void destroy_timer();
 
