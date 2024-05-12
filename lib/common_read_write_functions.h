@@ -18,7 +18,7 @@
 // According to kritjo, this flag does not yield any performance improvements and leads to crashes. Therefore it is
 // disabled by default.
 // Do not enable this flag unless you know what you are doing.
-#define SISCI_ALLOW_DMA_VEC_WAIT 0
+#define SISCI_PERF_ALLOW_DMA_VEC_WAIT 0
 
 extern volatile sig_atomic_t timer_expired;
 
@@ -280,12 +280,12 @@ static inline void write_dma_vec(sci_local_segment_t local_segment,
                                  bool block) {
     unsigned int flags = block ? SCI_FLAG_DMA_GLOBAL | SCI_FLAG_DMA_WAIT : SCI_FLAG_DMA_GLOBAL;
 
-#if SISCI_ALLOW_DMA_VEC_WAIT == 0
+#if SISCI_PERF_ALLOW_DMA_VEC_WAIT == 0
     if (block) {
         fprintf(stderr, "ERROR: Blocking DMA transfers with SCI_FLAG_DMA_WAIT is not allowed\n");
         exit(EXIT_FAILURE);
     }
-#endif // SISCI_ALLOW_DMA_VEC_WAIT
+#endif // SISCI_PERF_ALLOW_DMA_VEC_WAIT
 
     operations = 0;
 
@@ -306,12 +306,12 @@ static inline void read_dma_vec(sci_local_segment_t local_segment,
                                 bool block) {
     unsigned int flags = block ? SCI_FLAG_DMA_GLOBAL | SCI_FLAG_DMA_READ | SCI_FLAG_DMA_WAIT : SCI_FLAG_DMA_GLOBAL | SCI_FLAG_DMA_READ;
 
-#if SISCI_ALLOW_DMA_VEC_WAIT == 0
+#if SISCI_PERF_ALLOW_DMA_VEC_WAIT == 0
     if (block) {
         fprintf(stderr, "ERROR: Blocking DMA transfers with SCI_FLAG_DMA_WAIT is not allowed\n");
         exit(EXIT_FAILURE);
     }
-#endif // SISCI_ALLOW_DMA_VEC_WAIT
+#endif // SISCI_PERF_ALLOW_DMA_VEC_WAIT
 
     operations = 0;
     sci_error_t error;
