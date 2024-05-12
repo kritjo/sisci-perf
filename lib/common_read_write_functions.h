@@ -464,7 +464,7 @@ static inline void ping_pong_pio(unsigned char *local_ptr, peer_ping_pong_segmen
         SCIFlush(sequence, NO_FLAGS);
 
         while (*local_ptr != curr_counter) {
-            SEOE(SCICacheSync, local_map, local_ptr, sizeof(unsigned char), SCI_FLAG_CACHE_INVALIDATE | SCI_FLAG_CACHE_FLUSH);
+            SEOE(SCICacheSync, local_map, local_ptr, sizeof(unsigned char), SCI_FLAG_CACHE_INVALIDATE);
         }
 
         operations++;
