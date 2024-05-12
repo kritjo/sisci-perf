@@ -16,6 +16,10 @@ add_executable(initiator_main
         var_size_dma.h
         dma_vec.c
         dma_vec.h
+        simple_interrupt.c
+        simple_interrupt.h
+        simple_data_interrupt.c
+        simple_data_interrupt.h
 )
 target_link_libraries(initiator_main PRIVATE SISCIGlobDefs)
 target_link_libraries(initiator_main PRIVATE sisci)

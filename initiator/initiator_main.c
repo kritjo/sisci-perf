@@ -16,6 +16,8 @@
 #include "var_size_pio.h"
 #include "var_size_dma.h"
 #include "dma_vec.h"
+#include "simple_interrupt.h"
+#include "simple_data_interrupt.h"
 
 static pid_t main_pid;
 
@@ -150,6 +152,16 @@ int main(int argc , char *argv[]) {
     printf("##################### DMA VEC EXPERIMENTS #####################\n");
     run_experiment_dma_vec(sd, main_pid, order_interrupts[0], delivery_interrupt);
 #endif // SISCI_PERF_DMA_VEC
+
+#if SISCI_PERF_INT
+    printf("#################### INTERRUPT EXPERIMENTS ####################\n");
+    run_experiment_interrupt(sd, main_pid, order_interrupts[0], delivery_interrupt);
+#endif // SISCI_PERF_INT
+
+#if SISCI_PERF_DATA_INT
+    printf("################## DATA INTERRUPT EXPERIMENTS ##################\n");
+    run_experiment_data_interrupt(sd, main_pid, order_interrupts[0], delivery_interrupt);
+#endif // SISCI_PERF_DATA_INT
 
     printf("##################### EXPERIMENTS END #####################\n");
 
