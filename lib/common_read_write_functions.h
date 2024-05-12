@@ -325,4 +325,35 @@ static inline void read_dma_vec(sci_local_segment_t local_segment,
     }
 }
 
+static inline void trigger_interrupt(sci_remote_interrupt_t remote_interrupt) {
+    operations = 0;
+    while (!timer_expired) {
+        SEOE(SCITriggerInterrupt, remote_interrupt, NO_FLAGS);
+        operations += 1;
+    }
+}
+
+static inline void trigger_data_interrupt(sci_remote_data_interrupt_t remote_interrupt, void *data, unsigned int length) {
+    sci_error_t error;
+    bool nospc_error = false;
+    operations = 0;
+
+    while (!timer_expired) {
+        SCITriggerDataInterrupt(remote_interrupt, data, length, NO_FLAGS, &error);
+        if (error != SCI_ERR_OK && error != SCI_ERR_NOSPC) {
+            fprintf(stderr, "ERROR: SCITriggerDataInterrupt failed with error code %d\n", error);
+            exit(EXIT_FAILURE);
+        } else {
+            operations += 1;
+        }
+        if (error == SCI_ERR_NOSPC) {
+            nospc_error = true;
+        }
+    }
+
+    if (nospc_error) {
+        fprintf(stderr, "ERROR: SCITriggerDataInterrupt failed with error code SCI_ERR_NOSPC one or more times in a masked context\n");
+    }
+}
+
 #endif //SISCI_PERF_COMMON_READ_WRITE_FUNCTIONS_H
