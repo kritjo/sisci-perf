@@ -2,6 +2,7 @@
 #define SISCI_PERF_PROTOCOL_H
 
 #include <stddef.h>
+#include <stdbool.h>
 
 #define DELIVERY_INTERRUPT_NO 9573
 
@@ -10,6 +11,7 @@ typedef enum {
     ORDER_TYPE_GLOBAL_DMA_SEGMENT,
     ORDER_TYPE_INTERRUPT,
     ORDER_TYPE_DATA_INTERRUPT,
+    ORDER_TYPE_PING_PONG_SEGMENT
 } order_type_t;
 
 typedef enum {
@@ -43,5 +45,12 @@ typedef struct {
 
     char message[40];
 } delivery_t;
+
+typedef struct {
+    bool initiator_ready;
+    unsigned int initiator_ping_pong_segment_id;
+
+    unsigned char counter;
+} peer_ping_pong_segment_t;
 
 #endif //SISCI_PERF_PROTOCOL_H

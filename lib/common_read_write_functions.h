@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include "sisci_api.h"
 #include "sisci_glob_defs.h"
+#include "protocol.h"
 
 // Set to 1 to disable the checks for DMA completeness.
 // This is useful when we want to measure how fast we can post DMA transfers to the queue.
@@ -449,6 +450,24 @@ static inline void trigger_data_interrupt(sci_remote_data_interrupt_t remote_int
 
     if (nospc_error) {
         fprintf(stderr, "ERROR: SCITriggerDataInterrupt failed with error code SCI_ERR_NOSPC one or more times in a masked context\n");
+    }
+}
+
+static inline void ping_pong_pio(unsigned char *local_ptr, peer_ping_pong_segment_t *remote_ptr, sci_sequence_t sequence, sci_map_t local_map) {
+    operations = 0;
+    unsigned char curr_counter = 0;
+
+    while (!timer_expired) {
+        curr_counter++;
+
+        remote_ptr->counter = curr_counter;
+        SCIFlush(sequence, NO_FLAGS);
+
+        while (*local_ptr != curr_counter) {
+            SEOE(SCICacheSync, local_map, local_ptr, sizeof(unsigned char), SCI_FLAG_CACHE_INVALIDATE | SCI_FLAG_CACHE_FLUSH);
+        }
+
+        operations++;
     }
 }
 

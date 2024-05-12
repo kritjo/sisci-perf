@@ -20,6 +20,8 @@ add_executable(initiator_main
         simple_interrupt.h
         simple_data_interrupt.c
         simple_data_interrupt.h
+        ping_pong_pio.c
+        ping_pong_pio.h
 )
 target_link_libraries(initiator_main PRIVATE SISCIGlobDefs)
 target_link_libraries(initiator_main PRIVATE sisci)

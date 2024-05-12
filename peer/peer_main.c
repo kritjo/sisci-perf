@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <signal.h>
+#include <pthread.h>
 #include "sisci_glob_defs.h"
 #include "sisci_api.h"
 #include "protocol.h"
@@ -9,6 +10,7 @@
 #include "block_for_termination_signal.h"
 
 static pid_t main_pid;
+static unsigned int initiator_id;
 
 static sci_desc_t sd;
 static sci_remote_data_interrupt_t delivery_interrupt;
@@ -28,7 +30,88 @@ static unsigned int *ordered_interrupt_nos;
 static sci_local_interrupt_t *ordered_interrupts;
 static unsigned int ordered_interrupts_count;
 
-static void delivery_notification(delivery_status_t status, unsigned int commandType, unsigned int deliveryType, unsigned int id) {
+static pthread_t ping_pong_thread;
+
+typedef struct {
+    sci_map_t map;
+
+    sci_remote_segment_t remote_segment;
+    sci_map_t remote_map;
+    sci_sequence_t sequence;
+} ping_pong_cleanup_arg_t;
+
+static void ping_pong_thread_cleanup(void *arg) {
+    ping_pong_cleanup_arg_t *cleanup_arg = (ping_pong_cleanup_arg_t *) arg;
+
+    SEOE(SCIRemoveSequence, cleanup_arg->sequence, NO_FLAGS);
+    SEOE(SCIUnmapSegment, cleanup_arg->map, NO_FLAGS);
+    SEOE(SCIUnmapSegment, cleanup_arg->remote_map, NO_FLAGS);
+    SEOE(SCIDisconnectSegment, cleanup_arg->remote_segment, NO_FLAGS);
+}
+
+static void *ping_pong_thread_start(void *arg) {
+    sci_local_segment_t segment = *(sci_local_segment_t *) arg;
+    sci_map_t map;
+    peer_ping_pong_segment_t *buffer;
+    sci_error_t error;
+    sci_remote_segment_t remote_segment;
+    sci_map_t remote_map;
+    sci_sequence_t sequence;
+    unsigned char *remote_buffer;
+    unsigned char curr_counter = 0;
+
+    buffer = (typeof(buffer)) SCIMapLocalSegment(segment, &map, NO_OFFSET, SCIGetLocalSegmentSize(segment),
+                                                 NO_SUGGESTED_ADDRESS, NO_FLAGS, &error);
+    if (error != SCI_ERR_OK) {
+        fprintf(stderr, "Failed to map segment: %s\n", SCIGetErrorString(error));
+        exit(EXIT_FAILURE);
+    }
+
+    while (!buffer->initiator_ready) {
+        SEOE(SCICacheSync, map, buffer, sizeof(peer_ping_pong_segment_t),
+             SCI_FLAG_CACHE_INVALIDATE | SCI_FLAG_CACHE_FLUSH);
+    }
+
+    SEOE(SCIConnectSegment, sd, &remote_segment, initiator_id, buffer->initiator_ping_pong_segment_id, ADAPTER_NO,
+         NO_CALLBACK, NO_ARG, SCI_INFINITE_TIMEOUT, NO_FLAGS);
+
+    remote_buffer = (typeof(remote_buffer)) SCIMapRemoteSegment(remote_segment, &remote_map, NO_OFFSET,
+                                                                SCIGetRemoteSegmentSize(remote_segment),
+                                                                NO_SUGGESTED_ADDRESS, SCI_FLAG_IO_MAP_IOSPACE, &error);
+    if (error != SCI_ERR_OK) {
+        fprintf(stderr, "Failed to map remote segment: %s\n", SCIGetErrorString(error));
+        exit(EXIT_FAILURE);
+    }
+
+    SEOE(SCICreateMapSequence, remote_map, &sequence, NO_FLAGS);
+    SEOE(SCIStartSequence, sequence, NO_FLAGS);
+
+    ping_pong_cleanup_arg_t cleanup_arg = {
+            .map = map,
+            .remote_segment = remote_segment,
+            .remote_map = remote_map,
+            .sequence = sequence
+    };
+
+    pthread_cleanup_push(ping_pong_thread_cleanup, &cleanup_arg)
+
+            pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+
+            while (1) {
+                while (buffer->counter == curr_counter) {
+                    SEOE(SCICacheSync, map, buffer, sizeof(peer_ping_pong_segment_t),
+                         SCI_FLAG_CACHE_INVALIDATE | SCI_FLAG_CACHE_FLUSH);
+                }
+                curr_counter++;
+                *remote_buffer = curr_counter;
+                SCIFlush(sequence, NO_FLAGS);
+            }
+
+    pthread_cleanup_pop(1);
+}
+
+static void
+delivery_notification(delivery_status_t status, unsigned int commandType, unsigned int deliveryType, unsigned int id) {
     delivery_t delivery;
 
     delivery.status = status;
@@ -72,40 +155,62 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
     if (order->commandType == COMMAND_TYPE_CREATE) {
         switch (order->orderType) {
             case ORDER_TYPE_SEGMENT:
+            case ORDER_TYPE_PING_PONG_SEGMENT:
             case ORDER_TYPE_GLOBAL_DMA_SEGMENT:
-                ordered_segments = (typeof(ordered_segments)) reallocarray(ordered_segments, ordered_segments_count +1, sizeof(*ordered_segments));  // NOLINT(*-sizeof-expression)
+                ordered_segments = (typeof(ordered_segments)) reallocarray(ordered_segments, ordered_segments_count + 1,
+                                                                           sizeof(*ordered_segments));  // NOLINT(*-sizeof-expression)
                 if (ordered_segments == NULL) {
                     perror("Failed to allocate memory for ordered segments");
                     kill(main_pid, SIGTERM);
                 }
 
-                unsigned int create_flags = order->orderType == ORDER_TYPE_GLOBAL_DMA_SEGMENT ? SCI_FLAG_DMA_GLOBAL | SCI_FLAG_AUTO_ID : SCI_FLAG_AUTO_ID;
-                unsigned int prepare_flags = order->orderType == ORDER_TYPE_GLOBAL_DMA_SEGMENT ? SCI_FLAG_DMA_SOURCE_ONLY : NO_FLAGS;
+                unsigned int create_flags =
+                        order->orderType == ORDER_TYPE_GLOBAL_DMA_SEGMENT ? SCI_FLAG_DMA_GLOBAL | SCI_FLAG_AUTO_ID
+                                                                          : SCI_FLAG_AUTO_ID;
+                unsigned int prepare_flags =
+                        order->orderType == ORDER_TYPE_GLOBAL_DMA_SEGMENT ? SCI_FLAG_DMA_SOURCE_ONLY : NO_FLAGS;
 
-                SEOE(SCICreateSegment, sd, &ordered_segments[ordered_segments_count], id, order->size, NO_CALLBACK, NO_ARG, create_flags);
+                SEOE(SCICreateSegment, sd, &ordered_segments[ordered_segments_count], id, order->size, NO_CALLBACK,
+                     NO_ARG, create_flags);
 
                 SEOE(SCIPrepareSegment, ordered_segments[ordered_segments_count], ADAPTER_NO, prepare_flags);
 
                 SEOE(SCISetSegmentAvailable, ordered_segments[ordered_segments_count], ADAPTER_NO, NO_FLAGS);
 
-                delivery_notification(STATUS_TYPE_SUCCESS, COMMAND_TYPE_CREATE, order->orderType, SCIGetLocalSegmentId(ordered_segments[ordered_segments_count]));
+                delivery_notification(STATUS_TYPE_SUCCESS, COMMAND_TYPE_CREATE, order->orderType,
+                                      SCIGetLocalSegmentId(ordered_segments[ordered_segments_count]));
+
+                if (order->orderType == ORDER_TYPE_PING_PONG_SEGMENT) {
+                    if (ping_pong_thread != 0) {
+                        fprintf(stderr, "Received multiple ping pong segment orders\n");
+                        exit(EXIT_FAILURE);
+                    }
+
+                    pthread_create(&ping_pong_thread, NULL, ping_pong_thread_start,
+                                   &ordered_segments[ordered_segments_count]);
+                }
 
                 ordered_segments_count++;
                 break;
             case ORDER_TYPE_INTERRUPT:
-                ordered_interrupts = (typeof(ordered_interrupts)) reallocarray(ordered_interrupts, ordered_interrupts_count +1, sizeof(*ordered_interrupts));  // NOLINT(*-sizeof-expression)
+                ordered_interrupts = (typeof(ordered_interrupts)) reallocarray(ordered_interrupts,
+                                                                               ordered_interrupts_count + 1,
+                                                                               sizeof(*ordered_interrupts));  // NOLINT(*-sizeof-expression)
                 if (ordered_interrupts == NULL) {
                     perror("Failed to allocate memory for ordered interrupts");
                     kill(main_pid, SIGTERM);
                 }
 
-                ordered_interrupt_nos = (typeof(ordered_interrupt_nos)) reallocarray(ordered_interrupt_nos, ordered_interrupts_count +1, sizeof(*ordered_interrupt_nos));  // NOLINT(*-sizeof-expression)
+                ordered_interrupt_nos = (typeof(ordered_interrupt_nos)) reallocarray(ordered_interrupt_nos,
+                                                                                     ordered_interrupts_count + 1,
+                                                                                     sizeof(*ordered_interrupt_nos));  // NOLINT(*-sizeof-expression)
                 if (ordered_interrupt_nos == NULL) {
                     perror("Failed to allocate memory for ordered interrupt numbers");
                     kill(main_pid, SIGTERM);
                 }
 
-                SEOE(SCICreateInterrupt, sd, &ordered_interrupts[ordered_interrupts_count], ADAPTER_NO, &id, NO_CALLBACK, NO_ARG, NO_FLAGS);
+                SEOE(SCICreateInterrupt, sd, &ordered_interrupts[ordered_interrupts_count], ADAPTER_NO, &id,
+                     NO_CALLBACK, NO_ARG, NO_FLAGS);
 
                 ordered_interrupt_nos[ordered_interrupts_count] = id;
 
@@ -114,19 +219,25 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 delivery_notification(STATUS_TYPE_SUCCESS, COMMAND_TYPE_CREATE, ORDER_TYPE_INTERRUPT, id);
                 break;
             case ORDER_TYPE_DATA_INTERRUPT:
-                ordered_data_interrupts = (typeof(ordered_data_interrupts)) reallocarray(ordered_data_interrupts, ordered_data_interrupts_count +1, sizeof(*ordered_data_interrupts));  // NOLINT(*-sizeof-expression)
+                ordered_data_interrupts = (typeof(ordered_data_interrupts)) reallocarray(ordered_data_interrupts,
+                                                                                         ordered_data_interrupts_count +
+                                                                                         1,
+                                                                                         sizeof(*ordered_data_interrupts));  // NOLINT(*-sizeof-expression)
                 if (ordered_data_interrupts == NULL) {
                     perror("Failed to allocate memory for ordered data interrupts");
                     kill(main_pid, SIGTERM);
                 }
 
-                ordered_data_interrupt_nos = (typeof(ordered_data_interrupt_nos)) reallocarray(ordered_data_interrupt_nos, ordered_data_interrupts_count +1, sizeof(*ordered_data_interrupt_nos));  // NOLINT(*-sizeof-expression)
+                ordered_data_interrupt_nos = (typeof(ordered_data_interrupt_nos)) reallocarray(
+                        ordered_data_interrupt_nos, ordered_data_interrupts_count + 1,
+                        sizeof(*ordered_data_interrupt_nos));  // NOLINT(*-sizeof-expression)
                 if (ordered_data_interrupt_nos == NULL) {
                     perror("Failed to allocate memory for ordered data interrupt numbers");
                     kill(main_pid, SIGTERM);
                 }
 
-                SEOE(SCICreateDataInterrupt, sd, &ordered_data_interrupts[ordered_data_interrupts_count], ADAPTER_NO, &id, order_callback, NO_ARG, NO_FLAGS);
+                SEOE(SCICreateDataInterrupt, sd, &ordered_data_interrupts[ordered_data_interrupts_count], ADAPTER_NO,
+                     &id, order_callback, NO_ARG, NO_FLAGS);
 
                 ordered_data_interrupt_nos[ordered_data_interrupts_count] = id;
 
@@ -138,8 +249,27 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
     } else if (order->commandType == COMMAND_TYPE_DESTROY) {
         switch (order->orderType) {
             case ORDER_TYPE_SEGMENT:
+            case ORDER_TYPE_PING_PONG_SEGMENT:
             case ORDER_TYPE_GLOBAL_DMA_SEGMENT:
-                new_ordered_segments = (typeof(new_ordered_segments)) malloc((ordered_segments_count - 1) * sizeof(*new_ordered_segments)); // NOLINT(*-sizeof-expression)
+                if (order->orderType == ORDER_TYPE_PING_PONG_SEGMENT) {
+                    if (pthread_cancel(ping_pong_thread) != 0) {
+                        perror("Failed to cancel ping pong thread");
+                        delivery_notification(STATUS_TYPE_FAILURE, COMMAND_TYPE_DESTROY, ORDER_TYPE_SEGMENT, order->id);
+                        kill(main_pid, SIGTERM);
+                        return SCI_CALLBACK_CANCEL;
+                    }
+
+                    if (pthread_join(ping_pong_thread, NULL) != 0) {
+                        perror("Failed to join ping pong thread");
+                        delivery_notification(STATUS_TYPE_FAILURE, COMMAND_TYPE_DESTROY, ORDER_TYPE_SEGMENT, order->id);
+                        kill(main_pid, SIGTERM);
+                        return SCI_CALLBACK_CANCEL;
+                    }
+                    ping_pong_thread = 0;
+                }
+
+                new_ordered_segments = (typeof(new_ordered_segments)) malloc(
+                        (ordered_segments_count - 1) * sizeof(*new_ordered_segments)); // NOLINT(*-sizeof-expression)
                 if (new_ordered_segments == NULL && ordered_segments_count > 1) {
                     perror("Failed to allocate memory for new ordered segments");
                     delivery_notification(STATUS_TYPE_FAILURE, COMMAND_TYPE_DESTROY, ORDER_TYPE_SEGMENT, order->id);
@@ -164,7 +294,8 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 delivery_notification(STATUS_TYPE_SUCCESS, COMMAND_TYPE_DESTROY, order->orderType, order->id);
                 break;
             case ORDER_TYPE_INTERRUPT:
-                new_ordered_interrupts = (typeof(new_ordered_interrupts)) malloc((ordered_interrupts_count - 1) * sizeof(*new_ordered_interrupts)); // NOLINT(*-sizeof-expression)
+                new_ordered_interrupts = (typeof(new_ordered_interrupts)) malloc((ordered_interrupts_count - 1) *
+                                                                                 sizeof(*new_ordered_interrupts)); // NOLINT(*-sizeof-expression)
                 if (new_ordered_interrupts == NULL && ordered_interrupts_count > 1) {
                     perror("Failed to allocate memory for new ordered interrupts");
                     delivery_notification(STATUS_TYPE_FAILURE, COMMAND_TYPE_DESTROY, ORDER_TYPE_INTERRUPT, order->id);
@@ -185,7 +316,8 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 ordered_interrupts = new_ordered_interrupts;
                 free(tmp_ordered_interrupts);
 
-                new_ordered_interrupt_nos = (typeof(new_ordered_interrupt_nos)) malloc((ordered_interrupts_count - 1) * sizeof(*new_ordered_interrupt_nos)); // NOLINT(*-sizeof-expression)
+                new_ordered_interrupt_nos = (typeof(new_ordered_interrupt_nos)) malloc((ordered_interrupts_count - 1) *
+                                                                                       sizeof(*new_ordered_interrupt_nos)); // NOLINT(*-sizeof-expression)
                 if (new_ordered_interrupt_nos == NULL && ordered_interrupts_count > 1) {
                     perror("Failed to allocate memory for new ordered interrupt numbers");
                     delivery_notification(STATUS_TYPE_FAILURE, COMMAND_TYPE_DESTROY, ORDER_TYPE_INTERRUPT, order->id);
@@ -208,10 +340,13 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 delivery_notification(STATUS_TYPE_SUCCESS, COMMAND_TYPE_DESTROY, ORDER_TYPE_INTERRUPT, order->id);
                 break;
             case ORDER_TYPE_DATA_INTERRUPT:
-                new_ordered_data_interrupts = (typeof(new_ordered_data_interrupts)) malloc((ordered_data_interrupts_count - 1) * sizeof(*new_ordered_data_interrupts)); // NOLINT(*-sizeof-expression)
+                new_ordered_data_interrupts = (typeof(new_ordered_data_interrupts)) malloc(
+                        (ordered_data_interrupts_count - 1) *
+                        sizeof(*new_ordered_data_interrupts)); // NOLINT(*-sizeof-expression)
                 if (new_ordered_data_interrupts == NULL && ordered_data_interrupts_count > 1) {
                     perror("Failed to allocate memory for new ordered data interrupts");
-                    delivery_notification(STATUS_TYPE_FAILURE, COMMAND_TYPE_DESTROY, ORDER_TYPE_DATA_INTERRUPT, order->id);
+                    delivery_notification(STATUS_TYPE_FAILURE, COMMAND_TYPE_DESTROY, ORDER_TYPE_DATA_INTERRUPT,
+                                          order->id);
                     kill(main_pid, SIGTERM);
                     return SCI_CALLBACK_CANCEL;
                 }
@@ -229,10 +364,13 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 ordered_data_interrupts = new_ordered_data_interrupts;
                 free(tmp_ordered_data_interrupts);
 
-                new_ordered_data_interrupt_nos = (typeof(new_ordered_data_interrupt_nos)) malloc((ordered_data_interrupts_count - 1) * sizeof(*new_ordered_data_interrupt_nos)); // NOLINT(*-sizeof-expression)
+                new_ordered_data_interrupt_nos = (typeof(new_ordered_data_interrupt_nos)) malloc(
+                        (ordered_data_interrupts_count - 1) *
+                        sizeof(*new_ordered_data_interrupt_nos)); // NOLINT(*-sizeof-expression)
                 if (new_ordered_data_interrupt_nos == NULL && ordered_data_interrupts_count > 1) {
                     perror("Failed to allocate memory for new ordered data interrupt numbers");
-                    delivery_notification(STATUS_TYPE_FAILURE, COMMAND_TYPE_DESTROY, ORDER_TYPE_DATA_INTERRUPT, order->id);
+                    delivery_notification(STATUS_TYPE_FAILURE, COMMAND_TYPE_DESTROY, ORDER_TYPE_DATA_INTERRUPT,
+                                          order->id);
                     kill(main_pid, SIGTERM);
                     return SCI_CALLBACK_CANCEL;
                 }
@@ -261,7 +399,6 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
 }
 
 int main(int argc, char *argv[]) {
-    unsigned int initiator_id;
     long long_tmp;
     char *endptr;
 
@@ -295,7 +432,8 @@ int main(int argc, char *argv[]) {
     SEOE(SCIInitialize, NO_FLAGS);
     SEOE(SCIOpen, &sd, NO_FLAGS);
 
-    SEOE(SCICreateDataInterrupt, sd, &order_interrupt, ADAPTER_NO, &order_interrupt_no, order_callback, NO_ARG, SCI_FLAG_USE_CALLBACK);
+    SEOE(SCICreateDataInterrupt, sd, &order_interrupt, ADAPTER_NO, &order_interrupt_no, order_callback, NO_ARG,
+         SCI_FLAG_USE_CALLBACK);
 
     do {
         SCIConnectDataInterrupt(sd, &delivery_interrupt, initiator_id, ADAPTER_NO, delivery_interrupt_no,
