@@ -43,7 +43,7 @@ void *ping_pong_thread_start(void *arg) {
 
     remote_buffer = (typeof(remote_buffer)) SCIMapRemoteSegment(remote_segment, &remote_map, NO_OFFSET,
                                                                 SCIGetRemoteSegmentSize(remote_segment),
-                                                                NO_SUGGESTED_ADDRESS, SCI_FLAG_IO_MAP_IOSPACE, &error);
+                                                                NO_SUGGESTED_ADDRESS, NO_FLAGS, &error);
     if (error != SCI_ERR_OK) {
         fprintf(stderr, "Failed to map remote segment: %s\n", SCIGetErrorString(error));
         exit(EXIT_FAILURE);

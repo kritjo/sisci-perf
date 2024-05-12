@@ -57,7 +57,7 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
     SEOE(SCIConnectSegment, sd, &remote_segment, delivery.nodeId, delivery.id, ADAPTER_NO, NO_CALLBACK, NO_ARG, SCI_INFINITE_TIMEOUT, NO_FLAGS);
 
     // Map remote segment
-    remote_ptr = (typeof (remote_ptr)) SCIMapRemoteSegment(remote_segment, &remote_map, 0, SEGMENT_SIZE, NULL, SCI_FLAG_IO_MAP_IOSPACE, &error);
+    remote_ptr = (typeof (remote_ptr)) SCIMapRemoteSegment(remote_segment, &remote_map, 0, SEGMENT_SIZE, NULL, NO_FLAGS, &error);
     if (error != SCI_ERR_OK) {
         fprintf(stderr, "SCIMapRemoteSegment failed: %s\n", SCIGetErrorString(error));
         exit(EXIT_FAILURE);
