@@ -15,6 +15,7 @@
 #include "initiator_main.h"
 #include "var_size_pio.h"
 #include "var_size_dma.h"
+#include "dma_vec.h"
 
 static pid_t main_pid;
 
@@ -144,6 +145,11 @@ int main(int argc , char *argv[]) {
     printf("################# VAR-SIZE DMA EXPERIMENTS #################\n");
     run_var_size_experiment_dma(sd, main_pid, order_interrupts[0], delivery_interrupt);
 #endif // SISCI_PERF_VAR_SIZE_DMA
+
+#if SISCI_PERF_DMA_VEC
+    printf("##################### DMA VEC EXPERIMENTS #####################\n");
+    run_experiment_dma_vec(sd, main_pid, order_interrupts[0], delivery_interrupt);
+#endif // SISCI_PERF_DMA_VEC
 
     printf("##################### EXPERIMENTS END #####################\n");
 

@@ -14,6 +14,8 @@ add_executable(initiator_main
         var_size_pio.h
         var_size_dma.c
         var_size_dma.h
+        dma_vec.c
+        dma_vec.h
 )
 target_link_libraries(initiator_main PRIVATE SISCIGlobDefs)
 target_link_libraries(initiator_main PRIVATE sisci)
