@@ -20,8 +20,8 @@ void run_var_size_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote_data_
     sci_sequence_t sequence;
     size_t transfer_size;
     void *local_data;
-    pio_function_t write_pio_func;
-    pio_function_t read_pio_func;
+    pio_write_function_t write_pio_func;
+    pio_read_function_t read_pio_func;
 
     local_data = malloc(MAX_SEGMENT_SIZE);
     if (local_data == NULL) {
@@ -85,7 +85,7 @@ void run_var_size_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote_data_
 
         printf("Starting PIO write %zu bytes for %d seconds\n", transfer_size, MEASURE_SECONDS);
         start_timer();
-        write_pio_func(data, MAX_SEGMENT_SIZE, 1);
+        write_pio_func(data, MAX_SEGMENT_SIZE, 1, NO_SEQUENCE, NO_SEQ);
         printf("    operations: %llu\n", operations);
 
         printf("Starting PIO read %zu bytes for %d seconds\n", transfer_size, MEASURE_SECONDS);

@@ -53,7 +53,7 @@ void run_scale_up_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remo
 
         printf("Starting PIO write for %d seconds with %d segments on same peer\n", MEASURE_SECONDS, segments_this_round);
         start_timer();
-        write_pio_byte(data, SEGMENT_SIZE, segments_this_round);
+        write_pio_byte(data, SEGMENT_SIZE, segments_this_round, NO_SEQUENCE, NO_SEQ);
         printf("    operations: %llu\n", operations);
 
         printf("Starting PIO read for %d seconds with %d segments on same peer\n", MEASURE_SECONDS, segments_this_round);

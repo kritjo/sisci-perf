@@ -16,6 +16,8 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
     unsigned int size;
     volatile void *data[1];
     sci_error_t error;
+    sci_sequence_t sequence;
+    sci_sequence_status_t sequence_status;
 
     init_timer(MEASURE_SECONDS);
 
@@ -42,9 +44,18 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
         kill(main_pid, SIGTERM);
     }
 
+    SEOE(SCICreateMapSequence, map, &sequence, NO_FLAGS);
+    do {
+        sequence_status = SCIStartSequence(sequence, NO_FLAGS, &error);
+        if (sequence_status != SCI_SEQ_OK && sequence_status != SCI_SEQ_PENDING) {
+            fprintf(stderr, "Failed to start sequence, got illegal status: %d\n", sequence_status);
+            exit(EXIT_FAILURE);
+        }
+    } while (sequence_status != SCI_SEQ_OK);
+
     printf("Starting PIO write for %d seconds\n", MEASURE_SECONDS);
     start_timer();
-    write_pio_byte(data, SEGMENT_SIZE, 1);
+    write_pio_byte(data, SEGMENT_SIZE, 1, NO_SEQUENCE, NO_SEQ);
     printf("    operations: %llu\n", operations);
 
     printf("Starting PIO read for %d seconds\n", MEASURE_SECONDS);
@@ -52,9 +63,30 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
     read_pio_byte(data, SEGMENT_SIZE, 1);
     printf("    operations: %llu\n", operations);
 
+    printf("Starting PIO write with flush for %d seconds\n", MEASURE_SECONDS);
+    start_timer();
+    write_pio_byte(data, SEGMENT_SIZE, 1, sequence, FLUSH);
+    printf("    operations: %llu\n", operations);
+
+    sequence_status = SCICheckSequence(sequence, NO_FLAGS, &error);
+
+    if (sequence_status != SCI_SEQ_OK) {
+        fprintf(stderr, "Sequence failed: %d\n", error);
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Starting PIO write with sequence check for %d seconds\n", MEASURE_SECONDS);
+    start_timer();
+    write_pio_byte(data, SEGMENT_SIZE, 1, sequence, SEQ);
+    printf("    operations: %llu\n", operations);
+
+    SEOE(SCIRemoveSequence, sequence, NO_FLAGS);
+
     SEOE(SCIUnmapSegment, map, NO_FLAGS);
 
     SEOE(SCIDisconnectSegment, segment, NO_FLAGS);
+
+    sleep(1);
 
     SEOE(SCIConnectSegment, sd, &segment, delivery.nodeId, delivery.id, ADAPTER_NO, NO_CALLBACK, NO_ARG, SCI_INFINITE_TIMEOUT, NO_FLAGS);
 
@@ -66,7 +98,7 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
 
     printf("Starting PIO write in io-space for %d seconds\n", MEASURE_SECONDS);
     start_timer();
-    write_pio_byte(data, SEGMENT_SIZE, 1);
+    write_pio_byte(data, SEGMENT_SIZE, 1, NO_SEQUENCE, NO_SEQ);
     printf("    operations: %llu\n", operations);
 
     printf("Starting PIO read in io-space for %d seconds\n", MEASURE_SECONDS);
