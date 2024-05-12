@@ -40,7 +40,7 @@ void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote
     SEOE(SCIConnectSegment, sd, &segment, delivery.nodeId, delivery.id, ADAPTER_NO, NO_CALLBACK, NO_ARG, SCI_INFINITE_TIMEOUT, NO_FLAGS);
 
     SEOE(SCICreateSegment, sd, &local_segment, 0, SEGMENT_SIZE, NO_CALLBACK, NO_ARG, SCI_FLAG_AUTO_ID);
-    SEOE(SCIPrepareSegment, local_segment, ADAPTER_NO, NO_FLAGS);
+    SEOE(SCIPrepareSegment, local_segment, ADAPTER_NO, SCI_FLAG_DMA_SOURCE_ONLY);
 
     local_ptr = (typeof(local_ptr)) SCIMapLocalSegment(local_segment, &local_map, NO_OFFSET, SEGMENT_SIZE, NO_SUGGESTED_ADDRESS, NO_FLAGS, &error);
     if (error != SCI_ERR_OK) {

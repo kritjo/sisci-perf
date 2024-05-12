@@ -80,10 +80,11 @@ static sci_callback_action_t order_callback(__attribute__((unused)) void *_arg,
                 }
 
                 unsigned int create_flags = order->orderType == ORDER_TYPE_GLOBAL_DMA_SEGMENT ? SCI_FLAG_DMA_GLOBAL | SCI_FLAG_AUTO_ID : SCI_FLAG_AUTO_ID;
+                unsigned int prepare_flags = order->orderType == ORDER_TYPE_GLOBAL_DMA_SEGMENT ? SCI_FLAG_DMA_SOURCE_ONLY : NO_FLAGS;
 
                 SEOE(SCICreateSegment, sd, &ordered_segments[ordered_segments_count], id, order->size, NO_CALLBACK, NO_ARG, create_flags);
 
-                SEOE(SCIPrepareSegment, ordered_segments[ordered_segments_count], ADAPTER_NO, NO_FLAGS);
+                SEOE(SCIPrepareSegment, ordered_segments[ordered_segments_count], ADAPTER_NO, prepare_flags);
 
                 SEOE(SCISetSegmentAvailable, ordered_segments[ordered_segments_count], ADAPTER_NO, NO_FLAGS);
 
