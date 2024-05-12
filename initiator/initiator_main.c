@@ -115,23 +115,35 @@ int main(int argc , char *argv[]) {
     }
 
 
+#if SISCI_PERF_PIO
     printf("##################### PIO EXPERIMENTS #####################\n");
     run_single_segment_experiment_pio(sd, main_pid, order_interrupts[0], delivery_interrupt);
+#endif // SISCI_PERF_PIO
 
+#if SISCI_PERF_DMA
     printf("##################### DMA EXPERIMENTS #####################\n");
     run_single_segment_experiment_dma(sd, main_pid, order_interrupts[0], delivery_interrupt);
+#endif // SISCI_PERF_DMA
 
+#if SISCI_PERF_SCALE_UP
     printf("################### SCALE-UP EXPERIMENTS ##################\n");
     run_scale_up_segment_experiment_pio(sd, main_pid, order_interrupts[0], delivery_interrupt);
+#endif // SISCI_PERF_SCALE_UP
 
+#if SISCI_PERF_SCALE_OUT
     printf("################## SCALE-OUT EXPERIMENTS ##################\n");
     run_scale_out_segment_experiment_pio(sd, main_pid, num_peers, order_interrupts, delivery_interrupt);
+#endif // SISCI_PERF_SCALE_OUT
 
+#if SISCI_PERF_VAR_SIZE
     printf("################# VAR-SIZE PIO EXPERIMENTS #################\n");
     run_var_size_experiment_pio(sd, main_pid, order_interrupts[0], delivery_interrupt);
+#endif // SISCI_PERF_VAR_SIZE
 
+#if SISCI_PERF_VAR_SIZE_DMA
     printf("################# VAR-SIZE DMA EXPERIMENTS #################\n");
     run_var_size_experiment_dma(sd, main_pid, order_interrupts[0], delivery_interrupt);
+#endif // SISCI_PERF_VAR_SIZE_DMA
 
     printf("##################### EXPERIMENTS END #####################\n");
 
