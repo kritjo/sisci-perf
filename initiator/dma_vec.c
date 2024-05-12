@@ -58,7 +58,7 @@ void run_experiment_dma_vec(sci_desc_t sd, pid_t main_pid, sci_remote_data_inter
 
     SEOE(SCICreateDMAQueue, sd, &dma_queue, NO_CALLBACK, NO_ARG, NO_FLAGS);
 
-    transfer_size = MIN_DMA_TRANSFER_SIZE;
+    transfer_size = MIN_MEASURE_DMA_TRANSFER_SIZE;
     while (transfer_size <= MAX_SEGMENT_SIZE) {
         vec_el_size = transfer_size / DIS_DMA_MAX_VECLEN;
         if (vec_el_size < MIN_DMA_VEC_EL_SIZE) {

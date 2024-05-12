@@ -55,7 +55,7 @@ void run_var_size_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote_data_
 
     SEOE(SCICreateDMAQueue, sd, &dma_queue, NO_CALLBACK, NO_ARG, NO_FLAGS);
 
-    transfer_size = 64;
+    transfer_size = MIN_MEASURE_DMA_TRANSFER_SIZE;
     while (transfer_size <= MAX_SEGMENT_SIZE) {
         block_for_dma(dma_queue);
         printf("Starting DMA write %zu bytes for %d seconds\n", transfer_size, MEASURE_SECONDS);
