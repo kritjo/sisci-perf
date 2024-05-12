@@ -65,8 +65,7 @@ void *ping_pong_thread_start(void *arg) {
 
     while (1) {
         while (buffer->counter == curr_counter) {
-            SEOE(SCICacheSync, map, buffer, sizeof(peer_ping_pong_segment_t),
-                 SCI_FLAG_CACHE_INVALIDATE);
+            SCIFlush(sequence, NO_FLAGS);
         }
         curr_counter++;
         *remote_buffer = curr_counter;

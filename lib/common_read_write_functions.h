@@ -453,7 +453,7 @@ static inline void trigger_data_interrupt(sci_remote_data_interrupt_t remote_int
     }
 }
 
-static inline void ping_pong_pio(unsigned char *local_ptr, peer_ping_pong_segment_t *remote_ptr, sci_sequence_t sequence, sci_map_t local_map) {
+static inline void ping_pong_pio(const unsigned char *local_ptr, peer_ping_pong_segment_t *remote_ptr, sci_sequence_t sequence, sci_map_t local_map) {
     operations = 0;
     unsigned char curr_counter = 0;
 
@@ -464,7 +464,7 @@ static inline void ping_pong_pio(unsigned char *local_ptr, peer_ping_pong_segmen
         SCIFlush(sequence, NO_FLAGS);
 
         while (*local_ptr != curr_counter) {
-            SEOE(SCICacheSync, local_map, local_ptr, sizeof(unsigned char), SCI_FLAG_CACHE_INVALIDATE);
+            SCIFlush(sequence, NO_FLAGS);
         }
 
         operations++;
