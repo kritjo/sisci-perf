@@ -22,9 +22,9 @@
 
 #define NO_SEQUENCE NULL
 typedef enum {
-    NO_SEQ,
-    FLUSH,
-    SEQ
+    PIO_FLAG_NO_SEQ,
+    PIO_FLAG_FLUSH,
+    PIO_FLAG_CHK_SEQ
 } pio_flags_t;
 
 extern volatile sig_atomic_t timer_expired;
@@ -60,8 +60,8 @@ static inline void write_pio_byte(volatile void *uncasted_data[],
     while (!timer_expired) {
         for (uint32_t i = 0; i < segment_size; i++) {
             data[i % num_segments][i] = 0x01;
-            if (flags == FLUSH) SCIFlush(sequence, NO_FLAGS);
-            else if (flags == SEQ) {
+            if (flags == PIO_FLAG_FLUSH) SCIFlush(sequence, NO_FLAGS);
+            else if (flags == PIO_FLAG_CHK_SEQ) {
                 status = SCICheckSequence(sequence, NO_FLAGS, &error);
                 if (error != SCI_ERR_OK) {
                     fprintf(stderr, "ERROR: SCICheckSequence failed with error %s\n", SCIGetErrorString(error));
@@ -107,8 +107,8 @@ static inline void write_pio_word(volatile void *uncasted_data[],
     while (!timer_expired) {
         for (uint32_t i = 0; i < segment_size / 2; i++) {
             data[i % num_segments][i] = 0x01;
-            if (flags == FLUSH) SCIFlush(sequence, NO_FLAGS);
-            else if (flags == SEQ) {
+            if (flags == PIO_FLAG_FLUSH) SCIFlush(sequence, NO_FLAGS);
+            else if (flags == PIO_FLAG_CHK_SEQ) {
                 status = SCICheckSequence(sequence, NO_FLAGS, &error);
                 if (error != SCI_ERR_OK) {
                     fprintf(stderr, "ERROR: SCICheckSequence failed with error %s\n", SCIGetErrorString(error));
@@ -153,8 +153,8 @@ static inline void write_pio_dword(volatile void *uncasted_data[],
     while (!timer_expired) {
         for (uint32_t i = 0; i < segment_size / 4; i++) {
             data[i % num_segments][i] = 0x01;
-            if (flags == FLUSH) SCIFlush(sequence, NO_FLAGS);
-            else if (flags == SEQ) {
+            if (flags == PIO_FLAG_FLUSH) SCIFlush(sequence, NO_FLAGS);
+            else if (flags == PIO_FLAG_CHK_SEQ) {
                 status = SCICheckSequence(sequence, NO_FLAGS, &error);
                 if (error != SCI_ERR_OK) {
                     fprintf(stderr, "ERROR: SCICheckSequence failed with error %s\n", SCIGetErrorString(error));
@@ -199,8 +199,8 @@ static inline void write_pio_qword(volatile void *uncasted_data[],
     while (!timer_expired) {
         for (uint32_t i = 0; i < segment_size / 8; i++) {
             data[i % num_segments][i] = 0x01;
-            if (flags == FLUSH) SCIFlush(sequence, NO_FLAGS);
-            else if (flags == SEQ) {
+            if (flags == PIO_FLAG_FLUSH) SCIFlush(sequence, NO_FLAGS);
+            else if (flags == PIO_FLAG_CHK_SEQ) {
                 status = SCICheckSequence(sequence, NO_FLAGS, &error);
                 if (error != SCI_ERR_OK) {
                     fprintf(stderr, "ERROR: SCICheckSequence failed with error %s\n", SCIGetErrorString(error));
@@ -244,8 +244,8 @@ static inline void write_pio_dqword(volatile void *uncasted_data[],
     while (!timer_expired) {
         for (uint32_t i = 0; i < segment_size / 16; i++) {
             data[i % num_segments][i] = 0x01;
-            if (flags == FLUSH) SCIFlush(sequence, NO_FLAGS);
-            else if (flags == SEQ) {
+            if (flags == PIO_FLAG_FLUSH) SCIFlush(sequence, NO_FLAGS);
+            else if (flags == PIO_FLAG_CHK_SEQ) {
                 status = SCICheckSequence(sequence, NO_FLAGS, &error);
                 if (error != SCI_ERR_OK) {
                     fprintf(stderr, "ERROR: SCICheckSequence failed with error %s\n", SCIGetErrorString(error));

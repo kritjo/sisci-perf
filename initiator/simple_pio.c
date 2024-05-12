@@ -55,7 +55,7 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
 
     printf("Starting PIO write for %d seconds\n", MEASURE_SECONDS);
     start_timer();
-    write_pio_byte(data, SEGMENT_SIZE, 1, NO_SEQUENCE, NO_SEQ);
+    write_pio_byte(data, SEGMENT_SIZE, 1, NO_SEQUENCE, PIO_FLAG_NO_SEQ);
     printf("    operations: %llu\n", operations);
 
     printf("Starting PIO read for %d seconds\n", MEASURE_SECONDS);
@@ -65,7 +65,7 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
 
     printf("Starting PIO write with flush for %d seconds\n", MEASURE_SECONDS);
     start_timer();
-    write_pio_byte(data, SEGMENT_SIZE, 1, sequence, FLUSH);
+    write_pio_byte(data, SEGMENT_SIZE, 1, sequence, PIO_FLAG_FLUSH);
     printf("    operations: %llu\n", operations);
 
     sequence_status = SCICheckSequence(sequence, NO_FLAGS, &error);
@@ -77,7 +77,7 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
 
     printf("Starting PIO write with sequence check for %d seconds\n", MEASURE_SECONDS);
     start_timer();
-    write_pio_byte(data, SEGMENT_SIZE, 1, sequence, SEQ);
+    write_pio_byte(data, SEGMENT_SIZE, 1, sequence, PIO_FLAG_CHK_SEQ);
     printf("    operations: %llu\n", operations);
 
     SEOE(SCIRemoveSequence, sequence, NO_FLAGS);
@@ -98,7 +98,7 @@ void run_single_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote
 
     printf("Starting PIO write in io-space for %d seconds\n", MEASURE_SECONDS);
     start_timer();
-    write_pio_byte(data, SEGMENT_SIZE, 1, NO_SEQUENCE, NO_SEQ);
+    write_pio_byte(data, SEGMENT_SIZE, 1, NO_SEQUENCE, PIO_FLAG_NO_SEQ);
     printf("    operations: %llu\n", operations);
 
     printf("Starting PIO read in io-space for %d seconds\n", MEASURE_SECONDS);
