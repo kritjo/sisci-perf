@@ -5,8 +5,20 @@
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "sisci_api.h"
 #include "sisci_glob_defs.h"
+
+// Set to 1 to disable the checks for DMA completeness.
+// This is useful when we want to measure how fast we can post DMA transfers to the queue.
+// This will however potentially lead to crashes if the DMA transfers are not completed before the next one is posted.
+#define SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS 0
+
+// Set to 1 to allow the SCI_FLAG_DMA_WAIT.
+// According to kritjo, this flag does not yield any performance improvements and leads to crashes. Therefore it is
+// disabled by default.
+// Do not enable this flag unless you know what you are doing.
+#define SISCI_ALLOW_DMA_VEC_WAIT 0
 
 extern volatile sig_atomic_t timer_expired;
 
@@ -190,14 +202,56 @@ static inline void memcpy_read_pio(void *dest,
     }
 }
 
+/**
+ * @note As per the documentation "An application is allowed to start another transfer on a queue only after the
+ * previous transfer for that queue has completed". Therefore we have to check the state of the queue before starting.
+ */
+
+static inline void block_for_dma(sci_dma_queue_t dma_queue) {
+    sci_dma_queue_state_t dma_state;
+    dma_state = SCIDMAQueueState(dma_queue);
+
+    while (dma_state == SCI_DMAQUEUE_POSTED) {
+        SEOE(SCIWaitForDMAQueue, dma_queue, SCI_INFINITE_TIMEOUT, NO_FLAGS);
+        dma_state = SCIDMAQueueState(dma_queue);
+    }
+
+    switch (dma_state) {
+        case SCI_DMAQUEUE_IDLE:
+        case SCI_DMAQUEUE_DONE:
+            break;
+        case SCI_DMAQUEUE_GATHER:
+            fprintf(stderr, "ERROR: DMA queue is in gather state, don't know what to do\n");
+            exit(EXIT_FAILURE);
+            break;
+        case SCI_DMAQUEUE_POSTED:
+            // Case to satisfy clang-tidy - and make it explicit that this should not happen
+            fprintf(stderr, "ERROR: Logical error, this should not happen\n");
+            exit(EXIT_FAILURE);
+            break;
+        case SCI_DMAQUEUE_ABORTED:
+            fprintf(stderr, "ERROR: DMA queue is in aborted state\n");
+            exit(EXIT_FAILURE);
+            break;
+        case SCI_DMAQUEUE_ERROR:
+            fprintf(stderr, "ERROR: DMA queue is in error state\n");
+            exit(EXIT_FAILURE);
+            break;
+    }
+}
+
 static inline void write_dma(sci_local_segment_t local_segment,
                              sci_remote_segment_t remote_segment,
                              sci_dma_queue_t dma_queue,
                              size_t transfer_size) {
     operations = 0;
+
     while (!timer_expired) {
         SEOE(SCIStartDmaTransfer, dma_queue, local_segment, remote_segment, 0, transfer_size, 0, NO_CALLBACK, NO_ARG,
              SCI_FLAG_DMA_GLOBAL);
+#if SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS == 0
+        block_for_dma(dma_queue);
+#endif // SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS
         operations += transfer_size;
     }
 }
@@ -207,12 +261,68 @@ static inline void read_dma(sci_local_segment_t local_segment,
                             sci_dma_queue_t dma_queue,
                             size_t transfer_size) {
     operations = 0;
+
     while (!timer_expired) {
         SEOE(SCIStartDmaTransfer, dma_queue, local_segment, remote_segment, 0, transfer_size, 0, NO_CALLBACK, NO_ARG,
              SCI_FLAG_DMA_GLOBAL | SCI_FLAG_DMA_READ);
+#if SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS == 0
+        block_for_dma(dma_queue);
+#endif // SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS
         operations += transfer_size;
     }
 }
 
+static inline void write_dma_vec(sci_local_segment_t local_segment,
+                                 sci_remote_segment_t remote_segment,
+                                 sci_dma_queue_t dma_queue,
+                                 dis_dma_vec_t *dma_vec,
+                                 size_t vec_len,
+                                 bool block) {
+    unsigned int flags = block ? SCI_FLAG_DMA_GLOBAL | SCI_FLAG_DMA_WAIT : SCI_FLAG_DMA_GLOBAL;
+
+#if SISCI_ALLOW_DMA_VEC_WAIT == 0
+    if (block) {
+        fprintf(stderr, "ERROR: Blocking DMA transfers with SCI_FLAG_DMA_WAIT is not allowed\n");
+        exit(EXIT_FAILURE);
+    }
+#endif // SISCI_ALLOW_DMA_VEC_WAIT
+
+    operations = 0;
+
+    while (!timer_expired) {
+        SEOE(SCIStartDmaTransferVec, dma_queue, local_segment, remote_segment, vec_len, dma_vec, NO_CALLBACK, NO_ARG, flags);
+#if SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS == 0
+        if (!block) block_for_dma(dma_queue);
+#endif // SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS
+        operations += 1;
+    }
+}
+
+static inline void read_dma_vec(sci_local_segment_t local_segment,
+                                sci_remote_segment_t remote_segment,
+                                sci_dma_queue_t dma_queue,
+                                dis_dma_vec_t *dma_vec,
+                                size_t vec_len,
+                                bool block) {
+    unsigned int flags = block ? SCI_FLAG_DMA_GLOBAL | SCI_FLAG_DMA_READ | SCI_FLAG_DMA_WAIT : SCI_FLAG_DMA_GLOBAL | SCI_FLAG_DMA_READ;
+
+#if SISCI_ALLOW_DMA_VEC_WAIT == 0
+    if (block) {
+        fprintf(stderr, "ERROR: Blocking DMA transfers with SCI_FLAG_DMA_WAIT is not allowed\n");
+        exit(EXIT_FAILURE);
+    }
+#endif // SISCI_ALLOW_DMA_VEC_WAIT
+
+    operations = 0;
+    sci_error_t error;
+
+    while (!timer_expired) {
+        SCIStartDmaTransferVec(dma_queue, local_segment, remote_segment, vec_len, dma_vec, NO_CALLBACK, NO_ARG, flags, &error);
+#if SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS == 0
+        if (!block) block_for_dma(dma_queue);
+#endif // SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS
+        operations += 1;
+    }
+}
 
 #endif //SISCI_PERF_COMMON_READ_WRITE_FUNCTIONS_H
