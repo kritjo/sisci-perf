@@ -2,6 +2,8 @@
 A framework for testing Dolphin Interconnect Solutions NTB's performance using the SISCI API.
 
 ## Usage
+Create a file named `.callback.build`, this should contain any bash code that you want to be run before the building step. An example of this can be loading modules or setting up the environment in other ways.
+
 Start by enabling the features you want to profile in `initiator/initiator_main.h`.
 Some experiment options can be adjusted in their respective header files under `initiator/`.
 
