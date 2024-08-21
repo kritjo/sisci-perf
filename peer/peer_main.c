@@ -124,12 +124,13 @@ static void delivery_notification(delivery_status_t status, unsigned int command
 }
 
 static sci_callback_action_t handle_create_order(order_t *order) {
-    unsigned int id = 0;
+    unsigned int id = order->id;
 
     switch (order->orderType) {
         case ORDER_TYPE_SEGMENT:
         case ORDER_TYPE_PING_PONG_SEGMENT:
         case ORDER_TYPE_GLOBAL_DMA_SEGMENT:
+        case ORDER_TYPE_BROADCAST_SEGMENT:
             ordered_segments = (typeof(ordered_segments)) reallocarray(ordered_segments, ordered_segments_count + 1,
                                                                        sizeof(*ordered_segments));  // NOLINT(*-sizeof-expression)
             if (ordered_segments == NULL) {
@@ -137,11 +138,15 @@ static sci_callback_action_t handle_create_order(order_t *order) {
                 kill(main_pid, SIGTERM);
             }
 
-            unsigned int create_flags =
-                    order->orderType == ORDER_TYPE_GLOBAL_DMA_SEGMENT ? SCI_FLAG_DMA_GLOBAL | SCI_FLAG_AUTO_ID
-                                                                      : SCI_FLAG_AUTO_ID;
-            unsigned int prepare_flags =
-                    order->orderType == ORDER_TYPE_GLOBAL_DMA_SEGMENT ? SCI_FLAG_DMA_SOURCE_ONLY : NO_FLAGS;
+            unsigned int create_flags = NO_FLAGS;
+            if (order->orderType != ORDER_TYPE_BROADCAST_SEGMENT) create_flags |= SCI_FLAG_AUTO_ID;
+            if (order->orderType == ORDER_TYPE_GLOBAL_DMA_SEGMENT) create_flags |= SCI_FLAG_DMA_GLOBAL;
+            if (order->orderType == ORDER_TYPE_BROADCAST_SEGMENT) create_flags |= SCI_FLAG_BROADCAST;
+
+            unsigned int prepare_flags = NO_FLAGS;
+            if (order->orderType == ORDER_TYPE_GLOBAL_DMA_SEGMENT) prepare_flags |= SCI_FLAG_DMA_SOURCE_ONLY;
+
+            printf("Creating segment with id: %d\n", id);
 
             SEOE(SCICreateSegment, sd, &ordered_segments[ordered_segments_count], id, order->size, NO_CALLBACK,
                  NO_ARG, create_flags);
@@ -243,6 +248,7 @@ static sci_callback_action_t handle_destroy_order(order_t *order) {
         case ORDER_TYPE_SEGMENT:
         case ORDER_TYPE_PING_PONG_SEGMENT:
         case ORDER_TYPE_GLOBAL_DMA_SEGMENT:
+        case ORDER_TYPE_BROADCAST_SEGMENT:
             if (order->orderType == ORDER_TYPE_PING_PONG_SEGMENT) {
                 if (pthread_cancel(ping_pong_thread) != 0) {
                     perror("Failed to cancel ping pong thread");

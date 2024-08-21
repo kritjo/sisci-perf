@@ -3,6 +3,7 @@
 
 #define SEGMENT_SIZE 4096
 #define MAX_SEGMENT_SIZE 8388608
+#define BROADCAST_GROUP_ID 1
 
 #define ADAPTER_NO 0
 
