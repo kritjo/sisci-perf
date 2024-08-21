@@ -16,6 +16,7 @@ void run_experiment_interrupt(sci_desc_t sd, __attribute__((unused)) pid_t main_
 
     order.commandType = COMMAND_TYPE_CREATE;
     order.orderType = ORDER_TYPE_INTERRUPT;
+    order.id = 0;
 
     SEOE(SCITriggerDataInterrupt, order_interrupt, &order, sizeof(order), NO_FLAGS);
 

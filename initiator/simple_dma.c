@@ -25,6 +25,7 @@ void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote
     order.commandType = COMMAND_TYPE_CREATE;
     order.orderType = ORDER_TYPE_GLOBAL_DMA_SEGMENT;
     order.size = SEGMENT_SIZE;
+    order.id = 0;
 
     SEOE(SCITriggerDataInterrupt, order_interrupt, &order, sizeof(order), NO_FLAGS);
 

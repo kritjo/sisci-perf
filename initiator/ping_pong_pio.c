@@ -41,6 +41,7 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
     order.orderType = ORDER_TYPE_PING_PONG_SEGMENT;
     order.commandType = COMMAND_TYPE_CREATE;
     order.size = SEGMENT_SIZE;
+    order.id = 0;
 
     SEOE(SCITriggerDataInterrupt, order_interrupt, &order, sizeof(order), NO_FLAGS);
 
