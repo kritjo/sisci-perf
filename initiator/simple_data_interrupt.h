@@ -1,6 +1,9 @@
 #ifndef SISCI_PERF_SIMPLE_DATA_INTERRUPT_H
 #define SISCI_PERF_SIMPLE_DATA_INTERRUPT_H
 
+#include "sisci_types.h"
+#include <sys/types.h>
+
 #define MEASURE_SECONDS 2
 #define DATA_INT_DATA_LENGTH 50
 

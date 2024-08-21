@@ -1,6 +1,9 @@
 #ifndef SISCI_PERF_VAR_SIZE_DMA_H
 #define SISCI_PERF_VAR_SIZE_DMA_H
 
+#include "sisci_types.h"
+#include <sys/types.h>
+
 #define MEASURE_SECONDS 2
 #define MIN_MEASURE_DMA_TRANSFER_SIZE 1024
 #define MAX_MEASURE_DMA_TRANSFER_SIZE MAX_SEGMENT_SIZE

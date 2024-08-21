@@ -1,6 +1,9 @@
 #ifndef SISCI_PERF_SCALE_UP_PIO_H
 #define SISCI_PERF_SCALE_UP_PIO_H
 
+#include "sisci_types.h"
+#include <sys/types.h>
+
 #define MEASURE_SECONDS 2
 #define MAX_SEGMENTS 4
 

@@ -1,6 +1,8 @@
 #ifndef SISCI_PERF_SIMPLE_DMA_H
 #define SISCI_PERF_SIMPLE_DMA_H
 
+#include "sisci_types.h"
+#include <sys/types.h>
 
 #define MEASURE_SECONDS 2
 
