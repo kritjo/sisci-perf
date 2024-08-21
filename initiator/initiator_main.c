@@ -19,6 +19,7 @@
 #include "simple_interrupt.h"
 #include "simple_data_interrupt.h"
 #include "ping_pong_pio.h"
+#include "broadcast_pio.h"
 
 static pid_t main_pid;
 
@@ -168,6 +169,11 @@ int main(int argc , char *argv[]) {
     printf("##################### PING-PONG PIO EXPERIMENTS #####################\n");
     run_ping_pong_experiment_pio(sd, order_interrupts[0], delivery_interrupt);
 #endif // SISCI_PERF_PING_PONG_PIO
+
+#if SISCI_PERF_BROADCAST_PIO
+    printf("##################### BROADCAST DMA EXPERIMENTS #####################\n");
+    run_broadcast_pio_experiment(sd, main_pid, num_peers, order_interrupts, delivery_interrupt);
+#endif
 
     printf("##################### EXPERIMENTS END #####################\n");
 
