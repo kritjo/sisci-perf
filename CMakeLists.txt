@@ -4,6 +4,7 @@ project(sisci-perf)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -I/opt/DIS/include/ -I/opt/DIS/include/dis/ -g -D_REENTRANT -O2 -pthread")
 
