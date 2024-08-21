@@ -3,6 +3,7 @@
 
 #include "sisci_types.h"
 #include <sys/types.h>
+#include <stdint.h>
 
 #define MEASURE_SECONDS 2
 
