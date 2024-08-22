@@ -23,8 +23,6 @@ void run_broadcast_pio_experiment(sci_desc_t sd, pid_t main_pid, uint32_t num_pe
         order.size = SEGMENT_SIZE;
         order.id = BROADCAST_GROUP_ID;
 
-        printf("Ordering segment with id: %d\n", order.id);
-
         SEOE(SCITriggerDataInterrupt, order_interrupts[i], &order, sizeof(order), NO_FLAGS);
 
         size = sizeof(delivery);
