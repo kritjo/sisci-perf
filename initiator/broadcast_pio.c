@@ -51,6 +51,7 @@ void run_broadcast_pio_experiment(sci_desc_t sd, pid_t main_pid, uint32_t num_pe
     start_timer();
     write_pio_byte(&data, SEGMENT_SIZE, 1, NO_SEQUENCE, PIO_FLAG_NO_SEQ);
     printf("    operations: %llu\n", operations);
+    printf("$%s;%d;%llu\n", "PIO_BROADCAST", 1, operations);
 
     SEOE(SCIUnmapSegment, map, NO_FLAGS);
 

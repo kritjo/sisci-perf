@@ -60,12 +60,14 @@ void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote
     start_timer();
     write_dma(local_segment, segment, dma_queue, 1);
     printf("    operations: %llu\n", operations);
+    printf("$%s;%d;%llu\n", "DMA_WRITE", 1, operations);
 
     block_for_dma(dma_queue);
     printf("Starting DMA read one byte for %d seconds\n", MEASURE_SECONDS);
     start_timer();
     read_dma(local_segment, segment, dma_queue, 1);
     printf("    operations: %llu\n", operations);
+    printf("$%s;%d;%llu\n", "DMA_READ", 1, operations);
 
     destroy_timer();
 

@@ -35,6 +35,7 @@ void run_experiment_interrupt(sci_desc_t sd, __attribute__((unused)) pid_t main_
     start_timer();
     trigger_interrupt(interrupt);
     printf("    operations: %llu\n", operations);
+    printf("$%s;%d;%llu\n", "INT", 1, operations);
 
     SEOE(SCIDisconnectInterrupt, interrupt, NO_FLAGS);
 

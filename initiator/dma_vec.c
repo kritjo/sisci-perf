@@ -77,7 +77,8 @@ void run_experiment_dma_vec(sci_desc_t sd, pid_t main_pid, sci_remote_data_inter
             printf("Starting DMA write %zu bytes in total with %zu byte vectors elements for %d seconds\n", transfer_size, vec_el_size, MEASURE_SECONDS);
             start_timer();
             write_dma_vec(local_segment, segment, dma_queue, dmaVec, vec_el_count, false);
-            printf("    operations: %llu\n", operations * vec_el_size * vec_el_count);
+            printf("    bytes: %llu\n", operations * vec_el_size * vec_el_count);
+            printf("$%s;%zu;%llu\n", "DMA_WRITE_VECTOR", vec_el_size * vec_el_count, operations);
 
 #if SISCI_PERF_ALLOW_DMA_VEC_WAIT == 1
             block_for_dma(dma_queue);
@@ -90,7 +91,8 @@ void run_experiment_dma_vec(sci_desc_t sd, pid_t main_pid, sci_remote_data_inter
             printf("Starting DMA read %zu bytes in total with %zu byte vectors elements for %d seconds\n", transfer_size, vec_el_size, MEASURE_SECONDS);
             start_timer();
             read_dma_vec(local_segment, segment, dma_queue, dmaVec, vec_el_count, false);
-            printf("    operations: %llu\n", operations * vec_el_size * vec_el_count);
+            printf("    bytes: %llu\n", operations * vec_el_size * vec_el_count);
+            printf("$%s;%zu;%llu\n", "DMA_READ_VECTOR", vec_el_size * vec_el_count, operations);
 
 #if SISCI_PERF_ALLOW_DMA_VEC_WAIT == 1
             block_for_dma(dma_queue);

@@ -87,12 +87,14 @@ void run_var_size_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote_data_
         printf("Starting PIO write %zu bytes for %d seconds\n", transfer_size, MEASURE_SECONDS);
         start_timer();
         write_pio_func(data, MAX_SEGMENT_SIZE, 1, NO_SEQUENCE, PIO_FLAG_NO_SEQ);
-        printf("    operations: %llu\n", operations);
+        printf("    bytes: %llu\n", operations);
+        printf("$%s;%zu;%llu\n", "PIO_WRITE", transfer_size, operations);
 
         printf("Starting PIO read %zu bytes for %d seconds\n", transfer_size, MEASURE_SECONDS);
         start_timer();
         read_pio_func(data, MAX_SEGMENT_SIZE, 1);
-        printf("    operations: %llu\n", operations);
+        printf("    bytes: %llu\n", operations);
+        printf("$%s;%zu;%llu\n", "PIO_READ", transfer_size, operations);
 
         transfer_size *= 2;
     }
@@ -105,12 +107,14 @@ void run_var_size_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote_data_
         printf("Starting MemCpy write %zu bytes for %d seconds\n", transfer_size, MEASURE_SECONDS);
         start_timer();
         memcpy_write_pio(local_data, sequence, map, transfer_size);
-        printf("    operations: %llu\n", operations);
+        printf("    bytes: %llu\n", operations);
+        printf("$%s;%zu;%llu\n", "PIO_WRITE_MEMCPY", transfer_size, operations);
 
         printf("Starting MemCpy read %zu bytes for %d seconds\n", transfer_size, MEASURE_SECONDS);
         start_timer();
         memcpy_read_pio(local_data, sequence, map, transfer_size);
-        printf("    operations: %llu\n", operations);
+        printf("    bytes: %llu\n", operations);
+        printf("$%s;%zu;%llu\n", "PIO_READ_MEMCPY", transfer_size, operations);
 
         transfer_size *= 2;
     }

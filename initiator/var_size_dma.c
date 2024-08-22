@@ -62,13 +62,15 @@ void run_var_size_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote_data_
         printf("Starting DMA write %zu bytes for %d seconds\n", transfer_size, MEASURE_SECONDS);
         start_timer();
         write_dma(local_segment, segment, dma_queue, transfer_size);
-        printf("    operations: %llu\n", operations);
+        printf("    bytes: %llu\n", operations);
+        printf("$%s;%zu;%llu\n", "DMA_WRITE", transfer_size, operations);
 
         block_for_dma(dma_queue);
         printf("Starting DMA read %zu bytes for %d seconds\n", transfer_size, MEASURE_SECONDS);
         start_timer();
         read_dma(local_segment, segment, dma_queue, transfer_size);
-        printf("    operations: %llu\n", operations);
+        printf("    bytes: %llu\n", operations);
+        printf("$%s;%zu;%llu\n", "DMA_WRITE", transfer_size, operations);
 
         transfer_size *= 2;
     }

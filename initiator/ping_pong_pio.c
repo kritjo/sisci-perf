@@ -77,6 +77,8 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
     start_timer();
     ping_pong_pio(local_ptr, remote_ptr, sequence, local_map);
     printf("    operations: %llu\n", operations);
+    printf("$%s;%d;%llu\n", "PIO_PINGPONG", 0, operations);
+
 
     destroy_timer();
 

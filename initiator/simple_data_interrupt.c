@@ -40,11 +40,15 @@ void run_experiment_data_interrupt(sci_desc_t sd, __attribute__((unused)) pid_t 
     start_timer();
     trigger_data_interrupt(interrupt, data, 1);
     printf("    operations: %llu\n", operations);
+    printf("$%s;%d;%llu\n", "INT_DATA", 1, operations);
+
 
     printf("Starting trigger data interrupt with %d bytes of data for %d seconds\n", DATA_INT_DATA_LENGTH, MEASURE_SECONDS);
     start_timer();
     trigger_data_interrupt(interrupt, data, DATA_INT_DATA_LENGTH);
     printf("    operations: %llu\n", operations);
+    printf("$%s;%d;%llu\n", "INT_DATA", DATA_INT_DATA_LENGTH, operations);
+
 
     SEOE(SCIDisconnectDataInterrupt, interrupt, NO_FLAGS);
 

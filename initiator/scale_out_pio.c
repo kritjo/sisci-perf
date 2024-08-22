@@ -56,11 +56,13 @@ void run_scale_out_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, uint32_
         start_timer();
         write_pio_byte(data, SEGMENT_SIZE, segments_this_round, NO_SEQUENCE, PIO_FLAG_NO_SEQ);
         printf("    operations: %llu\n", operations);
+        printf("$%s;%d;%llu\n", "PIO_WRITE_SCALE_OUT", 1, operations);
 
         printf("Starting PIO read for %d seconds with %d segments on different peers\n", MEASURE_SECONDS, segments_this_round);
         start_timer();
         read_pio_byte(data, SEGMENT_SIZE, segments_this_round);
         printf("    operations: %llu\n", operations);
+        printf("$%s;%d;%llu\n", "PIO_READ_SCALE_OUT", 1, operations);
 
         for (uint32_t i = 0; i < segments_this_round; i++) {
             SEOE(SCIUnmapSegment, map[i], NO_FLAGS);
