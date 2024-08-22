@@ -8,6 +8,7 @@
 #include "sisci_glob_defs.h"
 #include "protocol.h"
 #include "common_read_write_functions.h"
+#include "initiator_main.h"
 
 void run_experiment_dma_vec(sci_desc_t sd, pid_t main_pid, sci_remote_data_interrupt_t order_interrupt, sci_local_data_interrupt_t delivery_interrupt) {
     sci_remote_segment_t segment;
@@ -74,11 +75,11 @@ void run_experiment_dma_vec(sci_desc_t sd, pid_t main_pid, sci_remote_data_inter
             }
 
             block_for_dma(dma_queue);
-            printf("Starting DMA write %zu bytes in total with %zu byte vectors elements for %d seconds\n", transfer_size, vec_el_size, MEASURE_SECONDS);
+            readable_printf("Starting DMA write %zu bytes in total with %zu byte vectors elements for %d seconds\n", transfer_size, vec_el_size, MEASURE_SECONDS);
             start_timer();
             write_dma_vec(local_segment, segment, dma_queue, dmaVec, vec_el_count, false);
-            printf("    bytes: %llu\n", operations * vec_el_size * vec_el_count);
-            printf("$%s;%zu;%llu\n", "DMA_WRITE_VECTOR", vec_el_size * vec_el_count, operations);
+            readable_printf("    bytes: %llu\n", operations * vec_el_size * vec_el_count);
+            machine_printf("$DMA_WRITE_VECTOR_%zu;%zu;%llu\n", vec_el_count, vec_el_size, operations);
 
 #if SISCI_PERF_ALLOW_DMA_VEC_WAIT == 1
             block_for_dma(dma_queue);
@@ -88,11 +89,11 @@ void run_experiment_dma_vec(sci_desc_t sd, pid_t main_pid, sci_remote_data_inter
 #endif // SISCI_PERF_ALLOW_DMA_VEC_WAIT
 
             block_for_dma(dma_queue);
-            printf("Starting DMA read %zu bytes in total with %zu byte vectors elements for %d seconds\n", transfer_size, vec_el_size, MEASURE_SECONDS);
+            readable_printf("Starting DMA read %zu bytes in total with %zu byte vectors elements for %d seconds\n", transfer_size, vec_el_size, MEASURE_SECONDS);
             start_timer();
             read_dma_vec(local_segment, segment, dma_queue, dmaVec, vec_el_count, false);
-            printf("    bytes: %llu\n", operations * vec_el_size * vec_el_count);
-            printf("$%s;%zu;%llu\n", "DMA_READ_VECTOR", vec_el_size * vec_el_count, operations);
+            readable_printf("    bytes: %llu\n", operations * vec_el_size * vec_el_count);
+            machine_printf("$DMA_WRITE_VECTOR_%zu;%zu;%llu\n", vec_el_count, vec_el_size, operations);
 
 #if SISCI_PERF_ALLOW_DMA_VEC_WAIT == 1
             block_for_dma(dma_queue);

@@ -8,6 +8,7 @@
 #include "sisci_glob_defs.h"
 #include "protocol.h"
 #include "common_read_write_functions.h"
+#include "initiator_main.h"
 
 
 void run_scale_up_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote_data_interrupt_t order_interrupt, sci_local_data_interrupt_t delivery_interrupt) {
@@ -52,18 +53,18 @@ void run_scale_up_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remo
             }
         }
 
-        printf("Starting PIO write for %d seconds with %d segments on same peer\n", MEASURE_SECONDS, segments_this_round);
+        readable_printf("Starting PIO write for %d seconds with %d segments on same peer\n", MEASURE_SECONDS, segments_this_round);
         start_timer();
         write_pio_byte(data, SEGMENT_SIZE, segments_this_round, NO_SEQUENCE, PIO_FLAG_NO_SEQ);
-        printf("    operations: %llu\n", operations);
-        printf("$%s;%d;%llu\n", "PIO_WRITE_SCALE_UP", 1, operations);
+        readable_printf("    operations: %llu\n", operations);
+        machine_printf("PIO_WRITE_SCALE_UP_%d;%d;%llu\n", segments_this_round, 1, operations);
 
 
-        printf("Starting PIO read for %d seconds with %d segments on same peer\n", MEASURE_SECONDS, segments_this_round);
+        readable_printf("Starting PIO read for %d seconds with %d segments on same peer\n", MEASURE_SECONDS, segments_this_round);
         start_timer();
         read_pio_byte(data, SEGMENT_SIZE, segments_this_round);
-        printf("    operations: %llu\n", operations);
-        printf("$%s;%d;%llu\n", "PIO_READ_SCALE_UP", 1, operations);
+        readable_printf("    operations: %llu\n", operations);
+        machine_printf("$PIO_READ_SCALE_UP_%d;%d;%llu\n", segments_this_round, 1, operations);
 
 
         for (uint32_t i = 0; i < segments_this_round; i++) {

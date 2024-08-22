@@ -4,6 +4,7 @@
 #include "simple_interrupt.h"
 #include "protocol.h"
 #include "common_read_write_functions.h"
+#include "initiator_main.h"
 
 
 void run_experiment_interrupt(sci_desc_t sd, __attribute__((unused)) pid_t main_pid, sci_remote_data_interrupt_t order_interrupt, sci_local_data_interrupt_t delivery_interrupt) {
@@ -31,11 +32,11 @@ void run_experiment_interrupt(sci_desc_t sd, __attribute__((unused)) pid_t main_
 
     SEOE(SCIConnectInterrupt, sd, &interrupt, delivery.nodeId, ADAPTER_NO, delivery.id, SCI_INFINITE_TIMEOUT, NO_FLAGS);
 
-    printf("Starting interrupt experiment for %d seconds\n", MEASURE_SECONDS);
+    readable_printf("Starting interrupt experiment for %d seconds\n", MEASURE_SECONDS);
     start_timer();
     trigger_interrupt(interrupt);
-    printf("    operations: %llu\n", operations);
-    printf("$%s;%d;%llu\n", "INT", 1, operations);
+    readable_printf("    operations: %llu\n", operations);
+    machine_printf("$%s;%d;%llu\n", "INT", 1, operations);
 
     SEOE(SCIDisconnectInterrupt, interrupt, NO_FLAGS);
 

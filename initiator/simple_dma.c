@@ -8,6 +8,7 @@
 #include "protocol.h"
 #include "sisci_glob_defs.h"
 #include "common_read_write_functions.h"
+#include "initiator_main.h"
 
 void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote_data_interrupt_t order_interrupt, sci_local_data_interrupt_t delivery_interrupt) {
     sci_remote_segment_t segment;
@@ -56,18 +57,18 @@ void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote
     SEOE(SCICreateDMAQueue, sd, &dma_queue, NO_CALLBACK, NO_ARG, NO_FLAGS);
 
     block_for_dma(dma_queue);
-    printf("Starting DMA write one byte for %d seconds\n", MEASURE_SECONDS);
+    readable_printf("Starting DMA write one byte for %d seconds\n", MEASURE_SECONDS);
     start_timer();
     write_dma(local_segment, segment, dma_queue, 1);
-    printf("    operations: %llu\n", operations);
-    printf("$%s;%d;%llu\n", "DMA_WRITE", 1, operations);
+    readable_printf("    operations: %llu\n", operations);
+    machine_printf("$%s;%d;%llu\n", "DMA_WRITE", 1, operations);
 
     block_for_dma(dma_queue);
-    printf("Starting DMA read one byte for %d seconds\n", MEASURE_SECONDS);
+    readable_printf("Starting DMA read one byte for %d seconds\n", MEASURE_SECONDS);
     start_timer();
     read_dma(local_segment, segment, dma_queue, 1);
-    printf("    operations: %llu\n", operations);
-    printf("$%s;%d;%llu\n", "DMA_READ", 1, operations);
+    readable_printf("    operations: %llu\n", operations);
+    machine_printf("$%s;%d;%llu\n", "DMA_READ", 1, operations);
 
     destroy_timer();
 

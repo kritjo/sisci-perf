@@ -6,6 +6,7 @@
 #include "sisci_glob_defs.h"
 #include "protocol.h"
 #include "common_read_write_functions.h"
+#include "initiator_main.h"
 
 
 void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t order_interrupt, sci_local_data_interrupt_t delivery_interrupt) {
@@ -73,12 +74,11 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
 
     init_timer(MEASURE_SECONDS);
 
-    printf("Starting PIO ping pong experiment for %d seconds\n", MEASURE_SECONDS);
+    readable_printf("Starting PIO ping pong experiment for %d seconds\n", MEASURE_SECONDS);
     start_timer();
     ping_pong_pio(local_ptr, remote_ptr, sequence, local_map);
-    printf("    operations: %llu\n", operations);
-    printf("$%s;%d;%llu\n", "PIO_PINGPONG", 0, operations);
-
+    readable_printf("    operations: %llu\n", operations);
+    machine_printf("$%s;%d;%llu\n", "PIO_PINGPONG", 0, operations);
 
     destroy_timer();
 

@@ -1,6 +1,12 @@
 #ifndef SISCI_PERF_INITIATOR_MAIN_H
 #define SISCI_PERF_INITIATOR_MAIN_H
 
+#define READABLE_PRINT 0
+#define MACHINE_PRINT 1
+#define readable_printf(...) if(READABLE_PRINT == 1) printf(__VA_ARGS__)
+#define machine_printf(...) if(MACHINE_PRINT == 1) printf(__VA_ARGS__)
+
+
 #define MAX_PEERS 4
 
 #define SISCI_PERF_PIO 1
