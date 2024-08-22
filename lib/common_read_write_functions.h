@@ -119,7 +119,8 @@ static inline void write_pio_word(volatile void *uncasted_data[],
                     fprintf(stderr, "ERROR: SCICheckSequence returned status %d\n", status);
                     exit(EXIT_FAILURE);
                 }
-            }            operations += 2;
+            }
+            operations++;
         }
     }
 }
@@ -136,7 +137,7 @@ static inline void read_pio_word(volatile void *uncasted_data[],
                 fprintf(stderr, "Data mismatch at index %d: %d\n", i, data[i % num_segments][i]);
                 exit(EXIT_FAILURE);
             }
-            operations += 2;
+            operations++;
         }
     }
 }
@@ -165,7 +166,8 @@ static inline void write_pio_dword(volatile void *uncasted_data[],
                     fprintf(stderr, "ERROR: SCICheckSequence returned status %d\n", status);
                     exit(EXIT_FAILURE);
                 }
-            }            operations += 4;
+            }
+            operations++;
         }
     }
 }
@@ -182,7 +184,7 @@ static inline void read_pio_dword(volatile void *uncasted_data[],
                 fprintf(stderr, "Data mismatch at index %d: %d\n", i, data[i % num_segments][i]);
                 exit(EXIT_FAILURE);
             }
-            operations += 4;
+            operations++;
         }
     }
 }
@@ -211,7 +213,8 @@ static inline void write_pio_qword(volatile void *uncasted_data[],
                     fprintf(stderr, "ERROR: SCICheckSequence returned status %d\n", status);
                     exit(EXIT_FAILURE);
                 }
-            }            operations += 8;
+            }
+            operations++;
         }
     }
 }
@@ -227,7 +230,7 @@ static inline void read_pio_qword(volatile void *uncasted_data[],
                 fprintf(stderr, "Data mismatch at index %d: %lu\n", i, data[i % num_segments][i]);
                 exit(EXIT_FAILURE);
             }
-            operations += 8;
+            operations++;
         }
     }
 }
@@ -256,7 +259,8 @@ static inline void write_pio_dqword(volatile void *uncasted_data[],
                     fprintf(stderr, "ERROR: SCICheckSequence returned status %d\n", status);
                     exit(EXIT_FAILURE);
                 }
-            }            operations += 16;
+            }
+            operations++;
         }
     }
 }
@@ -272,7 +276,7 @@ static inline void read_pio_dqword(volatile void *uncasted_data[],
                 fprintf(stderr, "Data mismatch at index %d: %llu\n", i, data[i % num_segments][i]);
                 exit(EXIT_FAILURE);
             }
-            operations += 16;
+            operations++;
         }
     }
 }
@@ -285,7 +289,7 @@ static inline void memcpy_write_pio(void *source,
     operations = 0;
     while (!timer_expired) {
         SEOE(SCIMemCpy, sequence, source, remote_map, 0, size, NO_FLAGS);
-        operations += size;
+        operations++;
     }
 }
 
@@ -295,7 +299,7 @@ static inline void memcpy_read_pio(void *dest,
     operations = 0;
     while (!timer_expired) {
         SEOE(SCIMemCpy, sequence, dest, remote_map, 0, size, SCI_FLAG_BLOCK_READ);
-        operations += size;
+        operations++;
     }
 }
 
@@ -349,7 +353,7 @@ static inline void write_dma(sci_local_segment_t local_segment,
 #if SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS == 0
         block_for_dma(dma_queue);
 #endif // SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS
-        operations += transfer_size;
+        operations++;
     }
 }
 
@@ -365,7 +369,7 @@ static inline void read_dma(sci_local_segment_t local_segment,
 #if SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS == 0
         block_for_dma(dma_queue);
 #endif // SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS
-        operations += transfer_size;
+        operations++;
     }
 }
 
@@ -391,7 +395,7 @@ static inline void write_dma_vec(sci_local_segment_t local_segment,
 #if SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS == 0
         if (!block) block_for_dma(dma_queue);
 #endif // SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS
-        operations += 1;
+        operations++;
     }
 }
 
@@ -418,7 +422,7 @@ static inline void read_dma_vec(sci_local_segment_t local_segment,
 #if SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS == 0
         if (!block) block_for_dma(dma_queue);
 #endif // SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS
-        operations += 1;
+        operations++;
     }
 }
 
@@ -426,7 +430,7 @@ static inline void trigger_interrupt(sci_remote_interrupt_t remote_interrupt) {
     operations = 0;
     while (!timer_expired) {
         SEOE(SCITriggerInterrupt, remote_interrupt, NO_FLAGS);
-        operations += 1;
+        operations++;
     }
 }
 
@@ -441,7 +445,7 @@ static inline void trigger_data_interrupt(sci_remote_data_interrupt_t remote_int
             fprintf(stderr, "ERROR: SCITriggerDataInterrupt failed with error code %d\n", error);
             exit(EXIT_FAILURE);
         } else {
-            operations += 1;
+            operations++;
         }
         if (error == SCI_ERR_NOSPC) {
             nospc_error = true;
