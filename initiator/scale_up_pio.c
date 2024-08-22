@@ -57,7 +57,7 @@ void run_scale_up_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remo
         start_timer();
         write_pio_byte(data, SEGMENT_SIZE, segments_this_round, NO_SEQUENCE, PIO_FLAG_NO_SEQ);
         readable_printf("    operations: %llu\n", operations);
-        machine_printf("PIO_WRITE_SCALE_UP_%d;%d;%llu\n", segments_this_round, 1, operations);
+        machine_printf("$PIO_WRITE_SCALE_UP_%d;%d;%llu\n", segments_this_round, 1, operations);
 
 
         readable_printf("Starting PIO read for %d seconds with %d segments on same peer\n", MEASURE_SECONDS, segments_this_round);
