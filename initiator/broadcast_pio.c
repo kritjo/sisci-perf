@@ -34,26 +34,26 @@ void run_broadcast_pio_experiment(sci_desc_t sd, pid_t main_pid, uint32_t num_pe
             fprintf(stderr, "Received invalid command type %d\n", delivery.commandType);
             kill(main_pid, SIGTERM);
         }
+
+        SEOE(SCIConnectSegment, sd, &segment, DIS_BROADCAST_NODEID_GROUP_ALL, BROADCAST_GROUP_ID, ADAPTER_NO, NO_CALLBACK, NO_ARG,
+             SCI_INFINITE_TIMEOUT, SCI_FLAG_BROADCAST);
+
+        data = SCIMapRemoteSegment(segment,&map,NO_OFFSET,SEGMENT_SIZE,NULL,SCI_FLAG_BROADCAST,&error);
+        if (error != SCI_ERR_OK) {
+            fprintf(stderr,"SCIMapRemoteSegment failed - Error code 0x%x\n",error);
+            exit(EXIT_FAILURE);
+        }
+
+        readable_printf("Starting DMA broadcast write one byte for %d seconds\n", MEASURE_SECONDS);
+        start_timer();
+        write_pio_byte(&data, SEGMENT_SIZE, 1, NO_SEQUENCE, PIO_FLAG_NO_SEQ);
+        readable_printf("    operations: %llu\n", operations);
+        machine_printf("$PIO_BROADCAST_%d;%d;%llu\n", i+1, 1, operations);
+
+        SEOE(SCIUnmapSegment, map, NO_FLAGS);
+
+        SEOE(SCIDisconnectSegment, segment, NO_FLAGS);
     }
-
-    SEOE(SCIConnectSegment, sd, &segment, DIS_BROADCAST_NODEID_GROUP_ALL, BROADCAST_GROUP_ID, ADAPTER_NO, NO_CALLBACK, NO_ARG,
-         SCI_INFINITE_TIMEOUT, SCI_FLAG_BROADCAST);
-
-    data = SCIMapRemoteSegment(segment,&map,NO_OFFSET,SEGMENT_SIZE,NULL,SCI_FLAG_BROADCAST,&error);
-    if (error != SCI_ERR_OK) {
-        fprintf(stderr,"SCIMapRemoteSegment failed - Error code 0x%x\n",error);
-        exit(EXIT_FAILURE);
-    }
-
-    readable_printf("Starting DMA broadcast write one byte for %d seconds\n", MEASURE_SECONDS);
-    start_timer();
-    write_pio_byte(&data, SEGMENT_SIZE, 1, NO_SEQUENCE, PIO_FLAG_NO_SEQ);
-    readable_printf("    operations: %llu\n", operations);
-    machine_printf("$%s;%d;%llu\n", "PIO_BROADCAST", 1, operations);
-
-    SEOE(SCIUnmapSegment, map, NO_FLAGS);
-
-    SEOE(SCIDisconnectSegment, segment, NO_FLAGS);
 
     for (uint32_t i = 0; i < num_peers; i++) {
         order.commandType = COMMAND_TYPE_DESTROY;
