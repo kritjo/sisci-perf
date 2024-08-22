@@ -145,9 +145,7 @@ static sci_callback_action_t handle_create_order(order_t *order) {
 
             unsigned int prepare_flags = NO_FLAGS;
             if (order->orderType == ORDER_TYPE_GLOBAL_DMA_SEGMENT) prepare_flags |= SCI_FLAG_DMA_SOURCE_ONLY;
-
-            printf("Creating segment with id: %d\n", id);
-
+            
             SEOE(SCICreateSegment, sd, &ordered_segments[ordered_segments_count], id, order->size, NO_CALLBACK,
                  NO_ARG, create_flags);
 
