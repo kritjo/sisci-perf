@@ -357,6 +357,22 @@ static inline void write_dma(sci_local_segment_t local_segment,
     }
 }
 
+static inline void write_dma_broadcast(sci_local_segment_t local_segment,
+                             sci_remote_segment_t remote_segment,
+                             sci_dma_queue_t dma_queue,
+                             size_t transfer_size) {
+    operations = 0;
+
+    while (!timer_expired) {
+        SEOE(SCIStartDmaTransfer, dma_queue, local_segment, remote_segment, 0, transfer_size, 0, NO_CALLBACK, NO_ARG,
+             SCI_FLAG_DMA_GLOBAL | SCI_FLAG_BROADCAST);
+#if SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS == 0
+        block_for_dma(dma_queue);
+#endif // SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS
+        operations++;
+    }
+}
+
 static inline void read_dma(sci_local_segment_t local_segment,
                             sci_remote_segment_t remote_segment,
                             sci_dma_queue_t dma_queue,

@@ -24,6 +24,8 @@ add_executable(initiator_main
         ping_pong_pio.h
         broadcast_pio.c
         broadcast_pio.h
+        broadcast_dma.c
+        broadcast_dma.h
 )
 target_link_libraries(initiator_main PRIVATE SISCIGlobDefs)
 target_link_libraries(initiator_main PRIVATE sisci)

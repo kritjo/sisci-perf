@@ -93,7 +93,7 @@ void run_experiment_dma_vec(sci_desc_t sd, pid_t main_pid, sci_remote_data_inter
             start_timer();
             read_dma_vec(local_segment, segment, dma_queue, dmaVec, vec_el_count, false);
             readable_printf("    bytes: %llu\n", operations * vec_el_size * vec_el_count);
-            machine_printf("$DMA_WRITE_VECTOR_%zu;%zu;%llu\n", vec_el_count, vec_el_size, operations);
+            machine_printf("$DMA_READ_VECTOR_%zu;%zu;%llu\n", vec_el_count, vec_el_size, operations);
 
 #if SISCI_PERF_ALLOW_DMA_VEC_WAIT == 1
             block_for_dma(dma_queue);
