@@ -107,7 +107,7 @@ void run_var_size_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote_data_
     while (transfer_size <= MAX_SEGMENT_SIZE) {
         readable_printf("Starting MemCpy write %zu bytes for %d seconds\n", transfer_size, MEASURE_SECONDS);
         start_timer();
-        memcpy_write_pio(local_data, sequence, map, transfer_size);
+        memcpy_write_pio(local_data, &sequence, &map, transfer_size, 1);
         readable_printf("    bytes: %llu\n", operations*transfer_size);
         machine_printf("$%s;%zu;%llu\n", "PIO_WRITE_MEMCPY", transfer_size, operations);
 

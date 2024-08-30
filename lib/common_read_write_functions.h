@@ -283,13 +283,16 @@ static inline void read_pio_dqword(volatile void *uncasted_data[],
 
 
 static inline void memcpy_write_pio(void *source,
-                                    sci_sequence_t sequence,
-                                    sci_map_t remote_map,
-                                    size_t size) {
+                                    sci_sequence_t sequence[],
+                                    sci_map_t remote_map[],
+                                    size_t size,
+                                    uint32_t num_segments) {
     operations = 0;
     while (!timer_expired) {
-        SEOE(SCIMemCpy, sequence, source, remote_map, 0, size, NO_FLAGS);
-        operations++;
+        for (uint32_t i = 0; i < size; i++) {
+            SEOE(SCIMemCpy, sequence[i%num_segments], source, remote_map[i%num_segments], NO_OFFSET, size, NO_FLAGS);
+            operations++;
+        }
     }
 }
 
@@ -298,7 +301,7 @@ static inline void memcpy_read_pio(void *dest,
                                    sci_map_t remote_map, size_t size) {
     operations = 0;
     while (!timer_expired) {
-        SEOE(SCIMemCpy, sequence, dest, remote_map, 0, size, SCI_FLAG_BLOCK_READ);
+        SEOE(SCIMemCpy, sequence, dest, remote_map, NO_OFFSET, size, SCI_FLAG_BLOCK_READ);
         operations++;
     }
 }

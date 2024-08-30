@@ -18,8 +18,16 @@ void run_scale_out_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, uint32_
     unsigned int size;
     volatile void *data[MAX_PEERS];
     sci_error_t error;
+    sci_sequence_t sequence[MAX_PEERS];
+    void *local_data;
 
     init_timer(MEASURE_SECONDS);
+
+    local_data = malloc(MAX_SEGMENT_SIZE);
+    if (local_data == NULL) {
+        fprintf(stderr, "Failed to allocate memory for local data\n");
+        kill(main_pid, SIGTERM);
+    }
 
     for (uint32_t segments_this_round = 1; segments_this_round <= num_peers; segments_this_round++) {
 
@@ -50,6 +58,9 @@ void run_scale_out_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, uint32_
                 fprintf(stderr, "Failed to map segment: %d\n", error);
                 kill(main_pid, SIGTERM);
             }
+
+            SEOE(SCICreateMapSequence, map[i], &sequence[i], NO_FLAGS);
+            SEOE(SCIStartSequence, sequence[i], NO_FLAGS);
         }
 
         readable_printf("Starting PIO write for %d seconds with %d segments on different peers\n", MEASURE_SECONDS, segments_this_round);
@@ -64,7 +75,15 @@ void run_scale_out_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, uint32_
         readable_printf("    operations: %llu\n", operations);
         machine_printf("$PIO_READ_SCALE_OUT_%d;%d;%llu\n", segments_this_round, 1, operations);
 
+        readable_printf("Starting PIO broadcast write %d bytes for %d seconds\n", SEGMENT_SIZE, MEASURE_SECONDS);
+        start_timer();
+        memcpy_write_pio(local_data, sequence, map, SEGMENT_SIZE, segments_this_round);
+        readable_printf("    operations: %llu\n", operations);
+        machine_printf("$PIO_WRITE_SCALE_OUT_%d;%d;%llu\n", segments_this_round, SEGMENT_SIZE, operations);
+
         for (uint32_t i = 0; i < segments_this_round; i++) {
+            SEOE(SCIRemoveSequence, sequence[i], NO_FLAGS);
+
             SEOE(SCIUnmapSegment, map[i], NO_FLAGS);
 
             SEOE(SCIDisconnectSegment, segment[i], NO_FLAGS);
@@ -85,6 +104,8 @@ void run_scale_out_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, uint32_
             }
         }
     }
+
+    free(local_data);
 
     destroy_timer();
 }
