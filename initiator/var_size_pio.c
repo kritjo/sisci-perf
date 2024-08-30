@@ -91,6 +91,12 @@ void run_var_size_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote_data_
         readable_printf("    bytes: %llu\n", operations*transfer_size);
         machine_printf("$%s;%zu;%llu\n", "PIO_WRITE", transfer_size, operations);
 
+        readable_printf("Starting PIO flush write %zu bytes for %d seconds\n", transfer_size, MEASURE_SECONDS);
+        start_timer();
+        write_pio_func(data, MAX_SEGMENT_SIZE, 1, NO_SEQUENCE, PIO_FLAG_FLUSH);
+        readable_printf("    bytes: %llu\n", operations*transfer_size);
+        machine_printf("$%s;%zu;%llu\n", "PIO_WRITE_FLUSH", transfer_size, operations);
+
         readable_printf("Starting PIO read %zu bytes for %d seconds\n", transfer_size, MEASURE_SECONDS);
         start_timer();
         read_pio_func(data, MAX_SEGMENT_SIZE, 1);
