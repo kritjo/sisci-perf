@@ -55,9 +55,7 @@ void run_broadcast_dma_experiment(sci_desc_t sd, pid_t main_pid, uint32_t num_pe
         SEOE(SCIConnectSegment, sd, &segment, DIS_BROADCAST_NODEID_GROUP_ALL, BROADCAST_GROUP_ID, ADAPTER_NO, NO_CALLBACK, NO_ARG,
              SCI_INFINITE_TIMEOUT, SCI_FLAG_BROADCAST);
 
-        printf("Waiting for data interrupt..\n");
         block_for_dma(dma_queue);
-        printf("Waited!\n");
 
         readable_printf("Starting DMA write one byte for %d seconds\n", MEASURE_SECONDS);
         start_timer();
