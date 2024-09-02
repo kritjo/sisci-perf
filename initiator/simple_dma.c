@@ -54,7 +54,7 @@ void run_single_segment_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote
         local_ptr[i] = (char) i;
     }
 
-    SEOE(SCICreateDMAQueue, sd, &dma_queue, NO_CALLBACK, NO_ARG, NO_FLAGS);
+    SEOE(SCICreateDMAQueue, sd, &dma_queue, ADAPTER_NO, DMA_QUEUE_MAX_ENTRIES, NO_FLAGS);
 
     block_for_dma(dma_queue);
     readable_printf("Starting DMA write one byte for %d seconds\n", MEASURE_SECONDS);

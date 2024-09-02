@@ -32,7 +32,7 @@ void run_broadcast_dma_experiment(sci_desc_t sd, pid_t main_pid, uint32_t num_pe
         local_data[i] = (char) i;
     }
 
-    SEOE(SCICreateDMAQueue, sd, &dma_queue, NO_CALLBACK, NO_ARG, NO_FLAGS);
+    SEOE(SCICreateDMAQueue, sd, &dma_queue, ADAPTER_NO, DMA_QUEUE_MAX_ENTRIES, NO_FLAGS);
 
     for (uint32_t i = 0; i < num_peers; i++) {
         order.commandType = COMMAND_TYPE_CREATE;

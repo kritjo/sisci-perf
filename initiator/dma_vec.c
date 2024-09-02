@@ -58,7 +58,7 @@ void run_experiment_dma_vec(sci_desc_t sd, pid_t main_pid, sci_remote_data_inter
         local_ptr[i] = (char) i;
     }
 
-    SEOE(SCICreateDMAQueue, sd, &dma_queue, NO_CALLBACK, NO_ARG, NO_FLAGS);
+    SEOE(SCICreateDMAQueue, sd, &dma_queue, ADAPTER_NO, DMA_QUEUE_MAX_ENTRIES, NO_FLAGS);
 
     transfer_size = MIN_MEASURE_DMA_VEC_TRANSFER_SIZE;
     while (transfer_size <= MAX_MEASURE_DMA_VEC_TRANSFER_SIZE) {
