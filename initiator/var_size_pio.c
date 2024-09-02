@@ -57,7 +57,7 @@ void run_var_size_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote_data_
     }
 
     transfer_size = 1;
-    while (transfer_size <= 16) {
+    while (transfer_size <= 8) {
         switch (transfer_size) {
             case 1:
                 write_pio_func = write_pio_byte;
@@ -74,10 +74,6 @@ void run_var_size_experiment_pio(sci_desc_t sd, pid_t main_pid, sci_remote_data_
             case 8:
                 write_pio_func = write_pio_qword;
                 read_pio_func = read_pio_qword;
-                break;
-            case 16:
-                write_pio_func = write_pio_dqword;
-                read_pio_func = read_pio_dqword;
                 break;
             default:
                 fprintf(stderr, "Invalid transfer size %zu\n", transfer_size);
