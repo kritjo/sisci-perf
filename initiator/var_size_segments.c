@@ -63,7 +63,7 @@ void run_var_size_segments_experiment(sci_desc_t sd, pid_t main_pid, sci_remote_
         start_timer();
         write_pio_byte(data, segment_size, 1, sequence, PIO_FLAG_FLUSH);
         readable_printf("    operations: %llu\n", operations);
-        machine_printf("$PIO_WRITE_FLUSH_%d;%d;%llu\n", segment_size, 1, operations);
+        machine_printf("$PIO_WRITE_FLUSH_SEG_SIZE_%d;%d;%llu\n", segment_size, 1, operations);
 
         SEOE(SCIUnmapSegment, map, NO_FLAGS);
 
