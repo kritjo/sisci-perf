@@ -21,6 +21,7 @@
 #include "ping_pong_pio.h"
 #include "broadcast_pio.h"
 #include "broadcast_dma.h"
+#include "var_size_segments.h"
 
 static pid_t main_pid;
 
@@ -174,6 +175,11 @@ int main(int argc , char *argv[]) {
 #if SISCI_PERF_BROADCAST_PIO
     printf("##################### BROADCAST PIO EXPERIMENTS #####################\n");
     run_broadcast_pio_experiment(sd, main_pid, num_peers, order_interrupts, delivery_interrupt);
+#endif
+
+#if SISCI_PERF_VAR_SIZE_SEGMENTS
+    printf("##################### VAR SIZE SEGMENTS EXPERIMENTS #####################\n");
+    run_var_size_segments_experiment(sd, main_pid, order_interrupts[0], delivery_interrupt);
 #endif
 
 #if UNSAFE_DO_NOT_USE_WILL_CAUSE_KERNEL_PANIC_SISCI_PERF_BROADCAST_DMA

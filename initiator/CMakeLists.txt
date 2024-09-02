@@ -26,6 +26,8 @@ add_executable(initiator_main
         broadcast_pio.h
         broadcast_dma.c
         broadcast_dma.h
+        var_size_segments.c
+        var_size_segments.h
 )
 target_link_libraries(initiator_main PRIVATE SISCIGlobDefs)
 target_link_libraries(initiator_main PRIVATE sisci)
