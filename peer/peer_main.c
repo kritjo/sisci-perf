@@ -146,14 +146,10 @@ static sci_callback_action_t handle_create_order(order_t *order) {
             if (order->orderType == ORDER_TYPE_GLOBAL_DMA_BROADCAST_SEGMENT) create_flags |= SCI_FLAG_BROADCAST |
                                                                                              SCI_FLAG_DMA_GLOBAL;
 
-            unsigned int prepare_flags = NO_FLAGS;
-            if (order->orderType == ORDER_TYPE_GLOBAL_DMA_SEGMENT) prepare_flags |= SCI_FLAG_DMA_SOURCE_ONLY;
-            if (order->orderType == ORDER_TYPE_GLOBAL_DMA_BROADCAST_SEGMENT) prepare_flags |= SCI_FLAG_DMA_SOURCE_ONLY;
-
             SEOE(SCICreateSegment, sd, &ordered_segments[ordered_segments_count], id, order->size, NO_CALLBACK,
                  NO_ARG, create_flags);
 
-            SEOE(SCIPrepareSegment, ordered_segments[ordered_segments_count], ADAPTER_NO, prepare_flags);
+            SEOE(SCIPrepareSegment, ordered_segments[ordered_segments_count], ADAPTER_NO, NO_FLAGS);
 
             SEOE(SCISetSegmentAvailable, ordered_segments[ordered_segments_count], ADAPTER_NO, NO_FLAGS);
 
