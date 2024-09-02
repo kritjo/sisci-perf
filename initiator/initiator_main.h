@@ -7,7 +7,7 @@
 #define machine_printf(...) if(MACHINE_PRINT == 1) printf(__VA_ARGS__)
 
 
-#define MAX_PEERS 4
+#define MAX_PEERS 8
 
 #define SISCI_PERF_PIO 1
 #define SISCI_PERF_DMA 1
