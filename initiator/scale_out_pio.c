@@ -23,7 +23,7 @@ void run_scale_out_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, uint32_
 
     init_timer(MEASURE_SECONDS);
 
-    local_data = malloc(MAX_SEGMENT_SIZE);
+    local_data = malloc(MAX_BROADCAST_SEGMENT_SIZE);
     if (local_data == NULL) {
         fprintf(stderr, "Failed to allocate memory for local data\n");
         kill(main_pid, SIGTERM);
@@ -34,7 +34,7 @@ void run_scale_out_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, uint32_
         for (uint32_t i = 0; i < segments_this_round; i++) {
             order.commandType = COMMAND_TYPE_CREATE;
             order.orderType = ORDER_TYPE_SEGMENT;
-            order.size = SEGMENT_SIZE;
+            order.size = MAX_BROADCAST_SEGMENT_SIZE;
             order.id = 0;
 
             SEOE(SCITriggerDataInterrupt, order_interrupts[i], &order, sizeof(order), NO_FLAGS);
@@ -52,7 +52,7 @@ void run_scale_out_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, uint32_
             SEOE(SCIConnectSegment, sd, &segment[i], delivery.nodeId, delivery.id, ADAPTER_NO, NO_CALLBACK, NO_ARG,
                  SCI_INFINITE_TIMEOUT, NO_FLAGS);
 
-            data[i] = SCIMapRemoteSegment(segment[i], &map[i], NO_OFFSET, SEGMENT_SIZE, NO_SUGGESTED_ADDRESS, NO_FLAGS,
+            data[i] = SCIMapRemoteSegment(segment[i], &map[i], NO_OFFSET, MAX_BROADCAST_SEGMENT_SIZE, NO_SUGGESTED_ADDRESS, NO_FLAGS,
                                           &error);
             if (error != SCI_ERR_OK) {
                 fprintf(stderr, "Failed to map segment: %d\n", error);
@@ -65,21 +65,27 @@ void run_scale_out_segment_experiment_pio(sci_desc_t sd, pid_t main_pid, uint32_
 
         readable_printf("Starting PIO write for %d seconds with %d segments on different peers\n", MEASURE_SECONDS, segments_this_round);
         start_timer();
-        write_pio_byte(data, SEGMENT_SIZE, segments_this_round, NO_SEQUENCE, PIO_FLAG_NO_SEQ);
+        write_pio_byte(data, MAX_BROADCAST_SEGMENT_SIZE, segments_this_round, NO_SEQUENCE, PIO_FLAG_NO_SEQ);
         readable_printf("    operations: %llu\n", operations);
         machine_printf("$PIO_WRITE_SCALE_OUT_%d;%d;%llu\n", segments_this_round, 1, operations);
 
         readable_printf("Starting PIO read for %d seconds with %d segments on different peers\n", MEASURE_SECONDS, segments_this_round);
         start_timer();
-        read_pio_byte(data, SEGMENT_SIZE, segments_this_round);
+        read_pio_byte(data, MAX_BROADCAST_SEGMENT_SIZE, segments_this_round);
         readable_printf("    operations: %llu\n", operations);
         machine_printf("$PIO_READ_SCALE_OUT_%d;%d;%llu\n", segments_this_round, 1, operations);
 
-        readable_printf("Starting PIO broadcast write %d bytes for %d seconds\n", SEGMENT_SIZE, MEASURE_SECONDS);
+        readable_printf("Starting PIO write %d bytes for %d seconds with %d segments on different peers\n", SEGMENT_SIZE, MEASURE_SECONDS, segments_this_round);
         start_timer();
         memcpy_write_pio(local_data, sequence, map, SEGMENT_SIZE, segments_this_round);
         readable_printf("    operations: %llu\n", operations);
         machine_printf("$PIO_WRITE_SCALE_OUT_%d;%d;%llu\n", segments_this_round, SEGMENT_SIZE, operations);
+
+        readable_printf("Starting PIO write %d bytes for %d seconds with %d segments on different peers\n", MAX_BROADCAST_SEGMENT_SIZE, MEASURE_SECONDS, segments_this_round);
+        start_timer();
+        memcpy_write_pio(local_data, sequence, map, MAX_BROADCAST_SEGMENT_SIZE, segments_this_round);
+        readable_printf("    operations: %llu\n", operations);
+        machine_printf("$PIO_WRITE_SCALE_OUT_%d;%d;%llu\n", segments_this_round, MAX_BROADCAST_SEGMENT_SIZE, operations);
 
         for (uint32_t i = 0; i < segments_this_round; i++) {
             SEOE(SCIRemoveSequence, sequence[i], NO_FLAGS);
