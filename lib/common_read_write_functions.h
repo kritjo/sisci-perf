@@ -242,9 +242,9 @@ static inline void memcpy_write_pio(void *source,
                                     uint32_t num_segments) {
     operations = 0;
     while (!timer_expired) {
-        for (uint32_t i = 0; i < size; i++) {
-            SEOE(SCIMemCpy, sequence[i%num_segments], source, remote_map[i%num_segments], NO_OFFSET, size, NO_FLAGS);
-            if (!timer_expired) operations++;
+        for (uint32_t i = 0; i < num_segments; i++) {
+            SEOE(SCIMemCpy, sequence[i], source, remote_map[i], NO_OFFSET, size, NO_FLAGS);
+            if (!timer_expired) { operations++; break; }
         }
     }
 }
