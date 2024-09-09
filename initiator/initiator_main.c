@@ -22,6 +22,7 @@
 #include "broadcast_pio.h"
 #include "broadcast_dma.h"
 #include "var_size_segments.h"
+#include "scale_up_out_pio.h"
 
 static pid_t main_pid;
 
@@ -161,6 +162,11 @@ int main(int argc , char *argv[]) {
     printf("################## SCALE-OUT EXPERIMENTS ##################\n");
     run_scale_out_segment_experiment_pio(sd, main_pid, num_peers, order_interrupts, delivery_interrupt);
 #endif // SISCI_PERF_SCALE_OUT
+
+#if SISCI_PERF_SCALE_UP_OUT
+    printf("################## SCALE-UP-OUT EXPERIMENTS ##################\n");
+    run_scale_up_out_segment_experiment_pio(sd, main_pid, num_peers, order_interrupts, delivery_interrupt);
+#endif //SISCI_PERF_SCALE_UP_OUT_PIO_H
 
 #if SISCI_PERF_VAR_SIZE
     printf("################# VAR-SIZE PIO EXPERIMENTS #################\n");
