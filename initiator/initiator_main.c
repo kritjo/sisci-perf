@@ -134,7 +134,27 @@ int main(int argc , char *argv[]) {
 
 #if SISCI_PERF_SCALE_UP
     printf("################### SCALE-UP EXPERIMENTS ##################\n");
-    run_scale_up_segment_experiment_pio(sd, main_pid, order_interrupts[0], delivery_interrupt);
+    sci_remote_data_interrupt_t scale_up_order_interrupts[MAX_SEGMENTS];
+    uint32_t scale_up_node_ids[MAX_SEGMENTS];
+
+    for (uint32_t i = 0; i < num_peers/2; i++) {
+        scale_up_order_interrupts[i] = order_interrupts[0];
+        scale_up_node_ids[i] = peer_ids[0];
+    }
+    for (uint32_t i = num_peers/2; i < num_peers; i++) {
+        scale_up_order_interrupts[i] = order_interrupts[num_peers - 1];
+        scale_up_node_ids[i] = peer_ids[num_peers - 1];
+    }
+
+    run_scale_up_segment_experiment_pio(sd, main_pid, num_peers, scale_up_node_ids, scale_up_order_interrupts, delivery_interrupt);
+
+    for (uint32_t i = num_peers/2; i < num_peers; i++) {
+        scale_up_order_interrupts[i] = order_interrupts[0];
+        scale_up_node_ids[i] = peer_ids[0];
+    }
+
+    run_scale_up_segment_experiment_pio(sd, main_pid, num_peers, scale_up_node_ids, scale_up_order_interrupts, delivery_interrupt);
+
 #endif // SISCI_PERF_SCALE_UP
 
 #if SISCI_PERF_SCALE_OUT
