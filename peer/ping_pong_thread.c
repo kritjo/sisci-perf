@@ -23,7 +23,7 @@ void *ping_pong_thread_start(void *arg) {
     sci_remote_segment_t remote_segment;
     sci_map_t remote_map;
     sci_sequence_t sequence;
-    unsigned char *remote_buffer;
+    volatile unsigned char *remote_buffer;
     unsigned char curr_counter = 0;
 
     buffer = (typeof(buffer)) SCIMapLocalSegment(segment, &map, NO_OFFSET, SCIGetLocalSegmentSize(segment),

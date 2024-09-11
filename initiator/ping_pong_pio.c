@@ -20,7 +20,7 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
 
     sci_remote_segment_t remote_segment;
     sci_map_t remote_map;
-    peer_ping_pong_segment_t *remote_ptr;
+    volatile peer_ping_pong_segment_t *remote_ptr;
     sci_error_t error;
     sci_sequence_t sequence;
 
