@@ -6,7 +6,6 @@ typedef struct {
 
     sci_remote_segment_t remote_segment;
     sci_map_t remote_map;
-    sci_sequence_t sequence;
 } ping_pong_cleanup_arg_t;
 
 typedef struct {
@@ -15,6 +14,6 @@ typedef struct {
     unsigned int initiator_node_id;
 } ping_pong_thread_arg_t;
 
-void *ping_pong_thread_start(void *arg);
+_Noreturn void *ping_pong_thread_start(void *arg);
 
 #endif //SISCI_PERF_PING_PONG_THREAD_H

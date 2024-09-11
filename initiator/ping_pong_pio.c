@@ -12,7 +12,7 @@
 void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t order_interrupt, sci_local_data_interrupt_t delivery_interrupt) {
     sci_local_segment_t local_segment;
     sci_map_t local_map;
-    unsigned char *local_ptr;
+    volatile unsigned char *local_ptr;
 
     order_t order;
     delivery_t delivery;
@@ -20,9 +20,8 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
 
     sci_remote_segment_t remote_segment;
     sci_map_t remote_map;
-    peer_ping_pong_segment_t *remote_ptr;
+    volatile peer_ping_pong_segment_t *remote_ptr;
     sci_error_t error;
-    sci_sequence_t sequence;
 
     // Allocate local segment
     SEOE(SCICreateSegment, sd, &local_segment, 0, SEGMENT_SIZE, NO_CALLBACK, NO_ARG, SCI_FLAG_AUTO_ID);
@@ -59,15 +58,12 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
     SEOE(SCIConnectSegment, sd, &remote_segment, delivery.nodeId, delivery.id, ADAPTER_NO, NO_CALLBACK, NO_ARG, SCI_INFINITE_TIMEOUT, NO_FLAGS);
 
     // Map remote segment
-    remote_ptr = (typeof (remote_ptr)) SCIMapRemoteSegment(remote_segment, &remote_map, 0, SEGMENT_SIZE, NULL, NO_FLAGS, &error);
+    remote_ptr = (typeof (remote_ptr)) SCIMapRemoteSegment(remote_segment, &remote_map, 0, SEGMENT_SIZE, NULL, SCI_FLAG_IO_MAP_IOSPACE, &error);
     if (error != SCI_ERR_OK) {
         fprintf(stderr, "SCIMapRemoteSegment failed: %s\n", SCIGetErrorString(error));
         exit(EXIT_FAILURE);
     }
-
-    SEOE(SCICreateMapSequence, remote_map, &sequence, NO_FLAGS);
-    SEOE(SCIStartSequence, sequence, NO_FLAGS);
-
+    
     remote_ptr->initiator_ping_pong_segment_id = SCIGetLocalSegmentId(local_segment);
     remote_ptr->counter = 0;
     remote_ptr->initiator_ready = true;
@@ -76,7 +72,7 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
 
     readable_printf("Starting PIO ping pong experiment for %d seconds\n", MEASURE_SECONDS);
     start_timer();
-    ping_pong_pio(local_ptr, remote_ptr, sequence, local_map);
+    ping_pong_pio(local_ptr, remote_ptr);
     readable_printf("    operations: %llu\n", operations);
     machine_printf("$%s;%d;%llu\n", "PIO_PINGPONG", 0, operations);
 
@@ -97,7 +93,6 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
         exit(EXIT_FAILURE);
     }
 
-    SEOE(SCIRemoveSequence, sequence, NO_FLAGS);
     SEOE(SCIUnmapSegment, remote_map, NO_FLAGS);
     SEOE(SCIDisconnectSegment, remote_segment, NO_FLAGS);
     SEOE(SCISetSegmentUnavailable, local_segment, ADAPTER_NO, NO_FLAGS);
