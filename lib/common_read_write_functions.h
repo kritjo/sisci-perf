@@ -307,17 +307,22 @@ static inline void block_for_dma(sci_dma_queue_t dma_queue) {
     }
 }
 
-static inline void write_dma(sci_local_segment_t local_segment,
-                             sci_remote_segment_t remote_segment,
-                             sci_dma_queue_t dma_queue,
+static inline void write_dma(sci_local_segment_t local_segments[],
+                             sci_remote_segment_t remote_segments[],
+                             sci_dma_queue_t dma_queues[],
+                             uint32_t remotes,
                              size_t transfer_size) {
     operations = 0;
 
     while (!timer_expired) {
-        SEOE(SCIStartDmaTransfer, dma_queue, local_segment, remote_segment, 0, transfer_size, 0, NO_CALLBACK, NO_ARG,
-             SCI_FLAG_DMA_GLOBAL);
+        for (uint32_t i = 0; i < remotes; i++) {
+            SEOE(SCIStartDmaTransfer, dma_queues[i], local_segments[i], remote_segments[i], 0, transfer_size, 0, NO_CALLBACK, NO_ARG,
+                 SCI_FLAG_DMA_GLOBAL);
+        }
 #if SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS == 0
-        block_for_dma(dma_queue);
+        for (uint32_t i = 0; i < remotes; i++) {
+            block_for_dma(dma_queues[i]);
+        }
 #endif // SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS
         if (timer_expired) break;
         else operations++;
@@ -341,17 +346,22 @@ static inline void write_dma_broadcast(sci_local_segment_t local_segment,
     }
 }
 
-static inline void read_dma(sci_local_segment_t local_segment,
-                            sci_remote_segment_t remote_segment,
-                            sci_dma_queue_t dma_queue,
+static inline void read_dma(sci_local_segment_t local_segments[],
+                            sci_remote_segment_t remote_segments[],
+                            sci_dma_queue_t dma_queues[],
+                            uint32_t remotes,
                             size_t transfer_size) {
     operations = 0;
 
     while (!timer_expired) {
-        SEOE(SCIStartDmaTransfer, dma_queue, local_segment, remote_segment, 0, transfer_size, 0, NO_CALLBACK, NO_ARG,
-             SCI_FLAG_DMA_GLOBAL | SCI_FLAG_DMA_READ);
+        for (uint32_t i = 0; i < remotes; i++) {
+            SEOE(SCIStartDmaTransfer, dma_queues[i], local_segments[i], remote_segments[i], 0, transfer_size, 0, NO_CALLBACK, NO_ARG,
+                 SCI_FLAG_DMA_GLOBAL | SCI_FLAG_DMA_READ);
+        }
 #if SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS == 0
-        block_for_dma(dma_queue);
+        for (uint32_t i = 0; i < remotes; i++) {
+            block_for_dma(dma_queues[i]);
+        }
 #endif // SISCI_PERF_DISABLE_DMA_COMPLETENESS_CHECKS
         if (timer_expired) break;
         else operations++;
