@@ -69,7 +69,7 @@ void run_var_size_experiment_dma(sci_desc_t sd, pid_t main_pid, sci_remote_data_
         block_for_dma(dma_queues[0]);
         readable_printf("Starting DMA read %zu bytes for %d seconds\n", transfer_size, MEASURE_SECONDS);
         start_timer();
-        read_dma(local_segments, segments, dma_queues, transfer_size);
+        read_dma(local_segments, segments, dma_queues, 1, transfer_size);
         readable_printf("    bytes: %llu\n", operations*transfer_size);
         machine_printf("$%s;%zu;%llu\n", "DMA_READ", transfer_size, operations);
 

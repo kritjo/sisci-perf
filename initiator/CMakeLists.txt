@@ -30,6 +30,8 @@ add_executable(initiator_main
         var_size_segments.h
         scale_up_out_pio.c
         scale_up_out_pio.h
+        interleaved_dmas.c
+        interleaved_dmas.h
 )
 target_link_libraries(initiator_main PRIVATE SISCIGlobDefs)
 target_link_libraries(initiator_main PRIVATE sisci)

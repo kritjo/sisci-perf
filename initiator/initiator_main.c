@@ -23,6 +23,7 @@
 #include "broadcast_dma.h"
 #include "var_size_segments.h"
 #include "scale_up_out_pio.h"
+#include "interleaved_dmas.h"
 
 static pid_t main_pid;
 
@@ -206,6 +207,11 @@ int main(int argc , char *argv[]) {
 #if SISCI_PERF_VAR_SIZE_SEGMENTS
     printf("##################### VAR SIZE SEGMENTS EXPERIMENTS #####################\n");
     run_var_size_segments_experiment(sd, main_pid, order_interrupts[0], delivery_interrupt);
+#endif
+
+#if SISCI_PERF_INTERLEAVED_DMAS
+    printf("##################### INTERLEAVED DMA EXPERIMENTS #####################\n");
+    run_single_segment_experiment_interleaved_dma(sd, main_pid, num_peers, order_interrupts, delivery_interrupt);
 #endif
 
 #if UNSAFE_DO_NOT_USE_WILL_CAUSE_KERNEL_PANIC_SISCI_PERF_BROADCAST_DMA
