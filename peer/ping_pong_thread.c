@@ -18,12 +18,12 @@ void *ping_pong_thread_start(void *arg) {
     ping_pong_thread_arg_t args = *(ping_pong_thread_arg_t *) arg;
     sci_local_segment_t segment = args.segment;
     sci_map_t map;
-    peer_ping_pong_segment_t *buffer;
+    ping_pong_segment_t *buffer;
     sci_error_t error;
     sci_remote_segment_t remote_segment;
     sci_map_t remote_map;
     sci_sequence_t sequence;
-    volatile unsigned char *remote_buffer;
+    volatile ping_pong_segment_t *remote_buffer;
     unsigned char curr_counter = 0;
 
     buffer = (typeof(buffer)) SCIMapLocalSegment(segment, &map, NO_OFFSET, SCIGetLocalSegmentSize(segment),
@@ -34,7 +34,7 @@ void *ping_pong_thread_start(void *arg) {
     }
 
     while (!buffer->initiator_ready) {
-        SEOE(SCICacheSync, map, buffer, sizeof(peer_ping_pong_segment_t),
+        SEOE(SCICacheSync, map, buffer, sizeof(ping_pong_segment_t),
              SCI_FLAG_CACHE_INVALIDATE | SCI_FLAG_CACHE_FLUSH);
     }
 
@@ -64,12 +64,12 @@ void *ping_pong_thread_start(void *arg) {
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
     while (1) {
-        while (buffer->counter == curr_counter) {
+        while (buffer->counter != (unsigned char) (curr_counter + 1)) {
             SCIFlush(sequence, NO_FLAGS);
         }
-        curr_counter++;
-        *remote_buffer = curr_counter;
-        SCIFlush(sequence, NO_FLAGS);
+        curr_counter+=2;
+        buffer->counter++;
+        SEOE(SCIMemCpy, sequence, (void *) buffer, remote_map, 0, sizeof(ping_pong_segment_t), NO_FLAGS);
     }
 
     pthread_cleanup_pop(1);

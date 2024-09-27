@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #define DELIVERY_INTERRUPT_NO 9573
+#define PING_PONG_SIZE 12 // Set to 12 to only send required data
 
 typedef enum {
     ORDER_TYPE_SEGMENT,
@@ -53,6 +54,6 @@ typedef struct {
     unsigned int initiator_ping_pong_segment_id;
 
     unsigned char counter;
-} peer_ping_pong_segment_t;
+} ping_pong_segment_t;
 
 #endif //SISCI_PERF_PROTOCOL_H

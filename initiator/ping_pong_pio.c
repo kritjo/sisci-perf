@@ -12,7 +12,7 @@
 void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t order_interrupt, sci_local_data_interrupt_t delivery_interrupt) {
     sci_local_segment_t local_segment;
     sci_map_t local_map;
-    unsigned char *local_ptr;
+    ping_pong_segment_t *local_ptr;
 
     order_t order;
     delivery_t delivery;
@@ -20,7 +20,7 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
 
     sci_remote_segment_t remote_segment;
     sci_map_t remote_map;
-    volatile peer_ping_pong_segment_t *remote_ptr;
+    volatile ping_pong_segment_t *remote_ptr;
     sci_error_t error;
     sci_sequence_t sequence;
 
@@ -35,8 +35,6 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
         fprintf(stderr, "SCIMapLocalSegment failed: %s\n", SCIGetErrorString(error));
         exit(EXIT_FAILURE);
     }
-
-    *local_ptr = 0;
 
     // Order a ping pong segment from peer
     order.orderType = ORDER_TYPE_PING_PONG_SEGMENT;
@@ -68,6 +66,9 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
     SEOE(SCICreateMapSequence, remote_map, &sequence, NO_FLAGS);
     SEOE(SCIStartSequence, sequence, NO_FLAGS);
 
+    local_ptr->counter = 0;
+    local_ptr->initiator_ping_pong_segment_id = SCIGetLocalSegmentId(local_segment);
+    local_ptr ->initiator_ready = true;
     remote_ptr->initiator_ping_pong_segment_id = SCIGetLocalSegmentId(local_segment);
     remote_ptr->counter = 0;
     remote_ptr->initiator_ready = true;
@@ -76,7 +77,7 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
 
     readable_printf("Starting PIO ping pong experiment for %d seconds\n", MEASURE_SECONDS);
     start_timer();
-    ping_pong_pio(local_ptr, remote_ptr, sequence, local_map);
+    ping_pong_pio_memcpy(local_ptr, remote_ptr, sequence, remote_map);
     readable_printf("    operations: %llu\n", operations);
     machine_printf("$%s;%d;%llu\n", "PIO_PINGPONG", 0, operations);
 
