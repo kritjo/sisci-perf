@@ -25,12 +25,12 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
     sci_sequence_t sequence;
 
     // Allocate local segment
-    SEOE(SCICreateSegment, sd, &local_segment, 0, SEGMENT_SIZE, NO_CALLBACK, NO_ARG, SCI_FLAG_AUTO_ID);
+    SEOE(SCICreateSegment, sd, &local_segment, 0, MAX_SEGMENT_SIZE, NO_CALLBACK, NO_ARG, SCI_FLAG_AUTO_ID);
     SEOE(SCIPrepareSegment, local_segment, ADAPTER_NO, NO_FLAGS);
     SEOE(SCISetSegmentAvailable, local_segment, ADAPTER_NO, NO_FLAGS);
 
     // Map local segment
-    local_ptr = (typeof(local_ptr)) SCIMapLocalSegment(local_segment, &local_map, 0, SEGMENT_SIZE, NULL, NO_FLAGS, &error);
+    local_ptr = (typeof(local_ptr)) SCIMapLocalSegment(local_segment, &local_map, 0, MAX_SEGMENT_SIZE, NULL, NO_FLAGS, &error);
     if (error != SCI_ERR_OK) {
         fprintf(stderr, "SCIMapLocalSegment failed: %s\n", SCIGetErrorString(error));
         exit(EXIT_FAILURE);
@@ -39,7 +39,7 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
     // Order a ping pong segment from peer
     order.orderType = ORDER_TYPE_PING_PONG_SEGMENT;
     order.commandType = COMMAND_TYPE_CREATE;
-    order.size = SEGMENT_SIZE;
+    order.size = MAX_SEGMENT_SIZE;
     order.id = 0;
 
     SEOE(SCITriggerDataInterrupt, order_interrupt, &order, sizeof(order), NO_FLAGS);
@@ -57,7 +57,7 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
     SEOE(SCIConnectSegment, sd, &remote_segment, delivery.nodeId, delivery.id, ADAPTER_NO, NO_CALLBACK, NO_ARG, SCI_INFINITE_TIMEOUT, NO_FLAGS);
 
     // Map remote segment
-    remote_ptr = (typeof (remote_ptr)) SCIMapRemoteSegment(remote_segment, &remote_map, 0, SEGMENT_SIZE, NULL, NO_FLAGS, &error);
+    remote_ptr = (typeof (remote_ptr)) SCIMapRemoteSegment(remote_segment, &remote_map, 0, MAX_SEGMENT_SIZE, NULL, NO_FLAGS, &error);
     if (error != SCI_ERR_OK) {
         fprintf(stderr, "SCIMapRemoteSegment failed: %s\n", SCIGetErrorString(error));
         exit(EXIT_FAILURE);
