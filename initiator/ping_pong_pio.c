@@ -36,71 +36,85 @@ void run_ping_pong_experiment_pio(sci_desc_t sd, sci_remote_data_interrupt_t ord
         exit(EXIT_FAILURE);
     }
 
-    // Order a ping pong segment from peer
-    order.orderType = ORDER_TYPE_PING_PONG_SEGMENT;
-    order.commandType = COMMAND_TYPE_CREATE;
-    order.size = MAX_SEGMENT_SIZE;
-    order.id = 0;
+    for (size_t ms_size = 8; ms_size <= MAX_SEGMENT_SIZE; ms_size *= 2) {
+        // Order a ping pong segment from peer
+        order.orderType = ORDER_TYPE_PING_PONG_SEGMENT;
+        order.commandType = COMMAND_TYPE_CREATE;
+        order.size = MAX_SEGMENT_SIZE;
+        order.id = 0;
 
-    SEOE(SCITriggerDataInterrupt, order_interrupt, &order, sizeof(order), NO_FLAGS);
+        SEOE(SCITriggerDataInterrupt, order_interrupt, &order, sizeof(order), NO_FLAGS);
 
-    size = sizeof(delivery);
+        size = sizeof(delivery);
 
-    SEOE(SCIWaitForDataInterrupt, delivery_interrupt, &delivery, &size, SCI_INFINITE_TIMEOUT, NO_FLAGS);
+        SEOE(SCIWaitForDataInterrupt, delivery_interrupt, &delivery, &size, SCI_INFINITE_TIMEOUT, NO_FLAGS);
 
-    if (delivery.commandType != COMMAND_TYPE_CREATE || delivery.deliveryType != ORDER_TYPE_PING_PONG_SEGMENT || delivery.status != STATUS_TYPE_SUCCESS) {
-        fprintf(stderr, "Received invalid command type %d\n", delivery.commandType);
-        exit(EXIT_FAILURE);
+        if (delivery.commandType != COMMAND_TYPE_CREATE || delivery.deliveryType != ORDER_TYPE_PING_PONG_SEGMENT || delivery.status != STATUS_TYPE_SUCCESS) {
+            fprintf(stderr, "Received invalid command type %d\n", delivery.commandType);
+            exit(EXIT_FAILURE);
+        }
+
+        // Connect to remote segment
+        SEOE(SCIConnectSegment, sd, &remote_segment, delivery.nodeId, delivery.id, ADAPTER_NO, NO_CALLBACK, NO_ARG, SCI_INFINITE_TIMEOUT, NO_FLAGS);
+
+        // Map remote segment
+        remote_ptr = (typeof (remote_ptr)) SCIMapRemoteSegment(remote_segment, &remote_map, 0, MAX_SEGMENT_SIZE, NULL, NO_FLAGS, &error);
+        if (error != SCI_ERR_OK) {
+            fprintf(stderr, "SCIMapRemoteSegment failed: %s\n", SCIGetErrorString(error));
+            exit(EXIT_FAILURE);
+        }
+
+        SEOE(SCICreateMapSequence, remote_map, &sequence, NO_FLAGS);
+        SEOE(SCIStartSequence, sequence, NO_FLAGS);
+
+        local_ptr->counter = 0;
+        local_ptr->initiator_ping_pong_segment_id = SCIGetLocalSegmentId(local_segment);
+        local_ptr ->initiator_ready = true;
+        remote_ptr->initiator_ping_pong_segment_id = SCIGetLocalSegmentId(local_segment);
+        remote_ptr->counter = 0;
+        remote_ptr->initiator_ready = true;
+        SCIFlush(sequence, NO_FLAGS);
+
+        init_timer(MEASURE_SECONDS);
+
+        sci_sequence_status_t sequence_status;
+
+        size_t real_size;
+
+        if (ms_size < sizeof(ping_pong_segment_t)) {
+            real_size = sizeof(ping_pong_segment_t);
+        } else {
+            real_size = ms_size;
+        }
+
+        readable_printf("Starting PIO ping pong experiment with message size %zu for %d seconds\n", real_size, MEASURE_SECONDS);
+        start_timer();
+        ping_pong_pio_memcpy(local_ptr, remote_ptr, sequence, remote_map, real_size);
+        readable_printf("    operations: %llu\n", operations);
+        machine_printf("$%s;%zu;%llu\n", "PIO_PINGPONG", real_size, operations);
+
+        destroy_timer();
+
+        order.commandType = COMMAND_TYPE_DESTROY;
+        order.id = delivery.id;
+
+        SEOE(SCITriggerDataInterrupt, order_interrupt, &order, sizeof(order), NO_FLAGS);
+
+        size = sizeof(delivery);
+
+        SEOE(SCIWaitForDataInterrupt, delivery_interrupt, &delivery, &size, SCI_INFINITE_TIMEOUT, NO_FLAGS);
+
+        if (delivery.commandType != COMMAND_TYPE_DESTROY || delivery.deliveryType != ORDER_TYPE_PING_PONG_SEGMENT ||
+            delivery.status != STATUS_TYPE_SUCCESS) {
+            fprintf(stderr, "Received invalid command type %d\n", delivery.commandType);
+            exit(EXIT_FAILURE);
+        }
+        
+        SEOE(SCIRemoveSequence, sequence, NO_FLAGS);
+        SEOE(SCIUnmapSegment, remote_map, NO_FLAGS);
+        SEOE(SCIDisconnectSegment, remote_segment, NO_FLAGS);
     }
 
-    // Connect to remote segment
-    SEOE(SCIConnectSegment, sd, &remote_segment, delivery.nodeId, delivery.id, ADAPTER_NO, NO_CALLBACK, NO_ARG, SCI_INFINITE_TIMEOUT, NO_FLAGS);
-
-    // Map remote segment
-    remote_ptr = (typeof (remote_ptr)) SCIMapRemoteSegment(remote_segment, &remote_map, 0, MAX_SEGMENT_SIZE, NULL, NO_FLAGS, &error);
-    if (error != SCI_ERR_OK) {
-        fprintf(stderr, "SCIMapRemoteSegment failed: %s\n", SCIGetErrorString(error));
-        exit(EXIT_FAILURE);
-    }
-
-    SEOE(SCICreateMapSequence, remote_map, &sequence, NO_FLAGS);
-    SEOE(SCIStartSequence, sequence, NO_FLAGS);
-
-    local_ptr->counter = 0;
-    local_ptr->initiator_ping_pong_segment_id = SCIGetLocalSegmentId(local_segment);
-    local_ptr ->initiator_ready = true;
-    remote_ptr->initiator_ping_pong_segment_id = SCIGetLocalSegmentId(local_segment);
-    remote_ptr->counter = 0;
-    remote_ptr->initiator_ready = true;
-
-    init_timer(MEASURE_SECONDS);
-
-    readable_printf("Starting PIO ping pong experiment for %d seconds\n", MEASURE_SECONDS);
-    start_timer();
-    ping_pong_pio_memcpy(local_ptr, remote_ptr, sequence, remote_map);
-    readable_printf("    operations: %llu\n", operations);
-    machine_printf("$%s;%d;%llu\n", "PIO_PINGPONG", 0, operations);
-
-    destroy_timer();
-
-    order.commandType = COMMAND_TYPE_DESTROY;
-    order.id = delivery.id;
-
-    SEOE(SCITriggerDataInterrupt, order_interrupt, &order, sizeof(order), NO_FLAGS);
-
-    size = sizeof(delivery);
-
-    SEOE(SCIWaitForDataInterrupt, delivery_interrupt, &delivery, &size, SCI_INFINITE_TIMEOUT, NO_FLAGS);
-
-    if (delivery.commandType != COMMAND_TYPE_DESTROY || delivery.deliveryType != ORDER_TYPE_PING_PONG_SEGMENT ||
-        delivery.status != STATUS_TYPE_SUCCESS) {
-        fprintf(stderr, "Received invalid command type %d\n", delivery.commandType);
-        exit(EXIT_FAILURE);
-    }
-
-    SEOE(SCIRemoveSequence, sequence, NO_FLAGS);
-    SEOE(SCIUnmapSegment, remote_map, NO_FLAGS);
-    SEOE(SCIDisconnectSegment, remote_segment, NO_FLAGS);
     SEOE(SCISetSegmentUnavailable, local_segment, ADAPTER_NO, NO_FLAGS);
     SEOE(SCIUnmapSegment, local_map, NO_FLAGS);
     SEOE(SCIRemoveSegment, local_segment, NO_FLAGS);

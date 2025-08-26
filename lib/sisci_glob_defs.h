@@ -19,6 +19,10 @@
 #include <limits.h>
 #include <stdio.h>
 
+#ifndef __USE_POSIX
+#define HOST_NAME_MAX 255
+#endif
+
 // SISCI Exit On Error -- SEOE
 #define SEOE(func, ...) \
 do {                    \

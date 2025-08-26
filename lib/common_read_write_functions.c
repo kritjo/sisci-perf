@@ -1,9 +1,11 @@
+#define _XOPEN_SOURCE 500
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include "common_read_write_functions.h"
+
 
 struct sigaction sa = {0};
 struct itimerval timer = {0};
