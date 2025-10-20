@@ -39,14 +39,6 @@ int main(int argc, char *argv[]) {
     
     for (int i = 0; i < WULOOPS; i++) {
         SEOE(SCIMemCpy, remote_sequence, local_address, remote_map, offs, size, NO_FLAGS);
-        if ( size <= 2048 ){
-            offs += ( size <= 128 ) ? 128 : size ;        
-            if (offs >= 2048 ) {
-                offs = offs - 2048;
-            } 
-        } else {
-            offs = 0;
-        }
     }
     
     clock_gettime(CLOCK_MONOTONIC_RAW, &pre);
@@ -54,14 +46,6 @@ int main(int argc, char *argv[]) {
 
     for (int i = 0; i < WULOOPS; i++) {
         SEOE(SCIMemCpy, remote_sequence, local_address, remote_map, offs, size, NO_FLAGS);
-        if ( size <= 2048 ){
-            offs += ( size <= 128 ) ? 128 : size ;        
-            if (offs >= 2048 ) {
-                offs = offs - 2048;
-            } 
-        } else {
-            offs = 0;
-        }
     }
 
     totalTimeUs = StopTimer(timer_start);
