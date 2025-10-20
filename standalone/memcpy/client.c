@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
           (unsigned long long) size, (double)averageTransferTime,
           (double)MB_pr_second);
     
-    totalTimeUs = (post.tv_sec - pre.tv_sec) * 1000000000L + (post.tv_nsec - pre.tv_nsec);
+    totalTimeUs = ((post.tv_sec - pre.tv_sec) * 1000000000L + (post.tv_nsec - pre.tv_nsec)) / 1000;
     averageTransferTime   = (totalTimeUs/(double)ILOOPS);
     MB_pr_second          = totalBytes/totalTimeUs;
     printf("CLOCK_MONOTONIC_RAW measure:\n");
