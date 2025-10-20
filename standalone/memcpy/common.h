@@ -38,13 +38,5 @@ typedef struct {
     struct timeval     start_time;          /* for gettimeofday() */
 } timer_start_t;
 
-typedef unsigned long long elog_time;
-static uint64_t elog_clock_scale = 0;
-static int elog_initialized = FALSE;
-unsigned long long rdtsc_inst();
-int elog_processor_speed_calibrate(void);
-int init_elog();
-void rdtsc(elog_time* tp /* MODIFIED */);
 void StartTimer(timer_start_t *timer_start);
 double StopTimer(timer_start_t timer_start);
-double elog_timediff_usecs(elog_time* start_time, elog_time* end_time);

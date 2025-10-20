@@ -13,7 +13,6 @@ double StopTimer(timer_start_t timer_start)
 {
     struct          timeval  end_time;
     long            wall_ticks;
-    elog_time       end_cputick;  
 
     /* This is the default for all os except OS_IS_WINDOWS and OS_IS_QNX */
     if (gettimeofday(&end_time, (struct timezone *)NULL) != 0) {
