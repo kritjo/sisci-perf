@@ -42,7 +42,6 @@ int main(int argc, char *argv[]) {
    
     printf("Warmed up!\n");
     
-    clock_gettime(CLOCK_MONOTONIC, &pre);
     StartTimer(&timer_start);
 
     for (int i = 0; i < ILOOPS; i++) {
@@ -50,7 +49,6 @@ int main(int argc, char *argv[]) {
     }
 
     totalTimeUs = StopTimer(timer_start);
-    clock_gettime(CLOCK_MONOTONIC, &post);
 
     totalBytes            = (double)size * ILOOPS;
     averageTransferTime   = (totalTimeUs/(double)ILOOPS);
