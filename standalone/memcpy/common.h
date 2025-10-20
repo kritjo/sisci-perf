@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #define ADAPTER_NO 0
 #define NO_FLAGS 0
