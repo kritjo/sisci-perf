@@ -1,16 +1,14 @@
 #include "common.h"
 
 int main(int argc, char *argv[]) {
-    if (argc != 3) {
+    if (argc != 2) {
         printf("Usage: %s <remote node id> <size>\n", argv[0]);
         exit(1);
     }
 
     int remote_node_id = atoi(argv[1]);
-    int size = atoi(argv[2]);
 
     printf("Remote node id: %d\n", remote_node_id);
-    printf("Size: %d\n", size);
 
     sci_desc_t sd;
     sci_error_t error;
