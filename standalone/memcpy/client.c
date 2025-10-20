@@ -53,19 +53,10 @@ int main(int argc, char *argv[]) {
     totalBytes            = (double)size * ILOOPS;
     averageTransferTime   = (totalTimeUs/(double)ILOOPS);
     MB_pr_second          = totalBytes/totalTimeUs;
-    printf("rdtsc measure:\n");
     printf("%7llu            %6.2f us              %7.2f MBytes/s\n",
           (unsigned long long) size, (double)averageTransferTime,
           (double)MB_pr_second);
     
-    totalTimeUs = ((post.tv_sec - pre.tv_sec) * 1000000000L + (post.tv_nsec - pre.tv_nsec)) / 1000;
-    averageTransferTime   = (totalTimeUs/(double)ILOOPS);
-    MB_pr_second          = totalBytes/totalTimeUs;
-    printf("CLOCK_MONOTONIC measure:\n");
-    printf("%7llu            %6.2f us              %7.2f MBytes/s\n",
-          (unsigned long long) size, (double)averageTransferTime,
-          (double)MB_pr_second);
-          
     SEOE(SCIRemoveSequence, remote_sequence, NO_FLAGS);
     SEOE(SCIUnmapSegment, remote_map, NO_FLAGS);
     SEOE(SCIDisconnectSegment, remote_segment, NO_FLAGS);
