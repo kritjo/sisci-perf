@@ -1,6 +1,8 @@
 #include "sisci_api.h"
 #include "sisci_types.h"
 
+#define _POSIX_C_SOURCE 199309L
+#include <time.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <stdint.h>
