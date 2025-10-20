@@ -27,7 +27,6 @@ int main(int argc, char *argv[]) {
     double MB_pr_second;
     double averageTransferTime;
     struct timespec pre, post;
-    size_t offs;
 
     SEOE(SCIInitialize, NO_FLAGS);
     SEOE(SCIOpen, &sd, NO_FLAGS);
@@ -43,7 +42,7 @@ int main(int argc, char *argv[]) {
    
     printf("Warmed up!\n");
     
-    clock_gettime(CLOCK_MONOTONIC_RAW, &pre);
+    clock_gettime(CLOCK_MONOTONIC, &pre);
     StartTimer(&timer_start);
 
     for (int i = 0; i < ILOOPS; i++) {
@@ -51,7 +50,7 @@ int main(int argc, char *argv[]) {
     }
 
     totalTimeUs = StopTimer(timer_start);
-    clock_gettime(CLOCK_MONOTONIC_RAW, &post);
+    clock_gettime(CLOCK_MONOTONIC, &post);
 
     totalBytes            = (double)size * ILOOPS;
     averageTransferTime   = (totalTimeUs/(double)ILOOPS);
@@ -64,7 +63,7 @@ int main(int argc, char *argv[]) {
     totalTimeUs = ((post.tv_sec - pre.tv_sec) * 1000000000L + (post.tv_nsec - pre.tv_nsec)) / 1000;
     averageTransferTime   = (totalTimeUs/(double)ILOOPS);
     MB_pr_second          = totalBytes/totalTimeUs;
-    printf("CLOCK_MONOTONIC_RAW measure:\n");
+    printf("CLOCK_MONOTONIC measure:\n");
     printf("%7llu            %6.2f us              %7.2f MBytes/s\n",
           (unsigned long long) size, (double)averageTransferTime,
           (double)MB_pr_second);
