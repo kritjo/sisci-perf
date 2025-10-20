@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
     void* local_address;
     int curr_counter = 0;
 
-    sci_remote_segment_t segment;
+    sci_local_segment_t segment;
     sci_segment_cb_reason_t reason;
 
     SEOE(SCIInitialize, NO_FLAGS);
