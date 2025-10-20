@@ -17,6 +17,8 @@ int main(int argc, char *argv[]) {
     void* local_address;
     int curr_counter = 0;
 
+    unsigned int rid, aid;
+
     sci_local_segment_t segment;
     sci_segment_cb_reason_t reason;
 
@@ -26,11 +28,15 @@ int main(int argc, char *argv[]) {
     SEOE(SCICreateSegment, sd, &segment, SEGMENT_ID, SEGMENT_SIZE, NO_CALLBACK, NO_ARGS, NO_FLAGS);
     SEOE(SCIPrepareSegment, segment, ADAPTER_NO, NO_FLAGS);
     SEOE(SCISetSegmentAvailable, segment, ADAPTER_NO, NO_FLAGS);
-    
+
     do {
-        reason = SCIWaitForLocalSegmentEvent(segment, &remote_node_id, ADAPTER_NO, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
-        if (error != SCI_ERR_OK) return 1;
-    } while (reason != SCI_CB_CONNECT && reason != SCI_CB_OPERATIONAL);
+        reason = SCIWaitForLocalSegmentEvent(segment, &rid, &aid, SCI_INFINITE_TIMEOUT, NO_FLAGS, &error);
+        if (error != SCI_ERR_OK) {
+            printf("err waiting: %s\n", SCIGetErrorString(error));
+            return 1;
+        }
+        printf("reason: %d\n", reason);
+    } while (reason == SCI_CB_CONNECT || reason == SCI_CB_OPERATIONAL);
 
     SEOE(SCISetSegmentUnavailable, segment, ADAPTER_NO, NO_FLAGS);
     SEOE(SCIRemoveSegment, segment, ADAPTER_NO);
