@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     SEOE(SCICreateMapSequence, remote_map, &remote_sequence, NO_FLAGS);
     
     for (int i = 0; i < WULOOPS; i++) {
-        SEOE(SCIMemCpy, remote_sequence, local_address, remote_map, offs, size, NO_FLAGS);
+        SEOE(SCIMemCpy, remote_sequence, local_address, remote_map, NO_OFFSET, size, NO_FLAGS);
     }
    
     printf("Warmed up!\n");
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
     StartTimer(&timer_start);
 
     for (int i = 0; i < ILOOPS; i++) {
-        SEOE(SCIMemCpy, remote_sequence, local_address, remote_map, offs, size, NO_FLAGS);
+        SEOE(SCIMemCpy, remote_sequence, local_address, remote_map, NO_OFFSET, size, NO_FLAGS);
     }
 
     totalTimeUs = StopTimer(timer_start);
