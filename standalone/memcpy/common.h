@@ -17,6 +17,7 @@
 #define SEGMENT_ID 1
 #define SEGMENT_SIZE 2097152
 #define ILOOPS 50000
+#define WULOOPS 50000
 #define FALSE 0
 #define TRUE 1
 

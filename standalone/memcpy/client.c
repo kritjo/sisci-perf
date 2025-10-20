@@ -35,7 +35,11 @@ int main(int argc, char *argv[]) {
     remote_address = (volatile int*) SCIMapRemoteSegment(remote_segment, &remote_map, NO_OFFSET, SEGMENT_SIZE, NO_ADDRESS_HINT, NO_FLAGS, &error);
     if (error != SCI_ERR_OK) return 1;
     SEOE(SCICreateMapSequence, remote_map, &remote_sequence, NO_FLAGS);
-
+    
+    for (int i = 0; i < WULOOPS; i++) {
+        SEOE(SCIMemCpy, remote_sequence, local_address, remote_map, NO_OFFSET, size, NO_FLAGS);
+    }
+    
     clock_gettime(CLOCK_MONOTONIC_RAW, &pre);
     StartTimer(&timer_start);
 
