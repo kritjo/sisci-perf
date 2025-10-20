@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
     } while (reason != SCI_CB_CONNECT && reason != SCI_CB_OPERATIONAL);
 
     SEOE(SCISetSegmentUnavailable, segment, ADAPTER_NO, NO_FLAGS);
-    SEOE(SCIRemoveSegment, ADAPTER_NO, segment);
+    SEOE(SCIRemoveSegment, segment, ADAPTER_NO);
     SEOE(SCIClose, sd, NO_FLAGS);
     SCITerminate();
     return 0;
