@@ -26,6 +26,9 @@ int elog_processor_speed_calibrate(void)
 
         rdtsc(&ts1);
         gettimeofday(&tv1, NULL);
+        
+        usleep(100000);
+        
         rdtsc(&ts2);
         gettimeofday(&tv2, NULL);
 
