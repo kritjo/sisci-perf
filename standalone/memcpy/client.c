@@ -27,6 +27,7 @@ int main(int argc, char *argv[]) {
     double MB_pr_second;
     double averageTransferTime;
     struct timespec pre, post;
+    size_t offs;
 
     SEOE(SCIInitialize, NO_FLAGS);
     SEOE(SCIOpen, &sd, NO_FLAGS);
@@ -37,14 +38,30 @@ int main(int argc, char *argv[]) {
     SEOE(SCICreateMapSequence, remote_map, &remote_sequence, NO_FLAGS);
     
     for (int i = 0; i < WULOOPS; i++) {
-        SEOE(SCIMemCpy, remote_sequence, local_address, remote_map, NO_OFFSET, size, NO_FLAGS);
+        SEOE(SCIMemCpy, remote_sequence, local_address, remote_map, offs, size, NO_FLAGS);
+        if ( size <= 2048 ){
+            offs += ( size <= 128 ) ? 128 : size ;        
+            if (offs >= 2048 ) {
+                offs = offs - 2048;
+            } 
+        } else {
+            offs = 0;
+        }
     }
     
     clock_gettime(CLOCK_MONOTONIC_RAW, &pre);
     StartTimer(&timer_start);
 
-    for (int i = 0; i < ILOOPS; i++) {
-        SEOE(SCIMemCpy, remote_sequence, local_address, remote_map, NO_OFFSET, size, NO_FLAGS);
+    for (int i = 0; i < WULOOPS; i++) {
+        SEOE(SCIMemCpy, remote_sequence, local_address, remote_map, offs, size, NO_FLAGS);
+        if ( size <= 2048 ){
+            offs += ( size <= 128 ) ? 128 : size ;        
+            if (offs >= 2048 ) {
+                offs = offs - 2048;
+            } 
+        } else {
+            offs = 0;
+        }
     }
 
     totalTimeUs = StopTimer(timer_start);
