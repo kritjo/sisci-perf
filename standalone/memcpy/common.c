@@ -1,4 +1,5 @@
 #include "common.h"
+#define MICRO_SECONDS 1000000
 
 void StartTimer(timer_start_t *timer_start)
 {
