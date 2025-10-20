@@ -40,11 +40,13 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < WULOOPS; i++) {
         SEOE(SCIMemCpy, remote_sequence, local_address, remote_map, offs, size, NO_FLAGS);
     }
+   
+    printf("Warmed up!\n");
     
     clock_gettime(CLOCK_MONOTONIC_RAW, &pre);
     StartTimer(&timer_start);
 
-    for (int i = 0; i < WULOOPS; i++) {
+    for (int i = 0; i < ILOOPS; i++) {
         SEOE(SCIMemCpy, remote_sequence, local_address, remote_map, offs, size, NO_FLAGS);
     }
 
