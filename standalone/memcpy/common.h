@@ -44,3 +44,4 @@ int init_elog();
 void rdtsc(elog_time* tp /* MODIFIED */);
 void StartTimer(timer_start_t *timer_start);
 double StopTimer(timer_start_t timer_start);
+double elog_timediff_usecs(elog_time* start_time, elog_time* end_time);
