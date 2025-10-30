@@ -19,7 +19,7 @@ static void run_benchmark(bench_op_fn op, void *ctx, int size, char *thing)
     double averageTransferTime = totalTimeUs / (double)ILOOPS;
     double MB_pr_second = totalBytes/totalTimeUs;
 
-    printf("%7llu|%6.2f us|%7.2f MB/s| %s\n", 
+    printf("%8llu|%6.2f us|%10.2f MB/s|%s\n", 
            (unsigned long long)size, averageTransferTime, MB_pr_second, thing);
 }
 
@@ -45,7 +45,7 @@ static void scicopy_op(int i, void *vctx, int size)
          ctx->remote_map, NO_OFFSET, size, NO_FLAGS);
 }
 
-static void memcpy_two_halves_op(int i, void *vctx, int size)
+static void scicopy_two_halves_op(int i, void *vctx, int size)
 {
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
     int half = size / 2;
@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
         /* Timed benchmark with op callback */
         run_benchmark(scicopy_op, &ctx, csize, "scicopy_op");
         
-        run_benchmark(memcpy_two_halves_op, &ctx, csize, "memcpy_two_halves_op");
+        run_benchmark(scicopy_two_halves_op, &ctx, csize, "scicopy_two_halves_op");
 
         run_benchmark(memcopy_op, &ctx, csize, "memcopy_op");
 
