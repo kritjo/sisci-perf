@@ -19,8 +19,8 @@ static void run_benchmark(bench_op_fn op, void *ctx, int size, char *thing)
     double averageTransferTime = totalTimeUs / (double)ILOOPS;
     double MB_pr_second = totalBytes/totalTimeUs;
 
-    printf("    %s|%7llu|%6.2f us|%7.2f MB/s\n", thing,
-           (unsigned long long)size, averageTransferTime, MB_pr_second);
+    printf("%7llu|%6.2f us|%7.2f MB/s| %s\n", 
+           (unsigned long long)size, averageTransferTime, MB_pr_second, thing);
 }
 
 /* --- Example op implementation: SCIMemCpy --- */
