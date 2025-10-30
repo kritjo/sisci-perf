@@ -61,6 +61,26 @@ static void memcpy_two_halves_op(int i, void *vctx)
          ctx->remote_map, half, half, NO_FLAGS);
 }
 
+static void memcpy_32_chunks_op(int i, void *vctx)
+{
+    (void)i; /* iteration index unused */
+    memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
+
+    const int CHUNK = 32;
+    int remaining = ctx->size;
+    int offset = 0;
+
+    uint32_t *local = (uint32_t *)ctx->local_address;
+    volatile uint32_t *remote = (volatile uint32_t *)ctx->remote_address;
+
+    while (remaining > 0) {
+        *remote = *local;
+        remaining -= CHUNK;
+        remote++;
+        local++;
+    }
+}
+
 static void memcpy_64_chunks_op(int i, void *vctx)
 {
     (void)i; /* iteration index unused */
@@ -155,7 +175,7 @@ int main(int argc, char *argv[]) {
     }
     printf("Warmed up!\n");
 
-    for (int csize = 1; csize <= size; csize *= 2) {
+    for (int csize = 1024; csize <= size; csize *= 2) {
         printf("Size: %d\n", csize);
 
         /* Timed benchmark with op callback */
@@ -163,6 +183,11 @@ int main(int argc, char *argv[]) {
         
         printf("Benchmarking split it in two. Should be same speed:\n");
         run_benchmark(memcpy_two_halves_op, &ctx, csize);
+
+        if (csize >= 32) {
+            printf("Benchmarking memcpy 32 byte chunks:\n");
+            run_benchmark(memcpy_32_chunks_op, &ctx, csize);
+        }
 
         if (csize >= 64) {
             printf("Benchmarking memcpy 64 byte chunks:\n");
