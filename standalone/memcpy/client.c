@@ -1,5 +1,65 @@
 #include "common.h"
 
+/* Generic benchmark op: do one unit of work. `i` is the iteration index. */
+typedef void (*bench_op_fn)(int i, void *ctx);
+
+/* Generic timer/throughput benchmark around a user-supplied op */
+static void run_benchmark(bench_op_fn op, void *ctx, int size)
+{
+    timer_start_t timer_start;
+    StartTimer(&timer_start);
+
+    for (int i = 0; i < ILOOPS; i++) {
+        op(i, ctx);
+    }
+
+    double totalTimeUs         = StopTimer(timer_start);
+    double totalBytes          = (double)size * ILOOPS;
+    double averageTransferTime = totalTimeUs / (double)ILOOPS;
+    double MB_pr_second        = totalBytes / totalTimeUs;
+
+    printf("%7llu            %6.2f us              %7.2f MBytes/s\n",
+           (unsigned long long)size, averageTransferTime, MB_pr_second);
+}
+
+/* --- Example op implementation: SCIMemCpy --- */
+typedef struct {
+    sci_sequence_t remote_sequence;
+    void          *local_address;
+    sci_map_t      remote_map;
+    int            size;
+} memcpy_ctx_t;
+
+static void memcpy_op(int i, void *vctx)
+{
+    (void)i; /* iteration not used for this op */
+    memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
+    SEOE(SCIMemCpy, ctx->remote_sequence, ctx->local_address, ctx->remote_map,
+         NO_OFFSET, ctx->size, NO_FLAGS);
+}
+
+static void memcpy_two_halves_op(int i, void *vctx)
+{
+    (void)i; /* iteration not used */
+    memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
+
+    int half = ctx->size / 2;
+    if (half <= 0) {
+        /* Nothing meaningful to do if size < 2. You could fallback to one copy. */
+        return;
+    }
+
+    char *local = (char *)ctx->local_address;
+
+    /* First half: [0 .. half-1] -> remote offset 0 */
+    SEOE(SCIMemCpy, ctx->remote_sequence, local,
+         ctx->remote_map, NO_OFFSET, half, NO_FLAGS);
+
+    /* Second half: [half .. 2*half-1] -> remote offset `half` */
+    SEOE(SCIMemCpy, ctx->remote_sequence, local + half,
+         ctx->remote_map, half, half, NO_FLAGS);
+}
+
 int main(int argc, char *argv[]) {
     if (argc != 3) {
         printf("Usage: %s <remote node id> <size>\n", argv[0]);
@@ -27,42 +87,38 @@ int main(int argc, char *argv[]) {
     sci_map_t remote_map;
     volatile int* remote_address;
     sci_sequence_t remote_sequence;
-    timer_start_t timer_start;
-    double totalTimeUs;
-    double totalBytes;
-    double MB_pr_second;
-    double averageTransferTime;
-    struct timespec pre, post;
 
     SEOE(SCIInitialize, NO_FLAGS);
     SEOE(SCIOpen, &sd, NO_FLAGS);
 
-    SEOE(SCIConnectSegment, sd, &remote_segment, remote_node_id, SEGMENT_ID, ADAPTER_NO, NO_CALLBACK, NO_ARGS, SCI_INFINITE_TIMEOUT, NO_FLAGS);
-    remote_address = (volatile int*) SCIMapRemoteSegment(remote_segment, &remote_map, NO_OFFSET, SEGMENT_SIZE, NO_ADDRESS_HINT, NO_FLAGS, &error);
+    SEOE(SCIConnectSegment, sd, &remote_segment, remote_node_id, SEGMENT_ID,
+         ADAPTER_NO, NO_CALLBACK, NO_ARGS, SCI_INFINITE_TIMEOUT, NO_FLAGS);
+    remote_address = (volatile int*)
+        SCIMapRemoteSegment(remote_segment, &remote_map, NO_OFFSET,
+                            SEGMENT_SIZE, NO_ADDRESS_HINT, NO_FLAGS, &error);
     if (error != SCI_ERR_OK) return 1;
     SEOE(SCICreateMapSequence, remote_map, &remote_sequence, NO_FLAGS);
-    
+
+    /* Prepare context for our op */
+    memcpy_ctx_t ctx = {
+        .remote_sequence = remote_sequence,
+        .local_address   = local_address,
+        .remote_map      = remote_map,
+        .size            = size
+    };
+
+    /* Warm-up using the same op */
     for (int i = 0; i < WULOOPS; i++) {
-        SEOE(SCIMemCpy, remote_sequence, local_address, remote_map, NO_OFFSET, size, NO_FLAGS);
+        memcpy_op(i, &ctx);
     }
-   
     printf("Warmed up!\n");
+
+    /* Timed benchmark with op callback */
+    run_benchmark(memcpy_op, &ctx, size);
     
-    StartTimer(&timer_start);
+    printf("Benchmarking split it in two. Should be same speed:\n");
+    run_benchmark(memcpy_two_halves_op, &ctx, size);
 
-    for (int i = 0; i < ILOOPS; i++) {
-        SEOE(SCIMemCpy, remote_sequence, local_address, remote_map, NO_OFFSET, size, NO_FLAGS);
-    }
-
-    totalTimeUs = StopTimer(timer_start);
-
-    totalBytes            = (double)size * ILOOPS;
-    averageTransferTime   = (totalTimeUs/(double)ILOOPS);
-    MB_pr_second          = totalBytes/totalTimeUs;
-    printf("%7llu            %6.2f us              %7.2f MBytes/s\n",
-          (unsigned long long) size, (double)averageTransferTime,
-          (double)MB_pr_second);
-    
     SEOE(SCIRemoveSequence, remote_sequence, NO_FLAGS);
     SEOE(SCIUnmapSegment, remote_map, NO_FLAGS);
     SEOE(SCIDisconnectSegment, remote_segment, NO_FLAGS);
@@ -70,3 +126,4 @@ int main(int argc, char *argv[]) {
     SCITerminate();
     return 0;
 }
+
