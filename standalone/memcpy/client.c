@@ -1,4 +1,5 @@
 #include "common.h"
+#include "string.h"
 
 /* Generic benchmark op: do one unit of work. `i` is the iteration index. */
 typedef void (*bench_op_fn)(int i, void *ctx, int size);
