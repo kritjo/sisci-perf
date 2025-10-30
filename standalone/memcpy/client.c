@@ -31,7 +31,13 @@ typedef struct {
     volatile void *remote_address;
 } memcpy_ctx_t;
 
-static void memcpy_op(int i, void *vctx, int size)
+static void memcopy_op(int i, void *vctx, int size)
+{
+    memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
+    memcpy(ctx->remote_address, ctx->local_address, size);
+}
+
+static void scicopy_op(int i, void *vctx, int size)
 {
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
     SEOE(SCIMemCpy, ctx->remote_sequence, ctx->local_address,
@@ -161,7 +167,7 @@ int main(int argc, char *argv[]) {
 
     /* Warm-up using the same op */
     for (int i = 0; i < WULOOPS; i++) {
-        memcpy_op(i, &ctx, size);
+        scicopy_op(i, &ctx, size);
     }
     printf("Warmed up!\n");
 
@@ -169,10 +175,13 @@ int main(int argc, char *argv[]) {
         printf("Size: %d\n", csize);
 
         /* Timed benchmark with op callback */
-        run_benchmark(memcpy_op, &ctx, csize);
+        run_benchmark(scicopy_op, &ctx, csize);
         
         printf("Benchmarking split it in two. Should be same speed:\n");
         run_benchmark(memcpy_two_halves_op, &ctx, csize);
+
+        printf("Memcpy:\n");
+        run_benchmark(memcopy_op, &ctx, csize);
 
         if (csize >= 32) {
             printf("Benchmarking memcpy 32 byte chunks:\n");
