@@ -16,7 +16,7 @@ static void run_benchmark(bench_op_fn op, void *ctx, int size)
     double totalTimeUs         = StopTimer(timer_start);
     double totalBytes          = (double)size * ILOOPS;
     double averageTransferTime = totalTimeUs / (double)ILOOPS;
-    double MB_pr_second        = totalBytes / totalTimeUs;
+    double MB_pr_second = (totalBytes / (1024.0 * 1024.0)) / (totalTimeUs / 1e6);
 
     printf("%7llu            %6.2f us              %7.2f MBytes/s\n",
            (unsigned long long)size, averageTransferTime, MB_pr_second);
