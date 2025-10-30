@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) {
     printf("Warmed up!\n");
 
     for (int csize = 0; csize <= size; csize *= 2) {
-        printf("Size: %d\n");
+        printf("Size: %d\n", csize);
 
         /* Timed benchmark with op callback */
         run_benchmark(memcpy_op, &ctx, csize);
