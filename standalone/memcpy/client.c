@@ -1,7 +1,7 @@
 #include "common.h"
 
 /* Generic benchmark op: do one unit of work. `i` is the iteration index. */
-typedef void (*bench_op_fn)(int i, void *ctx);
+typedef void (*bench_op_fn)(int i, void *ctx, int size);
 
 /* Generic timer/throughput benchmark around a user-supplied op */
 static void run_benchmark(bench_op_fn op, void *ctx, int size)
@@ -10,7 +10,7 @@ static void run_benchmark(bench_op_fn op, void *ctx, int size)
     StartTimer(&timer_start);
 
     for (int i = 0; i < ILOOPS; i++) {
-        op(i, ctx);
+        op(i, ctx, size);
     }
 
     double totalTimeUs         = StopTimer(timer_start);
@@ -31,17 +31,15 @@ typedef struct {
     volatile void *remote_address;
 } memcpy_ctx_t;
 
-static void memcpy_op(int i, void *vctx)
+static void memcpy_op(int i, void *vctx, int size)
 {
-    (void)i; /* iteration not used for this op */
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
     SEOE(SCIMemCpy, ctx->remote_sequence, ctx->local_address, ctx->remote_map,
          NO_OFFSET, ctx->size, NO_FLAGS);
 }
 
-static void memcpy_two_halves_op(int i, void *vctx)
+static void memcpy_two_halves_op(int i, void *vctx, int size)
 {
-    (void)i; /* iteration not used */
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
 
     int half = ctx->size / 2;
@@ -61,13 +59,13 @@ static void memcpy_two_halves_op(int i, void *vctx)
          ctx->remote_map, half, half, NO_FLAGS);
 }
 
-static void memcpy_32_chunks_op(int i, void *vctx)
+static void memcpy_32_chunks_op(int i, void *vctx, int size)
 {
     (void)i; /* iteration index unused */
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
 
     const int CHUNK = 32;
-    int remaining = ctx->size;
+    int remaining = size;
     int offset = 0;
 
     uint32_t *local = (uint32_t *)ctx->local_address;
@@ -81,13 +79,13 @@ static void memcpy_32_chunks_op(int i, void *vctx)
     }
 }
 
-static void memcpy_64_chunks_op(int i, void *vctx)
+static void memcpy_64_chunks_op(int i, void *vctx, int size)
 {
     (void)i; /* iteration index unused */
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
 
     const int CHUNK = 64;
-    int remaining = ctx->size;
+    int remaining = size;
     int offset = 0;
 
     uint64_t *local = (uint64_t *)ctx->local_address;
@@ -101,13 +99,13 @@ static void memcpy_64_chunks_op(int i, void *vctx)
     }
 }
 
-static void memcpy_nonvol_64_chunks_op(int i, void *vctx)
+static void memcpy_nonvol_64_chunks_op(int i, void *vctx, int size)
 {
     (void)i; /* iteration index unused */
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
 
     const int CHUNK = 64;
-    int remaining = ctx->size;
+    int remaining = size;
     int offset = 0;
 
     uint64_t *local = (uint64_t *)ctx->local_address;
