@@ -5,7 +5,7 @@
 typedef void (*bench_op_fn)(int i, void *ctx, int size);
 
 /* Generic timer/throughput benchmark around a user-supplied op */
-static void run_benchmark(bench_op_fn op, void *ctx, int size)
+static void run_benchmark(bench_op_fn op, void *ctx, int size, char *thing)
 {
     timer_start_t timer_start;
     StartTimer(&timer_start);
@@ -19,7 +19,7 @@ static void run_benchmark(bench_op_fn op, void *ctx, int size)
     double averageTransferTime = totalTimeUs / (double)ILOOPS;
     double MB_pr_second = totalBytes/totalTimeUs;
 
-    printf("%7llu|%6.2f us|%7.2f MB/s\n",
+    printf("    %s|%7llu|%6.2f us|%7.2f MB/s\n", thing,
            (unsigned long long)size, averageTransferTime, MB_pr_second);
 }
 
@@ -173,28 +173,21 @@ int main(int argc, char *argv[]) {
     printf("Warmed up!\n");
 
     for (int csize = 1024; csize <= size; csize *= 2) {
-        printf("Size: %d\n", csize);
-
         /* Timed benchmark with op callback */
-        run_benchmark(scicopy_op, &ctx, csize);
+        run_benchmark(scicopy_op, &ctx, csize, "scicopy_op");
         
-        printf("Benchmarking split it in two. Should be same speed:\n");
-        run_benchmark(memcpy_two_halves_op, &ctx, csize);
+        run_benchmark(memcpy_two_halves_op, &ctx, csize, "memcpy_two_halves_op");
 
-        printf("Memcpy:\n");
-        run_benchmark(memcopy_op, &ctx, csize);
+        run_benchmark(memcopy_op, &ctx, csize, "memcopy_op");
 
         if (csize >= 32) {
-            printf("Benchmarking memcpy 32 byte chunks:\n");
-            run_benchmark(memcpy_32_chunks_op, &ctx, csize);
+            run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op");
         }
 
         if (csize >= 64) {
-            printf("Benchmarking memcpy 64 byte chunks:\n");
-            run_benchmark(memcpy_64_chunks_op, &ctx, csize);
+            run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op");
         
-            printf("Benchmarking memcpy 64 byte chunks nonvolatile:\n");
-            run_benchmark(memcpy_nonvol_64_chunks_op, &ctx, csize);
+            run_benchmark(memcpy_nonvol_64_chunks_op, &ctx, csize, "memcpy_nonvol_64_chunks_op");
         }
     }
     SEOE(SCIRemoveSequence, remote_sequence, NO_FLAGS);
