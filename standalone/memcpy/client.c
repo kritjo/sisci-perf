@@ -14,8 +14,14 @@ int main(int argc, char *argv[]) {
 
     sci_desc_t sd;
     sci_error_t error;
-    void* local_address = malloc(SEGMENT_SIZE);
-    if (local_address == NULL) return 1;
+    void* local_address;
+    int i;
+    char *malloc_x = malloc(SEGMENT_SIZE + 3);
+    while ((size_t)malloc_x & 0x3f) {
+        malloc_x++;
+    }
+    local_address = (void *) malloc_x;
+    for (i=0; i<SEGMENT_SIZE; ++i) malloc_x[i] = i & 255;
 
     sci_remote_segment_t remote_segment;
     sci_map_t remote_map;

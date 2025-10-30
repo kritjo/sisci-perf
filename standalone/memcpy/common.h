@@ -33,9 +33,9 @@ do {                    \
 } while (0)
 
 typedef struct {
-    unsigned long long start_cputick;       /* for rtdsc() */
-    unsigned int       start_walltick;      /* for GetTickCount() and tickGet() */
-    struct timeval     start_time;          /* for gettimeofday() */
+    unsigned long long start_cputick;
+    unsigned int       start_walltick;
+    struct timeval     start_time;
 } timer_start_t;
 
 void StartTimer(timer_start_t *timer_start);
