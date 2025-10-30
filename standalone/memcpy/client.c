@@ -60,6 +60,30 @@ static void memcpy_two_halves_op(int i, void *vctx)
          ctx->remote_map, half, half, NO_FLAGS);
 }
 
+static void memcpy_64_chunks_op(int i, void *vctx)
+{
+    (void)i; /* iteration index unused */
+    memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
+
+    const int CHUNK = 64;
+    int remaining = ctx->size;
+    int offset = 0;
+
+    char *local = (char *)ctx->local_address;
+
+    while (remaining > 0) {
+        int n = remaining >= CHUNK ? CHUNK : remaining;
+        SEOE(SCIMemCpy, ctx->remote_sequence,
+             local + offset,          /* local offset */
+             ctx->remote_map,
+             offset,                  /* remote offset */
+             n,                       /* bytes this chunk */
+             NO_FLAGS);
+        offset += n;
+        remaining -= n;
+    }
+}
+
 int main(int argc, char *argv[]) {
     if (argc != 3) {
         printf("Usage: %s <remote node id> <size>\n", argv[0]);
@@ -113,12 +137,19 @@ int main(int argc, char *argv[]) {
     }
     printf("Warmed up!\n");
 
-    /* Timed benchmark with op callback */
-    run_benchmark(memcpy_op, &ctx, size);
-    
-    printf("Benchmarking split it in two. Should be same speed:\n");
-    run_benchmark(memcpy_two_halves_op, &ctx, size);
+    for (int csize = 0; csize <= size; csize *= 2) {
+        printf("Size: %d\n");
 
+        /* Timed benchmark with op callback */
+        run_benchmark(memcpy_op, &ctx, csize);
+        
+        printf("Benchmarking split it in two. Should be same speed:\n");
+        run_benchmark(memcpy_two_halves_op, &ctx, csize);
+
+        printf("Benchmarking memcpy 64 byte chunks:\n");
+        run_benchmark(memcpy_64_chunks_op, &ctx, csize);
+
+    }
     SEOE(SCIRemoveSequence, remote_sequence, NO_FLAGS);
     SEOE(SCIUnmapSegment, remote_map, NO_FLAGS);
     SEOE(SCIDisconnectSegment, remote_segment, NO_FLAGS);

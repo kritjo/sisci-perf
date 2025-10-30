@@ -2,13 +2,13 @@
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
-        printf("Usage: %s <remote node id> <size>\n", argv[0]);
+        printf("Usage: %s <size>\n", argv[0]);
         exit(1);
     }
 
-    int remote_node_id = atoi(argv[1]);
+    int segment_size = atoi(argv[1]);
 
-    printf("Remote node id: %d\n", remote_node_id);
+    printf("Segment size: %d\n", segment_size);
 
     sci_desc_t sd;
     sci_error_t error;
@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
     SEOE(SCIInitialize, NO_FLAGS);
     SEOE(SCIOpen, &sd, NO_FLAGS);
 
-    SEOE(SCICreateSegment, sd, &segment, SEGMENT_ID, SEGMENT_SIZE, NO_CALLBACK, NO_ARGS, NO_FLAGS);
+    SEOE(SCICreateSegment, sd, &segment, SEGMENT_ID, segment_size, NO_CALLBACK, NO_ARGS, NO_FLAGS);
     SEOE(SCIPrepareSegment, segment, ADAPTER_NO, NO_FLAGS);
     SEOE(SCISetSegmentAvailable, segment, ADAPTER_NO, NO_FLAGS);
 
