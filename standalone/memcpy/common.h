@@ -15,7 +15,6 @@
 #define NO_OFFSET 0
 #define NO_ADDRESS_HINT 0
 #define SEGMENT_ID 1
-#define SEGMENT_SIZE 2097152
 #define ILOOPS 50000
 #define WULOOPS 50000
 #define FALSE 0
