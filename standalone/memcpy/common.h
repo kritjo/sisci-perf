@@ -19,6 +19,8 @@
 #define WULOOPS 50000
 #define FALSE 0
 #define TRUE 1
+#define MIB 1048576
+#define MICRO_SECONDS 1000000
 
 // SISCI Exit On Error -- SEOE
 #define SEOE(func, ...) \
