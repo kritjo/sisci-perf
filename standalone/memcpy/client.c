@@ -16,11 +16,10 @@ static void run_benchmark(bench_op_fn op, void *ctx, int size)
     double totalTimeUs         = StopTimer(timer_start);
     double totalBytes          = (double)size * ILOOPS;
     double averageTransferTime = totalTimeUs / (double)ILOOPS;
-    double MB_pr_second = (totalBytes / MIB) / (totalTimeUs / MICRO_SECONDS);
-    double SCIB_pr_sec = totalBytes/totalTimeUs;
+    double MB_pr_second = totalBytes/totalTimeUs;
 
-    printf("%7llu|%6.2f us|%7.2f MiBytes/s|SCIBytes/s: %7.2f\n",
-           (unsigned long long)size, averageTransferTime, MB_pr_second, SCIB_pr_sec);
+    printf("%7llu|%6.2f us|%7.2f MB/s\n",
+           (unsigned long long)size, averageTransferTime, MB_pr_second);
 }
 
 /* --- Example op implementation: SCIMemCpy --- */
@@ -35,29 +34,24 @@ typedef struct {
 static void memcpy_op(int i, void *vctx, int size)
 {
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
-    SEOE(SCIMemCpy, ctx->remote_sequence, ctx->local_address, ctx->remote_map,
-         NO_OFFSET, ctx->size, NO_FLAGS);
+    SEOE(SCIMemCpy, ctx->remote_sequence, ctx->local_address,
+         ctx->remote_map, NO_OFFSET, size, NO_FLAGS);
 }
 
 static void memcpy_two_halves_op(int i, void *vctx, int size)
 {
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
-
-    int half = ctx->size / 2;
-    if (half <= 0) {
-        /* Nothing meaningful to do if size < 2. You could fallback to one copy. */
-        return;
-    }
+    int half = size / 2;
+    int tail = size - half;            // keep odd byte(s)
 
     char *local = (char *)ctx->local_address;
 
-    /* First half: [0 .. half-1] -> remote offset 0 */
-    SEOE(SCIMemCpy, ctx->remote_sequence, local,
-         ctx->remote_map, NO_OFFSET, half, NO_FLAGS);
-
-    /* Second half: [half .. 2*half-1] -> remote offset `half` */
-    SEOE(SCIMemCpy, ctx->remote_sequence, local + half,
-         ctx->remote_map, half, half, NO_FLAGS);
+    if (half > 0) {
+        SEOE(SCIMemCpy, ctx->remote_sequence, local,
+             ctx->remote_map, NO_OFFSET, half, NO_FLAGS);
+        SEOE(SCIMemCpy, ctx->remote_sequence, local + half,
+             ctx->remote_map, half, tail, NO_FLAGS);
+    }
 }
 
 static void memcpy_32_chunks_op(int i, void *vctx, int size)
@@ -65,7 +59,6 @@ static void memcpy_32_chunks_op(int i, void *vctx, int size)
     (void)i; /* iteration index unused */
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
 
-    const int CHUNK = 32;
     int remaining = size;
     int offset = 0;
 
@@ -74,7 +67,7 @@ static void memcpy_32_chunks_op(int i, void *vctx, int size)
 
     while (remaining > 0) {
         *remote = *local;
-        remaining -= CHUNK;
+        remaining -= 4;
         remote++;
         local++;
     }
@@ -85,7 +78,6 @@ static void memcpy_64_chunks_op(int i, void *vctx, int size)
     (void)i; /* iteration index unused */
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
 
-    const int CHUNK = 64;
     int remaining = size;
     int offset = 0;
 
@@ -94,7 +86,7 @@ static void memcpy_64_chunks_op(int i, void *vctx, int size)
 
     while (remaining > 0) {
         *remote = *local;
-        remaining -= CHUNK;
+        remaining -= 8;
         remote++;
         local++;
     }
@@ -105,7 +97,6 @@ static void memcpy_nonvol_64_chunks_op(int i, void *vctx, int size)
     (void)i; /* iteration index unused */
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
 
-    const int CHUNK = 64;
     int remaining = size;
     int offset = 0;
 
@@ -114,7 +105,7 @@ static void memcpy_nonvol_64_chunks_op(int i, void *vctx, int size)
 
     while (remaining > 0) {
         *remote = *local;
-        remaining -= CHUNK;
+        remaining -= 8;
         remote++;
         local++;
     }
