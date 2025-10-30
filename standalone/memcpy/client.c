@@ -28,6 +28,7 @@ typedef struct {
     void          *local_address;
     sci_map_t      remote_map;
     int            size;
+    volatile void *remote_address;
 } memcpy_ctx_t;
 
 static void memcpy_op(int i, void *vctx)
@@ -69,18 +70,14 @@ static void memcpy_64_chunks_op(int i, void *vctx)
     int remaining = ctx->size;
     int offset = 0;
 
-    char *local = (char *)ctx->local_address;
+    uint64_t *local = (uint64_t *)ctx->local_address;
+    volatile uint64_t *remote = (volatile uint64_t *)ctx->remote_address;
 
     while (remaining > 0) {
-        int n = remaining >= CHUNK ? CHUNK : remaining;
-        SEOE(SCIMemCpy, ctx->remote_sequence,
-             local + offset,          /* local offset */
-             ctx->remote_map,
-             offset,                  /* remote offset */
-             n,                       /* bytes this chunk */
-             NO_FLAGS);
-        offset += n;
-        remaining -= n;
+        *remote = *local;
+        remaining -= CHUNK;
+        remote++;
+        local++;
     }
 }
 
@@ -109,7 +106,7 @@ int main(int argc, char *argv[]) {
 
     sci_remote_segment_t remote_segment;
     sci_map_t remote_map;
-    volatile int* remote_address;
+    volatile void* remote_address;
     sci_sequence_t remote_sequence;
 
     SEOE(SCIInitialize, NO_FLAGS);
@@ -117,7 +114,7 @@ int main(int argc, char *argv[]) {
 
     SEOE(SCIConnectSegment, sd, &remote_segment, remote_node_id, SEGMENT_ID,
          ADAPTER_NO, NO_CALLBACK, NO_ARGS, SCI_INFINITE_TIMEOUT, NO_FLAGS);
-    remote_address = (volatile int*)
+    remote_address = (volatile void*)
         SCIMapRemoteSegment(remote_segment, &remote_map, NO_OFFSET,
                             size, NO_ADDRESS_HINT, NO_FLAGS, &error);
     if (error != SCI_ERR_OK) return 1;
@@ -128,7 +125,8 @@ int main(int argc, char *argv[]) {
         .remote_sequence = remote_sequence,
         .local_address   = local_address,
         .remote_map      = remote_map,
-        .size            = size
+        .size            = size,
+        .remote_address  = remote_address
     };
 
     /* Warm-up using the same op */
@@ -146,9 +144,10 @@ int main(int argc, char *argv[]) {
         printf("Benchmarking split it in two. Should be same speed:\n");
         run_benchmark(memcpy_two_halves_op, &ctx, csize);
 
-        printf("Benchmarking memcpy 64 byte chunks:\n");
-        run_benchmark(memcpy_64_chunks_op, &ctx, csize);
-
+        if (csize >= 64) {
+            printf("Benchmarking memcpy 64 byte chunks:\n");
+            run_benchmark(memcpy_64_chunks_op, &ctx, csize);
+        }
     }
     SEOE(SCIRemoveSequence, remote_sequence, NO_FLAGS);
     SEOE(SCIUnmapSegment, remote_map, NO_FLAGS);
