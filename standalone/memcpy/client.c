@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
     sci_error_t error;
     void* local_address;
     int i;
-    char *malloc_x = malloc(size + 3);
+    char *malloc_x = malloc(size + 63);
     while ((size_t)malloc_x & 0x3f) {
         malloc_x++;
     }
