@@ -81,6 +81,26 @@ static void memcpy_64_chunks_op(int i, void *vctx)
     }
 }
 
+static void memcpy_nonvol_64_chunks_op(int i, void *vctx)
+{
+    (void)i; /* iteration index unused */
+    memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
+
+    const int CHUNK = 64;
+    int remaining = ctx->size;
+    int offset = 0;
+
+    uint64_t *local = (uint64_t *)ctx->local_address;
+    uint64_t *remote = (uint64_t *)ctx->remote_address;
+
+    while (remaining > 0) {
+        *remote = *local;
+        remaining -= CHUNK;
+        remote++;
+        local++;
+    }
+}
+
 int main(int argc, char *argv[]) {
     if (argc != 3) {
         printf("Usage: %s <remote node id> <size>\n", argv[0]);
@@ -147,6 +167,9 @@ int main(int argc, char *argv[]) {
         if (csize >= 64) {
             printf("Benchmarking memcpy 64 byte chunks:\n");
             run_benchmark(memcpy_64_chunks_op, &ctx, csize);
+        
+            printf("Benchmarking memcpy 64 byte chunks nonvolatile:\n");
+            run_benchmark(memcpy_nonvol_64_chunks_op, &ctx, csize);
         }
     }
     SEOE(SCIRemoveSequence, remote_sequence, NO_FLAGS);
