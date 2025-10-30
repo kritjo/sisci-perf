@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
 
     /* Warm-up using the same op */
     for (int i = 0; i < WULOOPS; i++) {
-        memcpy_op(i, &ctx);
+        memcpy_op(i, &ctx, size);
     }
     printf("Warmed up!\n");
 
