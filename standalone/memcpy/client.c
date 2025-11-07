@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) {
     }
     printf("Warmed up!\n");
 
-    for (int csize = 1024; csize <= size; csize *= 2) {
+    for (int csize = 1; csize <= size; csize *= 2) {
         /* Timed benchmark with op callback */
         run_benchmark(scicopy_op, &ctx, csize, "scicopy_op");
         
@@ -287,7 +287,7 @@ int main(int argc, char *argv[]) {
 
         run_benchmark(memcpy_avx2_nt_op, &ctx, csize, "memcpy_avx2_nt_op");
 
-        run_benchmark(memcpy_avx2_cached_op, &ctx, csize, "memcpy_avx2_nt_op");
+        run_benchmark(memcpy_avx2_cached_op, &ctx, csize, "memcpy_avx2_cached_op");
 
         if (csize >= 32) {
             run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op");
