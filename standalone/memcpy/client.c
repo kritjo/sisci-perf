@@ -140,7 +140,7 @@ static void memcpy_avx2_load_stream_store(int i, void *vctx, int bytes)
     uint8_t *dst = (uint8_t *)(uintptr_t) ctx->remote_address;
 
     int n = bytes;
-#if defined(__AVX512__)
+#if defined(__AVX512F__)
     while (n >= 64) {
         __m512i a = _mm512_load_si512((const __m512i*)src);
         _mm512_stream_si512((__m512i*)dst, a);
@@ -179,7 +179,7 @@ static void memcpy_avx2_load_store(int i, void *vctx, int bytes)
     uint8_t *dst = (uint8_t *)(uintptr_t) ctx->remote_address;
 
     int n = bytes;
-#if defined(__AVX512__)
+#if defined(__AVX512F__)
     while (n >= 64) {
         __m512i a = _mm512_load_si512((const __m512i*)src);
         _mm512_store_si512((__m512i*)dst, a);
@@ -266,7 +266,7 @@ int main(int argc, char *argv[]) {
     };
 
 
-#if defined(__AVX512__)
+#if defined(__AVX512F__)
     printf("AVX512 support detected!\n");
 #else
     printf("WARN: NO AVX512 support detected\n");
