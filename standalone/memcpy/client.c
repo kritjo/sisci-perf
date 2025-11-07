@@ -270,6 +270,12 @@ int main(int argc, char *argv[]) {
         run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", NULL);
     }
 
+    printf("Running 2 32s:\n");
+
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", NULL);
+        run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", NULL);
+    }
 
     printf("Running 2 64s:\n");
 
