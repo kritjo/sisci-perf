@@ -135,12 +135,12 @@ static void memcpy_avx2_load_stream_store(int i, void *vctx, int bytes)
 {
     (void)i;
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
-#define __AVX2__
 #if defined(__AVX2__)
     const uint8_t *src = (const uint8_t *) ctx->local_address;
     uint8_t *dst = (uint8_t *)(uintptr_t) ctx->remote_address;
 
     int n = bytes;
+#if defined(__AVX512__)
     while (n >= 64) {
         __m512i a = _mm512_load_si512((const __m512i*)src);
         _mm512_stream_si512((__m512i*)dst, a);
@@ -151,6 +151,13 @@ static void memcpy_avx2_load_stream_store(int i, void *vctx, int bytes)
         _mm256_stream_si256((__m256i*)dst, v);
         src += 32; dst += 32; n -= 32;
     }
+#else
+    while (n>=32) {
+        __m256i v = _mm256_load_si256((const __m256i*)src);
+        _mm256_stream_si256((__m256i*)dst, v);
+        src += 32; dst += 32; n -= 32;
+    }
+#endif
     if (n >= 16) {
         __m128i v16 = _mm_load_si128((const __m128i*)src);
         _mm_stream_si128((__m128i*)dst, v16);
@@ -172,6 +179,7 @@ static void memcpy_avx2_load_store(int i, void *vctx, int bytes)
     uint8_t *dst = (uint8_t *)(uintptr_t) ctx->remote_address;
 
     int n = bytes;
+#if defined(__AVX512__)
     while (n >= 64) {
         __m512i a = _mm512_load_si512((const __m512i*)src);
         _mm512_store_si512((__m512i*)dst, a);
@@ -182,6 +190,13 @@ static void memcpy_avx2_load_store(int i, void *vctx, int bytes)
         _mm256_store_si256((__m256i*)dst, v);
         src += 32; dst += 32; n -= 32;
     }
+#else
+    while (n >= 32) {
+        __m256i v = _mm256_load_si256((const __m256i*)src);
+        _mm256_store_si256((__m256i*)dst, v);
+        src += 32; dst += 32; n -= 32;
+    }
+#endif
     if (n >= 16) {
         __m128i v16 = _mm_load_si128((const __m128i*)src);
         _mm_store_si128((__m128i*)dst, v16);
@@ -249,6 +264,13 @@ int main(int argc, char *argv[]) {
         .bytes           = bytes,
         .remote_address  = remote_address
     };
+
+
+#if defined(__AVX512__)
+    printf("AVX512 support detected!\n");
+#else
+    printf("WARN: NO AVX512 support detected\n");
+#endif
 
     /* Warm-up using the same op */
     for (int i = 0; i < WULOOPS; i++) {
