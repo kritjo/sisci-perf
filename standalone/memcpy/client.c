@@ -140,10 +140,11 @@ static void memcpy_avx2_load_stream_store(int i, void *vctx, int bytes)
     uint8_t *dst = (uint8_t *)(uintptr_t) ctx->remote_address;
 
     int n = bytes;
-#if defined(__AVX512F__)
     while (n >= 64) {
-        __m512i a = _mm512_load_si512((const __m512i*)src);
-        _mm512_stream_si512((__m512i*)dst, a);
+        __m256i a = _mm256_load_si256((const __m256i*)src);
+        __m256i b = _mm256_load_si256((const __m256i*)src + 32);
+        _mm256_stream_si256((__m256i*)dst, a);
+        _mm256_stream_si256((__m256i*)dst + 32, b);
         src += 64; dst += 64; n -= 64;
     }
     if (n >= 32) {
@@ -151,13 +152,6 @@ static void memcpy_avx2_load_stream_store(int i, void *vctx, int bytes)
         _mm256_stream_si256((__m256i*)dst, v);
         src += 32; dst += 32; n -= 32;
     }
-#else
-    while (n>=32) {
-        __m256i v = _mm256_load_si256((const __m256i*)src);
-        _mm256_stream_si256((__m256i*)dst, v);
-        src += 32; dst += 32; n -= 32;
-    }
-#endif
     if (n >= 16) {
         __m128i v16 = _mm_load_si128((const __m128i*)src);
         _mm_stream_si128((__m128i*)dst, v16);
@@ -179,10 +173,11 @@ static void memcpy_avx2_load_store(int i, void *vctx, int bytes)
     uint8_t *dst = (uint8_t *)(uintptr_t) ctx->remote_address;
 
     int n = bytes;
-#if defined(__AVX512F__)
     while (n >= 64) {
-        __m512i a = _mm512_load_si512((const __m512i*)src);
-        _mm512_store_si512((__m512i*)dst, a);
+        __m256i a = _mm256_load_si256((const __m256i*)src);
+        __m256i b = _mm256_load_si256((const __m256i*)src + 32);
+        _mm256_store_si256((__m256i*)dst, a);
+        _mm256_store_si256((__m256i*)dst + 32, b);
         src += 64; dst += 64; n -= 64;
     }
     if (n >= 32) {
@@ -190,13 +185,6 @@ static void memcpy_avx2_load_store(int i, void *vctx, int bytes)
         _mm256_store_si256((__m256i*)dst, v);
         src += 32; dst += 32; n -= 32;
     }
-#else
-    while (n >= 32) {
-        __m256i v = _mm256_load_si256((const __m256i*)src);
-        _mm256_store_si256((__m256i*)dst, v);
-        src += 32; dst += 32; n -= 32;
-    }
-#endif
     if (n >= 16) {
         __m128i v16 = _mm_load_si128((const __m128i*)src);
         _mm_store_si128((__m128i*)dst, v16);
