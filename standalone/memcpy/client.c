@@ -264,30 +264,27 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < WULOOPS; i++) {
         scicopy_op(i, &ctx, bytes);
     }
-    printf("Warmed up!\n");
+    printf("Warmed up, running only 64:\n");
 
-    for (int csize = 8; csize <= bytes; csize *= 2) {
-        /* Timed benchmark with op callback */
-        run_benchmark(scicopy_op, &ctx, csize, "scicopy_op", NULL);
-        
-        run_benchmark(scicopy_two_halves_op, &ctx, csize, "scicopy_two_halves_op", NULL);
-
-        run_benchmark(memcopy_op, &ctx, csize, "memcopy_op", NULL);
-
-        run_benchmark(memcpy_avx2_load_stream_store, &ctx, csize, "memcpy_avx2_load_stream_store", avx2_fence_cb);
-
-        run_benchmark(memcpy_avx2_load_store, &ctx, csize, "memcpy_avx2_load_store", avx2_fence_cb);
-
-        if (csize >= 32) {
-            run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", NULL);
-        }
-
-        if (csize >= 64) {
-            run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", NULL);
-        
-            run_benchmark(memcpy_nonvol_64_chunks_op, &ctx, csize, "memcpy_nonvol_64_chunks_op", NULL);
-        }
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", NULL);
     }
+
+
+    printf("Running 2 64s:\n");
+
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", NULL);
+        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", NULL);
+    }
+
+    printf("Running 32 and then 64:\n");
+
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", NULL);
+        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", NULL);
+    }
+
     SEOE(SCIRemoveSequence, remote_sequence, NO_FLAGS);
     SEOE(SCIUnmapSegment, remote_map, NO_FLAGS);
     SEOE(SCIDisconnectSegment, remote_segment, NO_FLAGS);
@@ -295,4 +292,3 @@ int main(int argc, char *argv[]) {
     SCITerminate();
     return 0;
 }
-
