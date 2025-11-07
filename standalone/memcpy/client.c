@@ -285,6 +285,14 @@ int main(int argc, char *argv[]) {
         run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", NULL);
     }
 
+
+    printf("Running 64 and then 32:\n");
+
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", NULL);
+        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", NULL);
+    }
+
     SEOE(SCIRemoveSequence, remote_sequence, NO_FLAGS);
     SEOE(SCIUnmapSegment, remote_map, NO_FLAGS);
     SEOE(SCIDisconnectSegment, remote_segment, NO_FLAGS);
