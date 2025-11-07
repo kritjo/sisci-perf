@@ -285,6 +285,10 @@ int main(int argc, char *argv[]) {
 
         run_benchmark(memcopy_op, &ctx, csize, "memcopy_op");
 
+        run_benchmark(memcpy_avx2_nt_op, &ctx, csize, "memcpy_avx2_nt_op");
+
+        run_benchmark(memcpy_avx2_cached_op, &ctx, csize, "memcpy_avx2_nt_op");
+
         if (csize >= 32) {
             run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op");
         }
