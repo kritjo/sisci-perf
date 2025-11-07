@@ -5,15 +5,20 @@
 
 /* Generic benchmark op: do one unit of work. `i` is the iteration index. */
 typedef void (*bench_op_fn)(int i, void *ctx, int size);
+typedef void (*bench_cb_fn)(void *ctx);
 
 /* Generic timer/throughput benchmark around a user-supplied op */
-static void run_benchmark(bench_op_fn op, void *ctx, int size, char *thing)
+static void run_benchmark(bench_op_fn op, void *ctx, int size, char *thing, bench_cb_fn cb)
 {
     timer_start_t timer_start;
     StartTimer(&timer_start);
 
     for (int i = 0; i < ILOOPS; i++) {
         op(i, ctx, size);
+    }
+
+    if (cb) {
+        cb(ctx);
     }
 
     double totalTimeUs         = StopTimer(timer_start);
@@ -223,6 +228,14 @@ static void memcpy_avx2_cached_op(int i, void *vctx, int size)
 #endif
 }
 
+static void avx2_cached_fence_cb(void *ctx)
+{
+    (void)ctx;
+#if defined(__AVX2__)
+    _mm_mfence();
+#endif
+}
+
 int main(int argc, char *argv[]) {
     if (argc != 3) {
         printf("Usage: %s <remote node id> <size>\n", argv[0]);
@@ -279,24 +292,24 @@ int main(int argc, char *argv[]) {
 
     for (int csize = 1; csize <= size; csize *= 2) {
         /* Timed benchmark with op callback */
-        run_benchmark(scicopy_op, &ctx, csize, "scicopy_op");
+        run_benchmark(scicopy_op, &ctx, csize, "scicopy_op", NULL);
         
-        run_benchmark(scicopy_two_halves_op, &ctx, csize, "scicopy_two_halves_op");
+        run_benchmark(scicopy_two_halves_op, &ctx, csize, "scicopy_two_halves_op", NULL);
 
-        run_benchmark(memcopy_op, &ctx, csize, "memcopy_op");
+        run_benchmark(memcopy_op, &ctx, csize, "memcopy_op", NULL);
 
-        run_benchmark(memcpy_avx2_nt_op, &ctx, csize, "memcpy_avx2_nt_op");
+        run_benchmark(memcpy_avx2_nt_op, &ctx, csize, "memcpy_avx2_nt_op", NULL);
 
-        run_benchmark(memcpy_avx2_cached_op, &ctx, csize, "memcpy_avx2_cached_op");
+        run_benchmark(memcpy_avx2_cached_op, &ctx, csize, "memcpy_avx2_cached_op", avx2_cached_fence_cb);
 
         if (csize >= 32) {
-            run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op");
+            run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", NULL);
         }
 
         if (csize >= 64) {
-            run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op");
+            run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", NULL);
         
-            run_benchmark(memcpy_nonvol_64_chunks_op, &ctx, csize, "memcpy_nonvol_64_chunks_op");
+            run_benchmark(memcpy_nonvol_64_chunks_op, &ctx, csize, "memcpy_nonvol_64_chunks_op", NULL);
         }
     }
     SEOE(SCIRemoveSequence, remote_sequence, NO_FLAGS);
