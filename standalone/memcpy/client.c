@@ -68,6 +68,25 @@ static void scicopy_two_halves_op(int i, void *vctx, int bytes)
     }
 }
 
+static void memcpy_8_chunks_op(int i, void *vctx, int bytes)
+{
+    (void)i; /* iteration index unused */
+    memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
+
+    int remaining = bytes;
+    int offset = 0;
+
+    uint8_t *local = (uint8_t *)ctx->local_address;
+    volatile uint8_t *remote = (volatile uint8_t *)ctx->remote_address;
+
+    while (remaining > 0) {
+        *remote = *local;
+        remaining -= 1;
+        remote++;
+        local++;
+    }
+}
+
 static void memcpy_32_chunks_op(int i, void *vctx, int bytes)
 {
     (void)i; /* iteration index unused */
@@ -267,40 +286,40 @@ int main(int argc, char *argv[]) {
     printf("Warmed up, running only 64:\n");
 
     for (int csize = 64; csize <= bytes; csize *= 2) {
-        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", NULL);
+        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", avx2_fence_cb);
     }
 
+    printf("8b:\n");
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        run_benchmark(memcpy_8_chunks_op, &ctx, csize, "memcpy_8_chunks_op", avx2_fence_cb);
+    }
     printf("Running 2 32s:\n");
 
     for (int csize = 64; csize <= bytes; csize *= 2) {
-        run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", NULL);
-        run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", NULL);
-    }
-
-    for (int loops = 0; loops<100; loops++) {
-        run_benchmark(memcpy_32_chunks_op, &ctx, 65536, "memcpy_32_chunks_op", NULL);
+        run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", avx2_fence_cb);
+        run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", avx2_fence_cb);
     }
 
     printf("Running 2 64s:\n");
 
     for (int csize = 64; csize <= bytes; csize *= 2) {
-        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", NULL);
-        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", NULL);
+        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", avx2_fence_cb);
+        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", avx2_fence_cb);
     }
 
     printf("Running 32 and then 64:\n");
 
     for (int csize = 64; csize <= bytes; csize *= 2) {
-        run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", NULL);
-        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", NULL);
+        run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", avx2_fence_cb);
+        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", avx2_fence_cb);
     }
 
 
     printf("Running 64 and then 32:\n");
 
     for (int csize = 64; csize <= bytes; csize *= 2) {
-        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", NULL);
-        run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", NULL);
+        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", avx2_fence_cb);
+        run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", avx2_fence_cb);
     }
 
     printf("Majloop:\n");
@@ -311,20 +330,20 @@ int main(int argc, char *argv[]) {
         
         run_benchmark(scicopy_two_halves_op, &ctx, csize, "scicopy_two_halves_op", NULL);
 
-        run_benchmark(memcopy_op, &ctx, csize, "memcopy_op", NULL);
+        run_benchmark(memcopy_op, &ctx, csize, "memcopy_op", avx2_fence_cb);
 
         run_benchmark(memcpy_avx2_load_stream_store, &ctx, csize, "memcpy_avx2_load_stream_store", avx2_fence_cb);
 
         run_benchmark(memcpy_avx2_load_store, &ctx, csize, "memcpy_avx2_load_store", avx2_fence_cb);
 
         if (csize >= 32) {
-            run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", NULL);
+            run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", avx2_fence_cb);
         }
 
         if (csize >= 64) {
-            run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", NULL);
+            run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", avx2_fence_cb);
         
-            run_benchmark(memcpy_nonvol_64_chunks_op, &ctx, csize, "memcpy_nonvol_64_chunks_op", NULL);
+            run_benchmark(memcpy_nonvol_64_chunks_op, &ctx, csize, "memcpy_nonvol_64_chunks_op", avx2_fence_cb);
         }
     }
 
