@@ -141,10 +141,10 @@ static void memcpy_avx2_load_stream_store(int i, void *vctx, int bytes)
 
     int n = bytes;
     while (n >= 64) {
-        __m256i a = _mm256_load_si256((const __m256i*)src);
-        __m256i b = _mm256_load_si256((const __m256i*)src + 32);
-        _mm256_stream_si256((__m256i*)dst, a);
-        _mm256_stream_si256((__m256i*)dst + 32, b);
+        __m256i a = _mm256_load_si256((const __m256i*)(src));
+        __m256i b = _mm256_load_si256((const __m256i*)(src + 32));
+        _mm256_stream_si256((__m256i*)(dst), a);
+        _mm256_stream_si256((__m256i*)(dst + 32), b);
         src += 64; dst += 64; n -= 64;
     }
     if (n >= 32) {
@@ -174,10 +174,10 @@ static void memcpy_avx2_load_store(int i, void *vctx, int bytes)
 
     int n = bytes;
     while (n >= 64) {
-        __m256i a = _mm256_load_si256((const __m256i*)src);
-        __m256i b = _mm256_load_si256((const __m256i*)src + 32);
-        _mm256_store_si256((__m256i*)dst, a);
-        _mm256_store_si256((__m256i*)dst + 32, b);
+        __m256i a = _mm256_load_si256((const __m256i*)(src));
+        __m256i b = _mm256_load_si256((const __m256i*)(src + 32));
+        _mm256_store_si256((__m256i*)(dst), a);
+        _mm256_store_si256((__m256i*)(dst + 32), b);
         src += 64; dst += 64; n -= 64;
     }
     if (n >= 32) {
@@ -201,7 +201,7 @@ static void avx2_fence_cb(void *ctx)
 {
     (void)ctx;
 #if defined(__AVX2__)
-    _mm_mfence();
+    _mm_sfence();
 #endif
 }
 
