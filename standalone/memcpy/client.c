@@ -163,7 +163,7 @@ static void memcpy_avx2_load_stream_store(int i, void *vctx, int bytes)
 #endif
 }
 
-static void memcpy_avx2_load_store(int i, void *vctx, int bytes)
+static void memcpy_avx2_uload_ustore(int i, void *vctx, int bytes)
 {
     (void)i;
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
@@ -173,20 +173,20 @@ static void memcpy_avx2_load_store(int i, void *vctx, int bytes)
 
     int n = bytes;
     while (n >= 64) {
-        __m256i a = _mm256_load_si256((const __m256i*)(src));
-        __m256i b = _mm256_load_si256((const __m256i*)(src + 32));
-        _mm256_store_si256((__m256i*)(dst), a);
-        _mm256_store_si256((__m256i*)(dst + 32), b);
+        __m256i a = _mm256_uload_si256((const __m256i*)(src));
+        __m256i b = _mm256_uload_si256((const __m256i*)(src + 32));
+        _mm256_ustore_si256((__m256i*)(dst), a);
+        _mm256_ustore_si256((__m256i*)(dst + 32), b);
         src += 64; dst += 64; n -= 64;
     }
     if (n >= 32) {
-        __m256i v = _mm256_load_si256((const __m256i*)src);
-        _mm256_store_si256((__m256i*)dst, v);
+        __m256i v = _mm256_uload_si256((const __m256i*)src);
+        _mm256_ustore_si256((__m256i*)dst, v);
         src += 32; dst += 32; n -= 32;
     }
     if (n >= 16) {
-        __m128i v16 = _mm_load_si128((const __m128i*)src);
-        _mm_store_si128((__m128i*)dst, v16);
+        __m128i v16 = _mm_uload_si128((const __m128i*)src);
+        _mm_ustore_si128((__m128i*)dst, v16);
         src += 16; dst += 16; n -= 16;
     }
     while (n >= 8) { *(uint64_t*)dst = *(const uint64_t*)src; dst+=8; src+=8; n-=8; }
@@ -314,7 +314,7 @@ int main(int argc, char *argv[]) {
 
         run_benchmark(memcpy_avx2_load_stream_store, &ctx, csize, "memcpy_avx2_load_stream_store", avx2_fence_cb);
 
-        run_benchmark(memcpy_avx2_load_store, &ctx, csize, "memcpy_avx2_load_store", avx2_fence_cb);
+        run_benchmark(memcpy_avx2_uload_ustore, &ctx, csize, "memcpy_avx2_uload_ustore", avx2_fence_cb);
 
         if (csize >= 32) {
             run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", avx2_fence_cb);
