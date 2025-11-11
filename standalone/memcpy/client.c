@@ -413,6 +413,27 @@ nobranch_prefetch(int i, void *vctx, int size)
     }
 }
 
+static void memmove_prefetch(volatile void *dst, const void *src, size_t count)
+{
+    volatile unsigned char *d = dst;
+    const unsigned char *s = src;
+
+    while (count >= 64) {
+        _mm_prefetch((const char*)(s + 64), _MM_HINT_NTA);
+        _mm_prefetch((const char*)(s + 128), _MM_HINT_NTA);
+        _mm_prefetch((const char)((s + 192)), _MM_HINT_NTA);
+
+        memmove(d, s, 64);
+        d     += 64;
+        s     += 64;
+        count -= 64;
+    }
+
+    if (count)
+        memcpy(d, s, count);
+
+    return dst;
+}
 
 static void avx2_fence_cb(void *ctx)
 {
@@ -504,6 +525,11 @@ int main(int argc, char *argv[]) {
         run_benchmark(nobranch_prefetch, &ctx, csize, "nobranch_prefetch", avx2_fence_cb);
     }
 
+    printf("only memmove_prefetch\n");
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        run_benchmark(memmove_prefetch, &ctx, csize, "memmove_prefetch", avx2_fence_cb);
+    }
+
     printf("8b:\n");
     for (int csize = 64; csize <= bytes; csize *= 2) {
         run_benchmark(memcpy_8_chunks_op, &ctx, csize, "memcpy_8_chunks_op", avx2_fence_cb);
@@ -569,6 +595,8 @@ int main(int argc, char *argv[]) {
 
         run_benchmark(sciMemCopy_OS_COPY_Prefetch, &ctx, csize, "sciMemCopy_OS_COPY_Prefetch", avx2_fence_cb);
         run_benchmark(nobranch_prefetch, &ctx, csize, "nobranch_prefetch", avx2_fence_cb);
+
+        run_benchmark(memmove_prefetch, &ctx, csize, "memmove_prefetch", avx2_fence_cb);
     }
 
     SEOE(SCIRemoveSequence, remote_sequence, NO_FLAGS);
