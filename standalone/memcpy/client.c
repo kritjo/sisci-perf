@@ -265,45 +265,67 @@ int main(int argc, char *argv[]) {
     }
     printf("Warmed up, running only 64:\n");
 
-    timer_start_t timer_start;
-    StartTimer(&timer_start);
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", avx2_fence_cb);
+    }
 
-    for (int i = 0; i < ILOOPS; i++) {
-        const uint32_t *src = (const uint32_t *)local_address;
-        volatile uint32_t *dest = (volatile uint32_t *)remote_address;
+    printf("8b:\n");
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        run_benchmark(memcpy_8_chunks_op, &ctx, csize, "memcpy_8_chunks_op", avx2_fence_cb);
+    }
+    printf("Running 2 32s:\n");
 
-        const uint32_t *end = src + (bytes / 4);
-        while (src < end) {
-            *dest++ = *src++;
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", avx2_fence_cb);
+        run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", avx2_fence_cb);
+    }
+
+    printf("Running 2 64s:\n");
+
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", avx2_fence_cb);
+        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", avx2_fence_cb);
+    }
+
+    printf("Running 32 and then 64:\n");
+
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", avx2_fence_cb);
+        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", avx2_fence_cb);
+    }
+
+
+    printf("Running 64 and then 32:\n");
+
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", avx2_fence_cb);
+        run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", avx2_fence_cb);
+    }
+
+    printf("Majloop:\n");
+
+    for (int csize = 8; csize <= bytes; csize *= 2) {
+        /* Timed benchmark with op callback */
+        run_benchmark(scicopy_op, &ctx, csize, "scicopy_op", NULL);
+        
+        run_benchmark(scicopy_two_halves_op, &ctx, csize, "scicopy_two_halves_op", NULL);
+
+        run_benchmark(memcopy_op, &ctx, csize, "memcopy_op", avx2_fence_cb);
+
+        run_benchmark(memcpy_avx2_load_stream_store, &ctx, csize, "memcpy_avx2_load_stream_store", avx2_fence_cb);
+
+        run_benchmark(memcpy_avx2_loadu_storeu, &ctx, csize, "memcpy_avx2_loadu_storeu", avx2_fence_cb);
+
+        if (csize >= 32) {
+            run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", avx2_fence_cb);
+        }
+
+        if (csize >= 64) {
+            run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", avx2_fence_cb);
+        
+            run_benchmark(memcpy_nonvol_64_chunks_op, &ctx, csize, "memcpy_nonvol_64_chunks_op", avx2_fence_cb);
         }
     }
-    double totalTimeUs         = StopTimer(timer_start);
-    double totalBytes          = (double)bytes * ILOOPS;
-    double averageTransferTime = totalTimeUs / (double)ILOOPS;
-    double MB_pr_second = totalBytes/totalTimeUs;
-
-    printf("%8llu|%6.2f us|%10.2f MB/s|%s\n", 
-           (unsigned long long)bytes, averageTransferTime, MB_pr_second, "32_chunks");
-
-
-    StartTimer(&timer_start);
-
-    for (int i = 0; i < ILOOPS; i++) {
-        const uint64_t *src2 = (const uint64_t *)local_address;
-        volatile uint64_t *dest2 = (volatile uint64_t *)remote_address;
-
-        const uint64_t *end = src2 + (bytes / 8);
-        while (src2 < end) {
-            *dest2++ = *src2++;
-        }
-    }
-    totalTimeUs         = StopTimer(timer_start);
-    totalBytes          = (double)bytes * ILOOPS;
-    averageTransferTime = totalTimeUs / (double)ILOOPS;
-    MB_pr_second = totalBytes/totalTimeUs;
-
-    printf("%8llu|%6.2f us|%10.2f MB/s|%s\n", 
-           (unsigned long long)bytes, averageTransferTime, MB_pr_second, "64_chunks");
 
     SEOE(SCIRemoveSequence, remote_sequence, NO_FLAGS);
     SEOE(SCIUnmapSegment, remote_map, NO_FLAGS);
@@ -312,3 +334,4 @@ int main(int argc, char *argv[]) {
     SCITerminate();
     return 0;
 }
+
