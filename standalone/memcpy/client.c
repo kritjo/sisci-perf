@@ -368,12 +368,49 @@ sciMemCopy_OS_COPY_Prefetch(int i, void *vctx, int size)
             void *s=(void *)&localAddr[j];
             void *d=(void *)&remoteAddr[j];
 
-            memcpy(s,d,(nostores-j)*4);
+            memcpy(d, s,(nostores-j)*4);
 
             /* we are finished, jump out of the loop */
             break;
         }
     }  /* for j */
+}
+
+static void
+nobranch_prefetch(int i, void *vctx, int size)
+{
+    (void)i; /* unused */
+
+    memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
+
+    const uint32_t *restrict local  =
+        (const uint32_t *)ctx->local_address;
+    uint32_t *restrict remote =
+        (uint32_t *)ctx->remote_address;
+
+    size_t nbytes = (size_t)size;
+    size_t nwords = nbytes / sizeof(uint32_t);
+
+    const size_t blk_bytes = 64;
+    const size_t blk_words = blk_bytes / sizeof(uint32_t);
+
+    size_t j = 0;
+
+    for (; j + blk_words <= nwords; j += blk_words) {
+
+        /* Prefetch a bit ahead; adjust distance experimentally */
+        __builtin_prefetch(local + j + 2 * blk_words, 0, 1);
+        __builtin_prefetch(local + j + 4 * blk_words, 0, 1);
+
+        /* Let the compiler vectorize this. */
+        memcpy(remote + j, local + j, blk_bytes);
+    }
+
+    /* Tail */
+    if (j < nwords) {
+        size_t tail_bytes = (nwords - j) * sizeof(uint32_t);
+        memcpy(remote + j, local + j, tail_bytes);
+    }
 }
 
 
@@ -451,10 +488,20 @@ int main(int argc, char *argv[]) {
         run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", avx2_fence_cb);
     }
 
+    printf("only scimemospref\n");
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        run_benchmark(sciMemCopy_OS_COPY_Prefetch, &ctx, csize, "sciMemCopy_OS_COPY_Prefetch", avx2_fence_cb);
+    }
+
     printf("running only tpf:\n");
 
     for (int csize = 64; csize <= bytes; csize *= 2) {
         run_benchmark(memcpy_tuned_chunks, &ctx, csize, "memcpy_tuned_chunks", avx2_fence_cb);
+    }
+
+    printf("only nobranch_prefetch\n");
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        run_benchmark(nobranch_prefetch, &ctx, csize, "nobranch_prefetch", avx2_fence_cb);
     }
 
     printf("8b:\n");
@@ -506,6 +553,8 @@ int main(int argc, char *argv[]) {
 
         run_benchmark(memcpy_avx2_loadu_storeu, &ctx, csize, "memcpy_avx2_loadu_storeu", avx2_fence_cb);
 
+        run_benchmark(nobranch_prefetch, &ctx, csize, "nobranch_prefetch", avx2_fence_cb);
+
         if (csize >= 32) {
             run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", avx2_fence_cb);
         }
@@ -519,6 +568,7 @@ int main(int argc, char *argv[]) {
         run_benchmark(memcpy_tuned_chunks, &ctx, csize, "memcpy_tuned_chunks", avx2_fence_cb);
 
         run_benchmark(sciMemCopy_OS_COPY_Prefetch, &ctx, csize, "sciMemCopy_OS_COPY_Prefetch", avx2_fence_cb);
+        run_benchmark(nobranch_prefetch, &ctx, csize, "nobranch_prefetch", avx2_fence_cb);
     }
 
     SEOE(SCIRemoveSequence, remote_sequence, NO_FLAGS);
