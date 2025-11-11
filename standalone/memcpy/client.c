@@ -422,7 +422,7 @@ static void memmove_prefetch(int i, void *vctx, int size)
     while (size >= 64) {
         _mm_prefetch((const char*)(s + 64), _MM_HINT_NTA);
         _mm_prefetch((const char*)(s + 128), _MM_HINT_NTA);
-        _mm_prefetch((const char)((s + 192)), _MM_HINT_NTA);
+        _mm_prefetch((const char*)((s + 192)), _MM_HINT_NTA);
 
         memmove(d, s, 64);
         d     += 64;
