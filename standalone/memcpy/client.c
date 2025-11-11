@@ -517,6 +517,8 @@ int main(int argc, char *argv[]) {
         }
 
         run_benchmark(memcpy_tuned_chunks, &ctx, csize, "memcpy_tuned_chunks", avx2_fence_cb);
+
+        run_benchmark(sciMemCopy_OS_COPY_Prefetch, &ctx, csize, "sciMemCopy_OS_COPY_Prefetch", avx2_fence_cb);
     }
 
     SEOE(SCIRemoveSequence, remote_sequence, NO_FLAGS);
