@@ -220,6 +220,115 @@ static void memcpy_avx2_loadu_storeu(int i, void *vctx, int bytes)
 #endif
 }
 
+
+static inline void memcpy_scalar_small(void *dst, const void *src, size_t len)
+{
+    const uint8_t *s = (const uint8_t *)src;
+    uint8_t *d = (uint8_t *)dst;
+    for (size_t i = 0; i < len; ++i)
+        d[i] = s[i];
+}
+
+static inline void memcpy_scalar_tail(void *dst, const void *src, size_t len)
+{
+    const uint8_t *s = (const uint8_t *)src;
+    uint8_t *d = (uint8_t *)dst;
+
+    while (len >= 8) {
+        *(uint64_t *)d = *(const uint64_t *)s;
+        d += 8; s += 8; len -= 8;
+    }
+    if (len >= 4) {
+        *(uint32_t *)d = *(const uint32_t *)s;
+        d += 4; s += 4; len -= 4;
+    }
+    if (len >= 2) {
+        d[0] = s[0];
+        d[1] = s[1];
+        d += 2; s += 2; len -= 2;
+    }
+    if (len)
+        d[0] = s[0];
+}
+
+void *memcpy_tuned_prefetch(void *restrict dst,
+                            const void *restrict src,
+                            size_t len)
+{
+    if (len == 0 || dst == src)
+        return dst;
+    if (len < 32) {
+        memcpy_scalar_small(dst, src, len);
+        return dst;
+    }
+
+    uint8_t *d = (uint8_t *)dst;
+    const uint8_t *s = (const uint8_t *)src;
+
+    // Align dest to 32B
+    uintptr_t mis = (uintptr_t)d & 31u;
+    if (mis != 0) {
+        size_t prefix = 32u - mis;
+        if (prefix > len)
+            prefix = len;
+
+        memcpy_scalar_small(d, s, prefix);
+        d   += prefix;
+        s   += prefix;
+        len -= prefix;
+
+        if (len < 32) {
+            memcpy_scalar_small(d, s, len);
+            return;
+        }
+    }
+
+    size_t n_vec = len / 32;
+    size_t tail  = len % 32;
+
+    // Only use prefetch for reasonably large copies
+    const size_t PF_DIST_LINES = 8;               // 8 * 64B ahead
+    const size_t PF_ITERS_AHEAD = PF_DIST_LINES * 2; // 2 vecs (32B) per line
+
+    if (n_vec <= PF_ITERS_AHEAD * 2) {
+        // Small/medium: no prefetch, clean loop
+        for (size_t i = 0; i < n_vec; ++i) {
+            __m256i v = _mm256_loadu_si256((const __m256i *)(s + i * 32));
+            _mm256_stream_si256((__m256i *)(d + i * 32), v);
+        }
+    } else {
+        // Large: main loop with always-valid prefetch
+        size_t main_end = n_vec - PF_ITERS_AHEAD;
+
+        size_t i = 0;
+        for (; i < main_end; ++i) {
+            size_t pf_i = i + PF_ITERS_AHEAD;
+            _mm_prefetch((const char *)(s + pf_i * 32), _MM_HINT_NTA);
+
+            __m256i v = _mm256_loadu_si256((const __m256i *)(s + i * 32));
+            _mm256_stream_si256((__m256i *)(d + i * 32), v);
+        }
+
+        // Tail: no prefetch; still no size-conditional in the loop body
+        for (; i < n_vec; ++i) {
+            __m256i v = _mm256_loadu_si256((const __m256i *)(s + i * 32));
+            _mm256_stream_si256((__m256i *)(d + i * 32), v);
+        }
+    }
+
+    if (tail) {
+        memcpy_scalar_tail(d + n_vec * 32, s + n_vec * 32, tail);
+    }
+
+}
+
+static inline void memcpy_tuned_chunks(int i, void *vctx, int bytes) {
+    (void)i;  /* iteration index unused */
+    memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
+
+    memcpy_tuned_prefetch(ctx->remote_address, ctx->local_address, bytes);
+}
+
 static void avx2_fence_cb(void *ctx)
 {
     (void)ctx;
@@ -294,6 +403,12 @@ int main(int argc, char *argv[]) {
         run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", avx2_fence_cb);
     }
 
+    printf("running only tpf:\n");
+
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        run_benchmark(memcpy_tuned_prefetch, &ctx, csize, "memcpy_tuned_prefetch", avx2_fence_cb);
+    }
+
     printf("8b:\n");
     for (int csize = 64; csize <= bytes; csize *= 2) {
         run_benchmark(memcpy_8_chunks_op, &ctx, csize, "memcpy_8_chunks_op", avx2_fence_cb);
@@ -360,6 +475,8 @@ int main(int argc, char *argv[]) {
         
             run_benchmark(memcpy_nonvol_64_chunks_op, &ctx, csize, "memcpy_nonvol_64_chunks_op", avx2_fence_cb);
         }
+
+        run_benchmark(memcpy_tuned_prefetch, &ctx, csize, "memcpy_tuned_prefetch", avx2_fence_cb);
     }
 
     SEOE(SCIRemoveSequence, remote_sequence, NO_FLAGS);
