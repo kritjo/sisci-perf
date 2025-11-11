@@ -356,11 +356,11 @@ sciMemCopy_OS_COPY_Prefetch(int i, void *vctx, int size)
 
             if (j % 48 == 0) {
                 __builtin_prefetch((unsigned int *)&localAddr[j+16], 0, 0);
-                __builtin_prefetch((unsigned int *)&localAddr[j+32], 10, 0);
+                __builtin_prefetch((unsigned int *)&localAddr[j+32], 0, 0);
                 __builtin_prefetch((unsigned int *)&localAddr[j+48], 0, 0);
             }
 
-            bcopy(s, d,blockSizeInBytes);
+            memcpy(d, s ,blockSizeInBytes);
             j += blockSizeInStores;
         } else {
 
