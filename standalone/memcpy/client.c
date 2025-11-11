@@ -413,12 +413,13 @@ nobranch_prefetch(int i, void *vctx, int size)
     }
 }
 
-static void memmove_prefetch(volatile void *dst, const void *src, size_t count)
+static void memmove_prefetch(int i, void *vctx, int size)
 {
-    volatile unsigned char *d = dst;
-    const unsigned char *s = src;
+    memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
+    volatile unsigned char *d = ctx->remote_address;
+    const unsigned char *s = ctx->local_address;
 
-    while (count >= 64) {
+    while (size >= 64) {
         _mm_prefetch((const char*)(s + 64), _MM_HINT_NTA);
         _mm_prefetch((const char*)(s + 128), _MM_HINT_NTA);
         _mm_prefetch((const char)((s + 192)), _MM_HINT_NTA);
@@ -426,13 +427,11 @@ static void memmove_prefetch(volatile void *dst, const void *src, size_t count)
         memmove(d, s, 64);
         d     += 64;
         s     += 64;
-        count -= 64;
+        size -= 64;
     }
 
-    if (count)
-        memcpy(d, s, count);
-
-    return dst;
+    if (size)
+        memcpy(d, s, size);
 }
 
 static void avx2_fence_cb(void *ctx)
