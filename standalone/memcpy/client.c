@@ -220,19 +220,18 @@ static void memcpy_avx2_loadu_storeu(int i, void *vctx, int bytes)
 #endif
 }
 
-
-static inline void memcpy_scalar_small(void *dst, const void *src, size_t len)
+static inline void memcpy_scalar_small(volatile void *dst, const void *src, size_t len)
 {
     const uint8_t *s = (const uint8_t *)src;
-    uint8_t *d = (uint8_t *)dst;
+    volatile uint8_t *d = (uint8_t *)dst;
     for (size_t i = 0; i < len; ++i)
         d[i] = s[i];
 }
 
-static inline void memcpy_scalar_tail(void *dst, const void *src, size_t len)
+static inline void memcpy_scalar_tail(volatile void *dst, const void *src, size_t len)
 {
     const uint8_t *s = (const uint8_t *)src;
-    uint8_t *d = (uint8_t *)dst;
+    volatile uint8_t *d = (uint8_t *)dst;
 
     while (len >= 8) {
         *(uint64_t *)d = *(const uint64_t *)s;
@@ -251,18 +250,18 @@ static inline void memcpy_scalar_tail(void *dst, const void *src, size_t len)
         d[0] = s[0];
 }
 
-void *memcpy_tuned_prefetch(void *restrict dst,
+void memcpy_tuned_prefetch(volatile void *restrict dst,
                             const void *restrict src,
                             size_t len)
 {
     if (len == 0 || dst == src)
-        return dst;
+        return;
     if (len < 32) {
         memcpy_scalar_small(dst, src, len);
-        return dst;
+        return;
     }
 
-    uint8_t *d = (uint8_t *)dst;
+    volatile uint8_t *d = (uint8_t *)dst;
     const uint8_t *s = (const uint8_t *)src;
 
     // Align dest to 32B
@@ -319,7 +318,6 @@ void *memcpy_tuned_prefetch(void *restrict dst,
     if (tail) {
         memcpy_scalar_tail(d + n_vec * 32, s + n_vec * 32, tail);
     }
-
 }
 
 static inline void memcpy_tuned_chunks(int i, void *vctx, int bytes) {
@@ -406,7 +404,7 @@ int main(int argc, char *argv[]) {
     printf("running only tpf:\n");
 
     for (int csize = 64; csize <= bytes; csize *= 2) {
-        run_benchmark(memcpy_tuned_prefetch, &ctx, csize, "memcpy_tuned_prefetch", avx2_fence_cb);
+        run_benchmark(memcpy_tuned_chunks, &ctx, csize, "memcpy_tuned_chunks", avx2_fence_cb);
     }
 
     printf("8b:\n");
@@ -476,7 +474,7 @@ int main(int argc, char *argv[]) {
             run_benchmark(memcpy_nonvol_64_chunks_op, &ctx, csize, "memcpy_nonvol_64_chunks_op", avx2_fence_cb);
         }
 
-        run_benchmark(memcpy_tuned_prefetch, &ctx, csize, "memcpy_tuned_prefetch", avx2_fence_cb);
+        run_benchmark(memcpy_tuned_chunks, &ctx, csize, "memcpy_tuned_chunks", avx2_fence_cb);
     }
 
     SEOE(SCIRemoveSequence, remote_sequence, NO_FLAGS);
