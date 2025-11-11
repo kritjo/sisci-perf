@@ -327,6 +327,56 @@ static inline void memcpy_tuned_chunks(int i, void *vctx, int bytes) {
     memcpy_tuned_prefetch(ctx->remote_address, ctx->local_address, bytes);
 }
 
+static void
+sciMemCopy_OS_COPY_Prefetch(int i, void *vctx, int size)
+{
+
+    size_t blockSizeInBytes = 64; /* For tuning */
+    size_t blockSizeInStores;
+    size_t nostores, j;
+    memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
+
+    volatile unsigned int *localAddr = (volatile unsigned int *) ctx->local_address;
+    volatile unsigned int *remoteAddr = (volatile unsigned int *) ctx->remote_address;
+    
+    nostores = (size) / sizeof(unsigned int);
+
+    blockSizeInStores = blockSizeInBytes / sizeof(unsigned int);
+
+    /* 
+     * Transfer data to remote node 
+     */
+
+    for (j=0;j<nostores;) {
+
+        if ((j+blockSizeInStores)<=nostores) {
+
+            void *s=(void *)&localAddr[j];
+            void *d=(void *)&remoteAddr[j];
+
+            if (j % 48 == 0) {
+                __builtin_prefetch((unsigned int *)&localAddr[j+16], 0, 0);
+                __builtin_prefetch((unsigned int *)&localAddr[j+32], 10, 0);
+                __builtin_prefetch((unsigned int *)&localAddr[j+48], 0, 0);
+            }
+
+            bcopy(s, d,blockSizeInBytes);
+            j += blockSizeInStores;
+        } else {
+
+            /* We transfer the rest of data */
+            void *s=(void *)&localAddr[j];
+            void *d=(void *)&remoteAddr[j];
+
+            memcpy(s,d,(nostores-j)*4);
+
+            /* we are finished, jump out of the loop */
+            break;
+        }
+    }  /* for j */
+}
+
+
 static void avx2_fence_cb(void *ctx)
 {
     (void)ctx;
