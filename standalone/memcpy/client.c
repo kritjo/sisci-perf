@@ -491,16 +491,6 @@ int main(int argc, char *argv[]) {
         run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", avx2_fence_cb);
     }
 
-    printf("GENERIC:\n");
-    for (int csize = 64; csize <= bytes; csize *= 2) {
-        for (int tsize = 1; tsize <= 512; tsize *= 2) {
-            ctx.trans_size = tsize;
-            char *string = malloc(64);
-            sprintf(string, "memcpy_%d_chunks_generic", tsize);
-            run_benchmark(memcpy_chunks, &ctx, csize, string, avx2_fence_cb);
-        }
-    }
-
     printf("Majloop:\n");
 
     for (int csize = 8; csize <= bytes; csize *= 2) {
