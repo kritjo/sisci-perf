@@ -37,6 +37,7 @@ typedef struct {
     sci_map_t      remote_map;
     int            bytes;
     volatile void *remote_address;
+    uint32_t       trans_size;
 } memcpy_ctx_t;
 
 static void memcopy_op(int i, void *vctx, int bytes)
@@ -123,6 +124,29 @@ static inline void memcpy_nonvol_64_chunks_op(int i, void *vctx, int bytes)
         *dest++ = *src++;
     }
 }
+
+static inline void memcpy_chunks_generic(volatile void *dst, const void *src,
+                                         size_t len, size_t elem_size)
+{
+    size_t n = len / elem_size;
+    const char *s = src;
+    volatile char *d = dst;
+
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t b = 0; b < elem_size; ++b)
+            d[b] = s[b];
+        d += elem_size;
+        s += elem_size;
+    }
+}
+
+static inline void memcpy_chunks(int i, void *vctx, int bytes) {
+    (void)i;  /* iteration index unused */
+    memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
+
+    memcpy_chunks_generic(ctx->remote_address, ctx->local_address, bytes, ctx->trans_size);
+}
+
 
 /* AVX2 non-temporal copy to remote mapped memory.
    - Aligns dest to 64B to avoid split lines
@@ -249,7 +273,8 @@ int main(int argc, char *argv[]) {
         .local_address   = local_address,
         .remote_map      = remote_map,
         .bytes           = bytes,
-        .remote_address  = remote_address
+        .remote_address  = remote_address,
+        .trans_size      = 0
     };
 
 
@@ -300,6 +325,14 @@ int main(int argc, char *argv[]) {
     for (int csize = 64; csize <= bytes; csize *= 2) {
         run_benchmark(memcpy_64_chunks_op, &ctx, csize, "memcpy_64_chunks_op", avx2_fence_cb);
         run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", avx2_fence_cb);
+    }
+
+    printf("GENERIC:\n");
+    for (int csize = 64; csize <= bytes; csize *= 2) {
+        for (int tsize = 1; tsize <= 512; tsize *= 2) {
+            ctx.trans_size = tsize;
+            run_benchmark(memcpy_chunks, &ctx, csize, "memcpy_%s_chunks_generic", avx2_fence_cb);
+        }
     }
 
     printf("Majloop:\n");
