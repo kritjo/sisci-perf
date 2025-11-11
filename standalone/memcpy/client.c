@@ -68,79 +68,59 @@ static void scicopy_two_halves_op(int i, void *vctx, int bytes)
     }
 }
 
-static void memcpy_8_chunks_op(int i, void *vctx, int bytes)
+static inline void memcpy_8_chunks_op(int i, void *vctx, size_t bytes)
 {
-    (void)i; /* iteration index unused */
-    memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
+    (void)i;
+    memcpy_ctx_t *ctx = vctx;
 
-    int remaining = bytes;
-    int offset = 0;
+    const uint8_t *src = ctx->local_address;
+    volatile uint8_t *dest = ctx->remote_address;
 
-    uint8_t *local = (uint8_t *)ctx->local_address;
-    volatile uint8_t *remote = (volatile uint8_t *)ctx->remote_address;
-
-    while (remaining > 0) {
-        *remote = *local;
-        remaining -= 1;
-        remote++;
-        local++;
+    const uint8_t *end = src + bytes;
+    while (src < end) {
+        *dest++ = *src++;
     }
 }
 
-static void memcpy_32_chunks_op(int i, void *vctx, int bytes)
+static inline void memcpy_32_chunks_op(int i, void *vctx, size_t bytes)
 {
-    (void)i; /* iteration index unused */
+    (void)i;  /* iteration index unused */
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
 
-    int remaining = bytes;
-    int offset = 0;
+    const uint32_t *src = (const uint32_t *)ctx->local_address;
+    volatile uint32_t *dest = (volatile uint32_t *)ctx->remote_address;
 
-    uint32_t *local = (uint32_t *)ctx->local_address;
-    volatile uint32_t *remote = (volatile uint32_t *)ctx->remote_address;
-
-    while (remaining > 0) {
-        *remote = *local;
-        remaining -= 4;
-        remote++;
-        local++;
+    const uint32_t *end = src + (bytes / 4);
+    while (src < end) {
+        *dest++ = *src++;
     }
 }
 
-static void memcpy_64_chunks_op(int i, void *vctx, int bytes)
+static inline void memcpy_64_chunks_op(int i, void *vctx, size_t bytes)
 {
-    (void)i; /* iteration index unused */
+    (void)i;  /* iteration index unused */
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
 
-    int remaining = bytes;
-    int offset = 0;
+    const uint64_t *src = (const uint64_t *)ctx->local_address;
+    volatile uint64_t *dest = (volatile uint64_t *)ctx->remote_address;
 
-    uint64_t *local = (uint64_t *)ctx->local_address;
-    volatile uint64_t *remote = (volatile uint64_t *)ctx->remote_address;
-
-    while (remaining > 0) {
-        *remote = *local;
-        remaining -= 8;
-        remote++;
-        local++;
+    const uint64_t *end = src + (bytes / 8);
+    while (src < end) {
+        *dest++ = *src++;
     }
 }
 
-static void memcpy_nonvol_64_chunks_op(int i, void *vctx, int bytes)
+static inline void memcpy_64_chunks_op(int i, void *vctx, size_t bytes)
 {
-    (void)i; /* iteration index unused */
+    (void)i;  /* iteration index unused */
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
 
-    int remaining = bytes;
-    int offset = 0;
+    const uint64_t *src = (const uint64_t *)ctx->local_address;
+    uint64_t *dest = (uint64_t *)ctx->remote_address;
 
-    uint64_t *local = (uint64_t *)ctx->local_address;
-    uint64_t *remote = (uint64_t *)ctx->remote_address;
-
-    while (remaining > 0) {
-        *remote = *local;
-        remaining -= 8;
-        remote++;
-        local++;
+    const uint64_t *end = src + (bytes / 8);
+    while (src < end) {
+        *dest++ = *src++;
     }
 }
 
