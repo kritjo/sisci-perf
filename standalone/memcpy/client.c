@@ -331,7 +331,9 @@ int main(int argc, char *argv[]) {
     for (int csize = 64; csize <= bytes; csize *= 2) {
         for (int tsize = 1; tsize <= 512; tsize *= 2) {
             ctx.trans_size = tsize;
-            run_benchmark(memcpy_chunks, &ctx, csize, "memcpy_%s_chunks_generic", avx2_fence_cb);
+            char *string = malloc(64);
+            sprintf(string, "memcpy_%d_chunks_generic", tsize);
+            run_benchmark(memcpy_chunks, &ctx, csize, string, avx2_fence_cb);
         }
     }
 
