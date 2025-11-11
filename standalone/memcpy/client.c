@@ -411,10 +411,11 @@ int main(int argc, char *argv[]) {
     for (int csize = 64; csize <= bytes; csize *= 2) {
         run_benchmark(memcpy_8_chunks_op, &ctx, csize, "memcpy_8_chunks_op", avx2_fence_cb);
     }
-    printf("Running 2 32s:\n");
+    printf("Running 2 32s with sleep in between:\n");
 
     for (int csize = 64; csize <= bytes; csize *= 2) {
         run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", avx2_fence_cb);
+        sleep(1);
         run_benchmark(memcpy_32_chunks_op, &ctx, csize, "memcpy_32_chunks_op", avx2_fence_cb);
     }
 
