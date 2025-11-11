@@ -297,10 +297,10 @@ int main(int argc, char *argv[]) {
             *dest2++ = *src2++;
         }
     }
-    double totalTimeUs         = StopTimer(timer_start);
-    double totalBytes          = (double)bytes * ILOOPS;
-    double averageTransferTime = totalTimeUs / (double)ILOOPS;
-    double MB_pr_second = totalBytes/totalTimeUs;
+    totalTimeUs         = StopTimer(timer_start);
+    totalBytes          = (double)bytes * ILOOPS;
+    averageTransferTime = totalTimeUs / (double)ILOOPS;
+    MB_pr_second = totalBytes/totalTimeUs;
 
     printf("%8llu|%6.2f us|%10.2f MB/s|%s\n", 
            (unsigned long long)bytes, averageTransferTime, MB_pr_second, "64_chunks");
