@@ -110,7 +110,7 @@ static inline void memcpy_64_chunks_op(int i, void *vctx, size_t bytes)
     }
 }
 
-static inline void memcpy_64_chunks_op(int i, void *vctx, size_t bytes)
+static inline void memcpy_nonvol_64_chunks_op(int i, void *vctx, size_t bytes)
 {
     (void)i;  /* iteration index unused */
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
