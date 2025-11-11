@@ -360,7 +360,7 @@ sciMemCopy_OS_COPY_Prefetch(int i, void *vctx, int size)
                 __builtin_prefetch((unsigned int *)&localAddr[j+48], 0, 0);
             }
 
-            memcpy(d, s ,blockSizeInBytes);
+            bcopy(s, d, blockSizeInBytes);
             j += blockSizeInStores;
         } else {
 
@@ -412,6 +412,8 @@ nobranch_prefetch(int i, void *vctx, int size)
         memcpy(remote + j, local + j, tail_bytes);
     }
 }
+
+static void *(* volatile real_memmove)(void *, const void *, size_t) = memmove;
 
 static void memmove_prefetch(int i, void *vctx, int size)
 {
