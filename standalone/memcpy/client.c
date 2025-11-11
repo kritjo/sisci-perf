@@ -68,7 +68,7 @@ static void scicopy_two_halves_op(int i, void *vctx, int bytes)
     }
 }
 
-static inline void memcpy_8_chunks_op(int i, void *vctx, size_t bytes)
+static inline void memcpy_8_chunks_op(int i, void *vctx, int bytes)
 {
     (void)i;
     memcpy_ctx_t *ctx = vctx;
@@ -82,7 +82,7 @@ static inline void memcpy_8_chunks_op(int i, void *vctx, size_t bytes)
     }
 }
 
-static inline void memcpy_32_chunks_op(int i, void *vctx, size_t bytes)
+static inline void memcpy_32_chunks_op(int i, void *vctx, int bytes)
 {
     (void)i;  /* iteration index unused */
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
@@ -96,7 +96,7 @@ static inline void memcpy_32_chunks_op(int i, void *vctx, size_t bytes)
     }
 }
 
-static inline void memcpy_64_chunks_op(int i, void *vctx, size_t bytes)
+static inline void memcpy_64_chunks_op(int i, void *vctx, int bytes)
 {
     (void)i;  /* iteration index unused */
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
@@ -110,7 +110,7 @@ static inline void memcpy_64_chunks_op(int i, void *vctx, size_t bytes)
     }
 }
 
-static inline void memcpy_nonvol_64_chunks_op(int i, void *vctx, size_t bytes)
+static inline void memcpy_nonvol_64_chunks_op(int i, void *vctx, int bytes)
 {
     (void)i;  /* iteration index unused */
     memcpy_ctx_t *ctx = (memcpy_ctx_t *)vctx;
