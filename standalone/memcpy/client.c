@@ -493,6 +493,7 @@ int main(int argc, char *argv[]) {
 
     printf("Majloop:\n");
 
+    SetSciMemCopyFunction(5);
     for (int csize = 8; csize <= bytes; csize *= 2) {
         /* Timed benchmark with op callback */
         run_benchmark(scicopy_op, &ctx, csize, "scicopy_op", NULL);
